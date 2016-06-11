@@ -1,0 +1,90 @@
+/*
+ * Copyright (C) 2016 donizyo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package com.stellaris.util;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import javax.xml.bind.DatatypeConverter;
+
+/**
+ *
+ * @author donizyo
+ */
+public class Digest {
+
+    public static final String DEFAULT_ALGORITHM = "MD5";
+    private final String digest;
+
+    public Digest(File file) {
+        int bufsize;
+        byte[] buffer;
+        MessageDigest md;
+
+        if (file == null) {
+            throw new NullPointerException();
+        }
+        if (!file.isFile()) {
+            throw new IllegalArgumentException();
+        }
+        bufsize = 1024;
+        buffer = new byte[bufsize];
+        try {
+            md = MessageDigest.getInstance(DEFAULT_ALGORITHM);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException(ex);
+        }
+        try (FileInputStream finput = new FileInputStream(file);
+                DigestInputStream dinput = new DigestInputStream(finput, md);) {
+            while (dinput.read(buffer) > 0);
+            buffer = md.digest();
+            digest = toString(buffer);
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    private static String toString(byte[] array) {
+        return DatatypeConverter.printHexBinary(array);
+    }
+
+    public Digest(String path) {
+        this(new File(path));
+    }
+
+    public String digest() {
+        return digest;
+    }
+
+    public static void main(String[] args) {
+        String path;
+        Digest digest;
+        String result;
+
+        if (args.length < 1) {
+            return;
+        }
+        path = args[0];
+        digest = new Digest(path);
+        result = digest.digest();
+        System.out.format("%s checksum of file \"%s\":\"%s\"%n",
+                Digest.DEFAULT_ALGORITHM, path, result);
+    }
+}
