@@ -60,14 +60,14 @@ public class DigestStore {
         return file;
     }
 
-    private static String getPath(File file) {
+    public static String getPath(File file) {
         String path;
 
         path = file.getAbsolutePath();
         return getPath(path);
     }
 
-    private static String getPath(String path) {
+    public static String getPath(String path) {
         int idx;
 
         idx = path.indexOf("Stellaris");
