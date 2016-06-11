@@ -25,8 +25,8 @@ import java.util.regex.Pattern;
  */
 public class Patterns {
 
-    public static final Patterns PS_RANGE =
-            compile("min", "=", "\\d\\+", "max", "=", "\\d\\+", "\\}");
+    public static final Patterns PS_RANGE
+            = compile("min", "=", "\\d*", "max", "=", "\\d*", "\\}");
 
     private final Pattern[] patterns;
 
@@ -66,9 +66,17 @@ public class Patterns {
             s = input[i];
             m = p.matcher(s);
             if (!m.matches()) {
+                //System.out.format("Unmatch @[%d]:%s%n", i, s);
                 return false;
             }
         }
         return true;
     }
+
+    public static void main(String[] args) {
+        String s = "min = 0 max = 3 }";
+        String[] ss = s.split(" ");
+        System.out.format("Matches: %b%n", PS_RANGE.matches(ss));
+    }
+
 }
