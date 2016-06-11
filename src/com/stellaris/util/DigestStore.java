@@ -38,6 +38,9 @@ public class DigestStore {
 
         prop = new Properties();
         file = getFileStore();
+        if (!file.isFile()) {
+            return;
+        }
         try (FileInputStream finput = new FileInputStream(file);) {
             prop.load(finput);
         } catch (IOException ex) {
