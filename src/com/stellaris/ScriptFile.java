@@ -128,6 +128,7 @@ public class ScriptFile extends HashMap<Field, Type> {
         Type old;
 
         old = super.put(field, type);
+        /*
         if (old == null
                 || old == type
                 || old == Type.INTEGER
@@ -137,5 +138,7 @@ public class ScriptFile extends HashMap<Field, Type> {
         // put the old value back
         super.put(field, old);
         throw new IllegalArgumentException();
+         */
+        return old;
     }
 }
