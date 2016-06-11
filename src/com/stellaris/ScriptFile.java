@@ -70,6 +70,7 @@ public class ScriptFile extends HashMap<Field, Type> {
             }
             // return
             if ("}".equals(token)) {
+                System.out.println();
                 return --state;
             }
             {
@@ -77,15 +78,18 @@ public class ScriptFile extends HashMap<Field, Type> {
                 key = token;
                 field = new Field(parent, key);
 
-                // assign
+                // operator
                 token = parser.next();
-                if (!"=".equals(token)) {
-                    throw new IllegalStateException(token);
+                if (!"=".equals(token)
+                        && !">".equals(token)
+                        && !"<".equals(token)) {
+                    throw new IllegalStateException("\"" + token + "\"");
                 }
 
                 // value
                 token = parser.next();
                 if ("{".equals(token)) {
+                    System.out.println();
                     tokens = parser.peek(7);
                     // { -> min = INTEGER max = INTEGER }
                     if (Patterns.PS_RANGE.matches(tokens)) {
@@ -122,6 +126,7 @@ public class ScriptFile extends HashMap<Field, Type> {
 
                 // field - type binding
                 put(field, type);
+                System.out.println();
             }
         }
 
