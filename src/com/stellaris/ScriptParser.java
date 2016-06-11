@@ -109,9 +109,10 @@ public class ScriptParser implements AutoCloseable {
     }
 
     /**
-     * Dicard elements buffered in built-in deque
-     * Will not ignore elements still in the stream
-     * @param count 
+     * Dicard elements buffered in built-in deque Will not ignore elements still
+     * in the stream
+     *
+     * @param count
      */
     public void discard(int count) {
         int i;
@@ -123,10 +124,15 @@ public class ScriptParser implements AutoCloseable {
     }
 
     public String next() {
+        String res;
+
         if (!deque.isEmpty()) {
-            return deque.removeFirst();
+            res = deque.removeFirst();
+        } else {
+            res = next0();
         }
-        return next0();
+        System.out.format("%s ", res);
+        return res;
     }
 
     private String next0() {
