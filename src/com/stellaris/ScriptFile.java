@@ -110,7 +110,12 @@ public class ScriptFile extends HashMap<Field, Type> {
                             Float.parseFloat(token);
                             type = Type.FLOAT;
                         } catch (NumberFormatException e2) {
-                            type = Type.STRING;
+                            if (token.startsWith("\"")
+                                    && token.endsWith("\"")) {
+                                type = Type.STRING;
+                            } else {
+                                type = Type.ENUM;
+                            }
                         }
                     }
                 }
