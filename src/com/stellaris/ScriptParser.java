@@ -198,16 +198,8 @@ public class ScriptParser implements AutoCloseable {
         return deque.add(str);
     }
 
-    /**
-     * Retrieves the next token string
-     *
-     * @return
-     */
-    private String next0() {
-        char c;
+    private boolean refill() {
         int rem;
-        int src, dst;
-        String res;
 
         rem = buffer.remaining();
         // check if there are enough remaining characters in the buffer
@@ -219,8 +211,24 @@ public class ScriptParser implements AutoCloseable {
                 // if there ain't more characters in the stream
                 // and if there ain't remaining charactes in the buffer
                 // there won't be any possible token to be parsed
-                return null;
+                return false;
             }
+        }
+        return true;
+    }
+
+    /**
+     * Retrieves the next token string
+     *
+     * @return
+     */
+    private String next0() {
+        char c;
+        int src, dst;
+        String res;
+
+        if (!refill()) {
+            return null;
         }
         while (true) {
             if (buffer.hasRemaining()) {
