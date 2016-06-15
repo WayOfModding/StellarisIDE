@@ -150,7 +150,7 @@ public class ScriptParser implements AutoCloseable {
             throw new AssertionError();
         }
         if (DEBUG) {
-            System.err.format("[NEXT]\tnext=\"%s\"%ncache=%d %s%n",
+            System.err.format("[NEXT]\tnext=\"%s\"%n\tcache=%d %s%n",
                     res, deque.size(), deque.toString()
             );
         }
