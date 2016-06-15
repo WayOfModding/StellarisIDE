@@ -16,6 +16,8 @@
  */
 package com.stellaris;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,20 +52,26 @@ public class Patterns {
         return new Patterns(ps);
     }
 
-    public boolean matches(String[] input) {
+    public boolean matches(List<String> input) {
         Pattern p;
         Matcher m;
         String s;
         int i;
         int len;
 
-        len = input.length;
+        if (input == null) {
+            throw new NullPointerException();
+        }
+        len = input.size();
         if (len != patterns.length) {
             return false;
         }
         for (i = 0; i < len; i++) {
+            s = input.get(i);
+            if (s == null) {
+                return false;
+            }
             p = patterns[i];
-            s = input[i];
             m = p.matcher(s);
             if (!m.matches()) {
                 //System.out.format("Unmatch @[%d]:%s%n", i, s);
@@ -76,7 +84,8 @@ public class Patterns {
     public static void main(String[] args) {
         String s = "min = 0 max = 3 }";
         String[] ss = s.split(" ");
-        System.out.format("Matches: %b%n", PS_RANGE.matches(ss));
+        List<String> l = Arrays.asList(ss);
+        System.out.format("Matches: %b%n", PS_RANGE.matches(l));
     }
 
 }

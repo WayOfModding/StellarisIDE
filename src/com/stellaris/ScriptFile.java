@@ -16,11 +16,13 @@
  */
 package com.stellaris;
 
+import static com.stellaris.test.Debug.DEBUG;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Generates AST (a.k.a abstract syntax tree) for Stellaris Script
@@ -58,10 +60,15 @@ public class ScriptFile extends HashMap<Field, Type> {
 
     private int analyze(Field parent, int state) {
         String token, key;
-        String[] tokens;
+        List<String> tokens;
         Field field;
         Type type;
 
+        if (DEBUG) {
+            System.err.format("[PARSE]\tparent=%s, state=%d%n",
+                    parent, state
+            );
+        }
         while (parser.hasNext()) {
             token = parser.next();
             // ignore comment token
@@ -70,7 +77,6 @@ public class ScriptFile extends HashMap<Field, Type> {
             }
             // return
             if ("}".equals(token)) {
-                System.out.println();
                 return --state;
             }
             {
@@ -89,7 +95,6 @@ public class ScriptFile extends HashMap<Field, Type> {
                 // value
                 token = parser.next();
                 if ("{".equals(token)) {
-                    System.out.println();
                     tokens = parser.peek(7);
                     // { -> min = INTEGER max = INTEGER }
                     if (Patterns.PS_RANGE.matches(tokens)) {
@@ -126,7 +131,6 @@ public class ScriptFile extends HashMap<Field, Type> {
 
                 // field - type binding
                 put(field, type);
-                System.out.println();
             }
         }
 

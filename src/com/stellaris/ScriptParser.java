@@ -16,12 +16,10 @@
  */
 package com.stellaris;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.CharBuffer;
-import java.util.Deque;
-import java.util.ArrayDeque;
+import java.io.*;
+import java.nio.*;
+import java.util.*;
+import static com.stellaris.test.Debug.*;
 
 /**
  *
@@ -30,15 +28,17 @@ import java.util.ArrayDeque;
 public class ScriptParser implements AutoCloseable {
 
     private static final int BUFFER_SIZE = 4096;
+    private static final int REFILL_SIZE = 1024;
+    private static final int CACHE_SIZE = 3;
 
     private final BufferedReader reader;
     private CharBuffer buffer;
-    private boolean hasNext;
-    private final Deque<String> deque;
+    private boolean hasMore;
+    private final LinkedList<String> deque;
 
     public ScriptParser(Reader in) {
         reader = new BufferedReader(in);
-        deque = new ArrayDeque<>(128);
+        deque = new LinkedList<>();
         fill();
     }
 
@@ -68,43 +68,51 @@ public class ScriptParser implements AutoCloseable {
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+        hasMore = res > 0 && !buffer.hasRemaining();
         buffer.flip();
-        hasNext = res > 0;
+    }
+
+    private boolean hasRemaining() {
+        return !deque.isEmpty();
     }
 
     public boolean hasNext() {
-        return hasNext || !deque.isEmpty();
-    }
-
-    public String peek() {
-        String res;
-
-        if (deque.isEmpty()) {
-            res = next0();
-            deque.addLast(res);
-        } else {
-            res = deque.getFirst();
-        }
-
+        boolean res;
+        
+        res = hasRemaining() || cache(CACHE_SIZE);
         return res;
     }
 
-    public String[] peek(int count) {
-        String[] res;
+    /**
+     * Fill the deque
+     *
+     * @param count
+     */
+    private boolean cache(int count) {
         String str;
-        int i;
 
-        res = new String[count];
-        i = 0;
-        while (!deque.isEmpty() && i < count) {
-            str = deque.getFirst();
-            res[i++] = str;
-        }
-        while (i < count) {
+        while (deque.size() < count) {
             str = next0();
-            res[i++] = str;
-            deque.addLast(str);
+            if (str == null) {
+                hasMore = false;
+                break;
+            }
+            hasMore = true;
         }
+        return hasRemaining();
+    }
+
+    public List<String> peek(int count) {
+        List<String> res;
+        int size;
+
+        cache(count);
+        size = deque.size();
+        if (size < count) {
+            count = size;
+        }
+        res = deque.subList(0, count);
+        res = Collections.unmodifiableList(res);
         return res;
     }
 
@@ -116,68 +124,154 @@ public class ScriptParser implements AutoCloseable {
      */
     public void discard(int count) {
         int i;
+        String str;
 
         i = 0;
         while (i++ < count) {
-            deque.removeFirst();
+            str = deque.remove();
+            if (DEBUG) {
+                System.err.format("[DISCARD]\tcache=%d %s%n",
+                        deque.size(), deque.toString()
+                );
+            }
         }
     }
 
+    /**
+     * Get next token
+     *
+     * @return
+     */
     public String next() {
         String res;
 
-        if (!deque.isEmpty()) {
-            res = deque.removeFirst();
-        } else {
-            res = next0();
+        if (DEBUG) {
+            System.err.format("[NEXT]\tcache=%d %s%n",
+                    deque.size(), deque.toString()
+            );
         }
-        System.out.format("%s ", res);
+        res = deque.remove();
+        if (res == null) {
+            throw new AssertionError();
+        }
         return res;
     }
 
-    private String next0() {
-        StringBuilder sb;
-        char c;
-        int state;
+    /**
+     * Create a token string with char data from the buffer
+     *
+     * @param src
+     * @param dst
+     * @return
+     */
+    private String cache(int src, int dst) {
+        int len;
+        char[] buf;
+        String str;
+        boolean res;
 
-        sb = new StringBuilder();
-        // state:
-        // 0 :      initial
-        // 1 :      accept
-        // 2 :      comment
-        state = 0;
-        while (hasNext()) {
-            if (buffer.hasRemaining()) {
-                c = buffer.get();
-                if (Character.isWhitespace(c)) {
-                    if (state == 0) {
-                        // skip first few whitespace characters
-                        continue;
-                    } else if (state == 2) {
-                        if (c == '\r' || c == '\n') {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
-                } else if (c == '#') {
-                    state = 2;
-                } else if (state != 2) {
-                    state = 1;
-                }
-                sb.append(c);
-            } else {
+        if (src == dst) {
+            throw new AssertionError();
+        }
+        len = dst - src;
+        buf = new char[len];
+        buffer.position(src);
+        buffer.get(buf);
+        str = new String(buf);
+        res = cache(str);
+        if (DEBUG) {
+            System.err.format("[CACHE]\tsrc=%d, dst=%d, str=\"%s\"%n"
+                    + "\tcache=%d %s%n",
+                    src, dst, str,
+                    deque.size(), deque.toString()
+            );
+        }
+
+        return str;
+    }
+
+    private boolean cache(String str) {
+        return deque.add(str);
+    }
+
+    /**
+     * Retrieves the next token string
+     *
+     * @return
+     */
+    private String next0() {
+        char c;
+        int rem;
+        int src, dst;
+        String res;
+
+        rem = buffer.remaining();
+        // check if there are enough remaining characters in the buffer
+        if (rem < REFILL_SIZE) {
+            if (hasMore) {
+                // re-fill if there are more characters in the stream
                 fill();
-                if (!hasNext()) {
+            } else if (rem == 0) {
+                // if there ain't more characters in the stream
+                // and if there ain't remaining charactes in the buffer
+                // there won't be any possible token to be parsed
+                return null;
+            }
+        }
+        while (true) {
+            if (buffer.hasRemaining()) {
+                // skip the first few whitespace characters
+                c = buffer.get();
+                if (!Character.isWhitespace(c)) {
                     break;
                 }
+            } else {
+                // if there's no remaining characters in the buffer
+                return null;
             }
         }
 
-        if (sb.length() == 0) {
-            throw new IllegalStateException();
+        if (c == '#') {
+            // find a comment token
+            src = buffer.position() - 1;
+            while (true) {
+                if (!buffer.hasRemaining()) {
+                    dst = buffer.position();
+                    break;
+                }
+                c = buffer.get();
+                if (c == '\r' || c == '\n') {
+                    dst = buffer.position() - 1;
+                    break;
+                }
+                if (buffer.hasRemaining()) {
+                    continue;
+                }
+                throw new TokenException("Comment token is too long!");
+            }
+            res = cache(src, dst);
+        } else {
+            // non-comment token
+            src = buffer.position() - 1;
+            while (true) {
+                if (!buffer.hasRemaining()) {
+                    dst = buffer.position();
+                    break;
+                }
+                c = buffer.get();
+                if (Character.isWhitespace(c)) {
+                    dst = buffer.position() - 1;
+                    break;
+                }
+                if (buffer.hasRemaining()) {
+                    continue;
+                }
+                throw new TokenException("Key token is too long!");
+            }
+            res = cache(src, dst);
         }
-        return sb.toString();
+
+        return res;
     }
 
     @Override
@@ -186,5 +280,20 @@ public class ScriptParser implements AutoCloseable {
             reader.close();
         } catch (IOException ex) {
         }
+    }
+
+    public static void main(String[] args) {
+        if (args.length < 1) {
+            return;
+        }
+        //ScriptFile.newInstance(new java.io.File(args[0]));
+        //*
+        try (ScriptParser parser = new ScriptParser(
+                new java.io.FileReader(
+                        new java.io.File(args[0], "common/achievements.txt")));) {
+            parser.peek(1024);
+        } catch (FileNotFoundException ex) {
+        }
+        //*/
     }
 }
