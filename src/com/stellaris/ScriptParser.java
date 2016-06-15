@@ -78,7 +78,7 @@ public class ScriptParser implements AutoCloseable {
 
     public boolean hasNext() {
         boolean res;
-        
+
         res = hasRemaining() || cache(CACHE_SIZE);
         return res;
     }
@@ -90,6 +90,7 @@ public class ScriptParser implements AutoCloseable {
      */
     private boolean cache(int count) {
         String str;
+        boolean res;
 
         while (deque.size() < count) {
             str = next0();
@@ -97,9 +98,9 @@ public class ScriptParser implements AutoCloseable {
                 hasMore = false;
                 break;
             }
-            hasMore = true;
         }
-        return hasRemaining();
+        res = hasRemaining();
+        return res;
     }
 
     public List<String> peek(int count) {
@@ -145,6 +146,9 @@ public class ScriptParser implements AutoCloseable {
     public String next() {
         String res;
 
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
         res = deque.remove();
         if (res == null) {
             throw new AssertionError();

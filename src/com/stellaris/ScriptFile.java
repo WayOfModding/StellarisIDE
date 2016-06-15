@@ -51,8 +51,13 @@ public class ScriptFile extends HashMap<Field, Type> {
     }
 
     private void analyze() {
+        int res;
+
         try {
-            analyze(null, 0);
+            res = analyze(null, 0);
+            if (res != 0) {
+                throw new AssertionError();
+            }
         } finally {
             parser.close();
         }
@@ -134,7 +139,7 @@ public class ScriptFile extends HashMap<Field, Type> {
             }
         }
 
-        throw new IllegalStateException();
+        return state;
     }
 
     @Override
