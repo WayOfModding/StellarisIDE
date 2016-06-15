@@ -67,9 +67,7 @@ public class Stellaris {
                 System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
                 try {
                     script = ScriptFile.newInstance(file);
-                } catch (IllegalStateException
-                        | TokenException
-                        | AssertionError ex) {
+                } catch (IllegalStateException | TokenException | AssertionError ex) {
                     System.err.format("[ERROR] Found at file \"%s\"%n",
                             DigestStore.getPath(file));
                     continue;
@@ -149,10 +147,12 @@ public class Stellaris {
         System.out.format("Checkout directory \"%s\"...%n", path);
         st = new Stellaris();
         st.init(path);
+        /*
         for (Field field : st.fields.keySet()) {
             System.out.format("%s%n\t\t%s",
                     field.toString(),
                     st.fields.get(field).name().toLowerCase());
         }
+        //*/
     }
 }
