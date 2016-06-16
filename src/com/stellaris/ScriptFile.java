@@ -133,9 +133,12 @@ public class ScriptFile extends HashMap<Field, Type> {
                             type = Type.RANGE;
                             parser.discard(7);
                         } else {
-                            type = Type.STRUCT;
                             // add 1 each time a struct is found
                             state = analyze(field, ++state);
+                            type = get(field);
+                            if (type != Type.LIST) {
+                                type = Type.STRUCT;
+                            }
                         }
                     } else if ("yes".equals(token)
                             || "no".equals(token)) {
