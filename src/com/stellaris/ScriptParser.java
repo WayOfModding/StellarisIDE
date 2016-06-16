@@ -73,6 +73,30 @@ public class ScriptParser implements AutoCloseable {
         }
         hasMore = res > 0 && !buffer.hasRemaining();
         buffer.flip();
+        if (DEBUG && DEBUG_FILL) {
+            System.out.format("[FILL]\tfile_size=%d, total_line=%d%n",
+                    res, countLines()
+            );
+        }
+    }
+
+    private int countLines() {
+        int count;
+        char c;
+
+        count = 1;
+        while (buffer.hasRemaining()) {
+            c = buffer.get();
+            if (c == '\r') {
+                buffer.get();
+                ++count;
+            } else if (c == '\n') {
+                ++count;
+            }
+        }
+        buffer.rewind();
+
+        return count;
     }
 
     private boolean hasRemaining() {
@@ -284,10 +308,9 @@ public class ScriptParser implements AutoCloseable {
                     buffer.reset();
                     break;
                 }
-                if (buffer.hasRemaining()) {
-                    continue;
-                }
-                throw new TokenException("Comment token is too long!");
+                //if (buffer.hasRemaining()) { continue; }
+                //System.out.format("[ERROR] line=%d, position=%d%n", lineCounter, buffer.position());
+                //throw new TokenException("Comment token is too long!");
             }
             if (dst - src == 1
                     && buffer.get(src) == '#') {
