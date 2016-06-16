@@ -33,7 +33,8 @@ public class Stellaris {
 
     private static final String SUFFIX_TXT = ".txt";
     private static final String[] BLACKLIST = {
-        "common\\HOW_TO_MAKE_NEW_SHIPS.txt"
+        "common\\HOW_TO_MAKE_NEW_SHIPS.txt",
+        "interface\\credits.txt"
     };
     private final DigestStore digestStore;
     private final Map<Field, Type> fields;
