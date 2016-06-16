@@ -108,17 +108,17 @@ public class ScriptFile extends HashMap<Field, Type> {
                         if ("{".equals(token)
                                 || "yes".equals(token)
                                 || "no".equals(token)) {
-                            throw new TokenException();
+                            throw new TokenException(parent, token);
                         }
                         try {
                             // integer
                             Integer.parseInt(token);
-                            throw new TokenException();
+                            throw new TokenException(token);
                         } catch (NumberFormatException e1) {
                             // float
                             try {
                                 Float.parseFloat(token);
-                                throw new TokenException();
+                                throw new TokenException(token);
                             } catch (NumberFormatException e2) {
                             }
                         }

@@ -28,7 +28,7 @@ import static com.stellaris.test.Debug.*;
  */
 public class ScriptParser implements AutoCloseable {
 
-    private static final int BUFFER_SIZE = 4096;
+    private static final int BUFFER_SIZE = 65536;
     private static final int REFILL_SIZE = 256;
     private static final int CACHE_SIZE = 3;
 
@@ -227,35 +227,19 @@ public class ScriptParser implements AutoCloseable {
      */
     private String next0() {
         char c;
-        int src, dst;
+        int src, dst, pos;
         String res;
         boolean isString;
+        boolean isNewLine;
 
         if (!refill()) {
             return null;
         }
-        while (true) {
-            if (buffer.hasRemaining()) {
-                // skip the first few whitespace characters
-                c = buffer.get();
-                if (!Character.isWhitespace(c)) {
-                    break;
-                }
-                if (c == '\r') {
-                    buffer.mark();
-                    if (buffer.get() != '\n') {
-                        buffer.reset();
-                    }
-                    ++lineCounter;
-                } else if (c == '\n') {
-                    ++lineCounter;
-                }
-            } else {
-                // if there's no remaining characters in the buffer
-                return null;
-            }
+        if (!skipLeadingWhitespace()) {
+            return null;
         }
 
+        c = buffer.get();
         if (c == '#') {
             // find a comment token
             src = buffer.position() - 1;
@@ -269,17 +253,32 @@ public class ScriptParser implements AutoCloseable {
                     src = buffer.position() - 1;
                     continue;
                 }
+                isNewLine = false;
+                dst = -1;
                 if (c == '\r') {
                     dst = buffer.position() - 1;
                     buffer.mark();
-                    if (buffer.get() != '\n') {
-                        buffer.reset();
+                    c = buffer.get();
+                    if (c != '\n') {
+                        throw new AssertionError();
                     }
                     ++lineCounter;
-                    break;
+                    isNewLine = true;
                 } else if (c == '\n') {
                     dst = buffer.position() - 1;
                     ++lineCounter;
+                    isNewLine = true;
+                }
+                if (isNewLine) {
+                    if (!skipLeadingWhitespace()) {
+                        return null;
+                    }
+                    buffer.mark();
+                    c = buffer.get();
+                    if (c == '#') {
+                        continue;
+                    }
+                    buffer.reset();
                     break;
                 }
                 if (buffer.hasRemaining()) {
@@ -301,48 +300,94 @@ public class ScriptParser implements AutoCloseable {
             }
         } else {
             // non-comment token
-            src = buffer.position() - 1;
-            isString = c == '"';
-            while (true) {
-                if (!buffer.hasRemaining()) {
-                    dst = buffer.position();
-                    break;
-                }
-                c = buffer.get();
-                if (isString) {
-                    if (c == '\\') {
-                        buffer.get();
-                        continue;
-                    } else if (c == '"') {
+
+            // handle leading terminal characters
+            pos = buffer.position();
+            src = pos - 1;
+            if (c == '{'
+                    || c == '}'
+                    || c == '='
+                    || c == '>'
+                    || c == '<') {
+                dst = pos;
+            } else {
+                isString = c == '"';
+                while (true) {
+                    if (!buffer.hasRemaining()) {
                         dst = buffer.position();
                         break;
                     }
-                } else if (Character.isWhitespace(c)) {
-                    dst = buffer.position() - 1;
-                    if (c == '\r') {
-                        buffer.mark();
-                        if (buffer.get() != '\n') {
-                            buffer.reset();
+                    c = buffer.get();
+                    if (isString) {
+                        if (c == '\\') {
+                            buffer.get();
+                            continue;
+                        } else if (c == '"') {
+                            dst = buffer.position();
+                            break;
                         }
-                        ++lineCounter;
-                    } else if (c == '\n') {
-                        ++lineCounter;
+                    } else if (Character.isWhitespace(c)) {
+                        dst = buffer.position() - 1;
+                        if (c == '\r') {
+                            buffer.mark();
+                            if (buffer.get() != '\n') {
+                                buffer.reset();
+                            }
+                            ++lineCounter;
+                        } else if (c == '\n') {
+                            ++lineCounter;
+                        }
+                        break;
+                    } else if (c == '='
+                            || c == '>'
+                            || c == '<'
+                            || c == '}') {
+                        // handle ending terminal characters
+                        dst = buffer.position() - 1;
+                        buffer.position(dst);
+                        break;
                     }
-                    break;
-                } else if (c == '}') {
-                    dst = buffer.position() - 1;
-                    buffer.position(dst);
-                    break;
+                    if (buffer.hasRemaining()) {
+                        continue;
+                    }
+                    throw new TokenException("Key token is too long!");
                 }
-                if (buffer.hasRemaining()) {
-                    continue;
-                }
-                throw new TokenException("Key token is too long!");
             }
             res = cache(src, dst);
         }
 
         return res;
+    }
+
+    private boolean skipLeadingWhitespace() {
+        char c;
+        int pos;
+
+        while (true) {
+            if (buffer.hasRemaining()) {
+                // skip the first few whitespace characters
+                c = buffer.get();
+                if (!Character.isWhitespace(c)) {
+                    break;
+                }
+                if (c == '\r') {
+                    buffer.mark();
+                    if (buffer.get() != '\n') {
+                        buffer.reset();
+                    }
+                    ++lineCounter;
+                } else if (c == '\n') {
+                    ++lineCounter;
+                }
+            } else {
+                // if there's no remaining characters in the buffer
+                return false;
+            }
+        }
+
+        pos = buffer.position();
+        buffer.position(pos - 1);
+        return true;
     }
 
     @Override

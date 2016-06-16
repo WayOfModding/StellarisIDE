@@ -22,6 +22,10 @@ package com.stellaris;
  */
 public class TokenException extends RuntimeException {
 
+    TokenException(Field parent, String token) {
+        this(String.format("parent=%s, token=%s", parent, token));
+    }
+
     TokenException(String err) {
         super(err);
     }
