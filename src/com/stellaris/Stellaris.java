@@ -22,6 +22,7 @@ import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 
 /**
@@ -31,6 +32,9 @@ import java.util.Queue;
 public class Stellaris {
 
     private static final String SUFFIX_TXT = ".txt";
+    private static final String[] BLACKLIST = {
+        "common\\HOW_TO_MAKE_NEW_SHIPS.txt"
+    };
     private final DigestStore digestStore;
     private final Map<Field, Type> fields;
 
@@ -46,6 +50,7 @@ public class Stellaris {
         Queue<File> files, dirs;
         File file, dir;
         ScriptFile script;
+        String filename;
 
         root = new File(path);
         df = new DirectoryFilter();
@@ -58,19 +63,31 @@ public class Stellaris {
             dir.listFiles(sf);
 
             files = sf.getFiles();
+            mainloop:
             while (!files.isEmpty()) {
                 file = files.remove();
                 if (digestStore.matches(file)) {
                     continue;
                 }
                 // refresh syntax table
-                //System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
+                System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
                 try {
                     script = ScriptFile.newInstance(file);
                 } catch (IllegalStateException | TokenException | AssertionError ex) {
                     System.err.format("[ERROR] Found at file \"%s\"%n",
                             DigestStore.getPath(file));
                     continue;
+                } catch (NoSuchElementException ex) {
+                    filename = DigestStore.getPath(file);
+                    for (String name : BLACKLIST) {
+                        if (name.equals(filename)) {
+                            continue mainloop;
+                        }
+                    }
+                    throw new RuntimeException(String.format(
+                            "A non-blacklisted file \"%s\" has serious error!",
+                            filename),
+                            ex);
                 }
                 fields.putAll(script);
             }

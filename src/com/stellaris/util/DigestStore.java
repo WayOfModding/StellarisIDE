@@ -68,9 +68,13 @@ public class DigestStore {
     }
 
     public static String getPath(String path) {
+        final String sp = "Stellaris\\";
+        int len;
         int idx;
 
-        idx = path.indexOf("Stellaris");
+        idx = path.indexOf(sp);
+        len = sp.length();
+        idx += len;
         return path.substring(idx);
     }
 
