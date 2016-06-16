@@ -102,7 +102,7 @@ public class ScriptFile extends HashMap<Field, Type> {
                         token = parser.next();
                         if ("}".equals(token)) {
                             type = Type.LIST;
-                            put(field, type);
+                            put(parent, type);
                             return --state;
                         }
                         if ("{".equals(token)
@@ -193,6 +193,10 @@ public class ScriptFile extends HashMap<Field, Type> {
     }
 
     public static void main(String[] args) {
+        if (args.length < 2) {
+            return;
+        }
+        System.out.format("Parsing file \"%s\"...%n", args[1]);
         ScriptFile.newInstance(new java.io.File(args[0], args[1]));
     }
 }
