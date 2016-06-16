@@ -64,7 +64,7 @@ public class Stellaris {
                     continue;
                 }
                 // refresh syntax table
-                System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
+                //System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
                 try {
                     script = ScriptFile.newInstance(file);
                 } catch (IllegalStateException | TokenException | AssertionError ex) {
