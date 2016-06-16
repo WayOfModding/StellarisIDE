@@ -254,7 +254,6 @@ public class ScriptParser implements AutoCloseable {
         int src, dst, pos;
         String res;
         boolean isString;
-        boolean isNewLine;
 
         if (!refill()) {
             return null;
@@ -265,65 +264,7 @@ public class ScriptParser implements AutoCloseable {
 
         c = buffer.get();
         if (c == '#') {
-            // find a comment token
-            src = buffer.position() - 1;
-            while (true) {
-                if (!buffer.hasRemaining()) {
-                    dst = buffer.position();
-                    break;
-                }
-                c = buffer.get();
-                if (c == '#') {
-                    src = buffer.position() - 1;
-                    continue;
-                }
-                isNewLine = false;
-                dst = -1;
-                if (c == '\r') {
-                    dst = buffer.position() - 1;
-                    buffer.mark();
-                    c = buffer.get();
-                    if (c != '\n') {
-                        throw new AssertionError();
-                    }
-                    ++lineCounter;
-                    isNewLine = true;
-                } else if (c == '\n') {
-                    dst = buffer.position() - 1;
-                    ++lineCounter;
-                    isNewLine = true;
-                }
-                if (isNewLine) {
-                    if (dst == -1) {
-                        throw new AssertionError();
-                    }
-                    if (!skipLeadingWhitespace()) {
-                        return null;
-                    }
-                    buffer.mark();
-                    c = buffer.get();
-                    if (c == '#') {
-                        continue;
-                    }
-                    buffer.reset();
-                    break;
-                }
-                //if (buffer.hasRemaining()) { continue; }
-                //System.out.format("[ERROR] line=%d, position=%d%n", lineCounter, buffer.position());
-                //throw new TokenException("Comment token is too long!");
-            }
-            if (dst - src == 1
-                    && buffer.get(src) == '#') {
-                res = next0();
-            } else if (src < dst) {
-                if (Debug.ACCEPT_COMMENT) {
-                    res = cache(src, dst);
-                } else {
-                    res = next0();
-                }
-            } else {
-                res = next0();
-            }
+            res = handleComment();
         } else {
             // non-comment token
 
@@ -367,8 +308,11 @@ public class ScriptParser implements AutoCloseable {
                     } else if (c == '='
                             || c == '>'
                             || c == '<'
-                            || c == '}') {
+                            || c == '}'
+                            || c == '#') {
                         // handle ending terminal characters
+                        // handle immediate ending comment
+                        // fuck those who don't have good coding habits
                         dst = buffer.position() - 1;
                         buffer.position(dst);
                         break;
@@ -414,6 +358,75 @@ public class ScriptParser implements AutoCloseable {
         pos = buffer.position();
         buffer.position(pos - 1);
         return true;
+    }
+
+    private String handleComment() {
+        int src, dst;
+        boolean isNewLine;
+        char c;
+        String res;
+
+        // find a comment token
+        src = buffer.position() - 1;
+        while (true) {
+            if (!buffer.hasRemaining()) {
+                dst = buffer.position();
+                break;
+            }
+            c = buffer.get();
+            if (c == '#') {
+                src = buffer.position() - 1;
+                continue;
+            }
+            isNewLine = false;
+            dst = -1;
+            if (c == '\r') {
+                dst = buffer.position() - 1;
+                buffer.mark();
+                c = buffer.get();
+                if (c != '\n') {
+                    throw new AssertionError();
+                }
+                ++lineCounter;
+                isNewLine = true;
+            } else if (c == '\n') {
+                dst = buffer.position() - 1;
+                ++lineCounter;
+                isNewLine = true;
+            }
+            if (isNewLine) {
+                if (dst == -1) {
+                    throw new AssertionError();
+                }
+                if (!skipLeadingWhitespace()) {
+                    return null;
+                }
+                buffer.mark();
+                c = buffer.get();
+                if (c == '#') {
+                    continue;
+                }
+                buffer.reset();
+                break;
+            }
+            //if (buffer.hasRemaining()) { continue; }
+            //System.out.format("[ERROR] line=%d, position=%d%n", lineCounter, buffer.position());
+            //throw new TokenException("Comment token is too long!");
+        }
+        if (dst - src == 1
+                && buffer.get(src) == '#') {
+            res = next0();
+        } else if (src < dst) {
+            if (Debug.ACCEPT_COMMENT) {
+                res = cache(src, dst);
+            } else {
+                res = next0();
+            }
+        } else {
+            res = next0();
+        }
+
+        return res;
     }
 
     @Override
