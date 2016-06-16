@@ -23,5 +23,8 @@ package com.stellaris.test;
 public class Debug {
 
     public static final boolean DEBUG = false;
+    public static final boolean DEBUG_NEXT = true;
+    public static final boolean DEBUG_CACHE = false;
+    public static final boolean DEBUG_DISCARD = true;
     public static final boolean ACCEPT_COMMENT = false;
 }

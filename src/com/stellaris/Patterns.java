@@ -27,8 +27,14 @@ import java.util.regex.Pattern;
  */
 public class Patterns {
 
+    private static final String SP_INTEGER = "\\d*";
+    private static final String SP_FLOAT = "\\d*\\.\\d*";
     public static final Patterns PS_RANGE
-            = compile("min", "=", "\\d*", "max", "=", "\\d*", "\\}");
+            = compile("min", "=", SP_INTEGER, "max", "=", SP_INTEGER, "\\}");
+    public static final Patterns PS_COLOR_HSV
+            = compile("\\{", SP_FLOAT, SP_FLOAT, SP_FLOAT, "\\}");
+    public static final Patterns PS_COLOR_RGB
+            = compile("\\{", SP_INTEGER, SP_INTEGER, SP_INTEGER, "\\}");
 
     private final Pattern[] patterns;
 

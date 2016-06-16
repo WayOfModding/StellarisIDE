@@ -28,5 +28,6 @@ public enum Type {
     STRUCT,
     BOOLEAN,
     ENUM,
-    LIST;
+    LIST,
+    COLOR;
 }

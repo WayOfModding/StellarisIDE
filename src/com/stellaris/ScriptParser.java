@@ -133,9 +133,9 @@ public class ScriptParser implements AutoCloseable {
         i = 0;
         while (i++ < count) {
             str = deque.remove();
-            if (DEBUG) {
-                System.err.format("[DISCARD]\tcache=%d %s%n",
-                        deque.size(), deque.toString()
+            if (DEBUG && DEBUG_DISCARD) {
+                System.err.format("[DSCD]\tstr=\"%s\"%n\tcache=%d %s%n",
+                        str, deque.size(), deque.toString()
                 );
             }
         }
@@ -156,7 +156,7 @@ public class ScriptParser implements AutoCloseable {
         if (res == null) {
             throw new AssertionError();
         }
-        if (DEBUG) {
+        if (DEBUG && DEBUG_NEXT) {
             System.err.format("[NEXT]\tline=%d, next=\"%s\"%n\tcache=%d %s%n",
                     lineCounter, res, deque.size(), deque.toString()
             );
@@ -186,7 +186,7 @@ public class ScriptParser implements AutoCloseable {
         buffer.get(buf);
         str = new String(buf);
         res = cache(str);
-        if (DEBUG) {
+        if (DEBUG && DEBUG_CACHE) {
             System.err.format("[CACHE]\tline=%d, src=%d, dst=%d, str=\"%s\"%n"
                     + "\tcache=%d %s%n",
                     lineCounter, src, dst, str,

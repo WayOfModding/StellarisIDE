@@ -69,6 +69,8 @@ public class ScriptFile extends HashMap<Field, Type> {
         Field field;
         Type type;
         boolean isList;
+        boolean isColor;
+        Patterns patterns;
 
         if (DEBUG) {
             System.err.format("[PARSE]\tparent=%s, state=%d%n",
@@ -126,7 +128,28 @@ public class ScriptFile extends HashMap<Field, Type> {
                 } else {
                     // value
                     token = parser.next();
-                    if ("{".equals(token)) {
+                    if ("hsv".equals(token)) {
+                        isColor = true;
+                        patterns = Patterns.PS_COLOR_HSV;
+                    } else if ("rgb".equals(token)) {
+                        isColor = true;
+                        patterns = Patterns.PS_COLOR_RGB;
+                    } else {
+                        isColor = false;
+                        patterns = null;
+                    }
+                    if (isColor) {
+                        if (patterns == null) {
+                            throw new AssertionError();
+                        }
+                        tokens = parser.peek(5);
+                        if (patterns.matches(tokens)) {
+                            type = Type.COLOR;
+                            parser.discard(5);
+                        } else {
+                            throw new TokenException(parent, token);
+                        }
+                    } else if ("{".equals(token)) {
                         tokens = parser.peek(7);
                         // { -> min = INTEGER max = INTEGER }
                         if (Patterns.PS_RANGE.matches(tokens)) {
