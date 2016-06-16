@@ -27,5 +27,6 @@ public enum Type {
     FLOAT,
     STRUCT,
     BOOLEAN,
-    ENUM;
+    ENUM,
+    LIST;
 }

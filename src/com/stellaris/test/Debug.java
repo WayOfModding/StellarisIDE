@@ -23,4 +23,5 @@ package com.stellaris.test;
 public class Debug {
 
     public static final boolean DEBUG = false;
+    public static final boolean ACCEPT_COMMENT = false;
 }

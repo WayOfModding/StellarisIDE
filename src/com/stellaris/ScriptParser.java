@@ -16,6 +16,7 @@
  */
 package com.stellaris;
 
+import com.stellaris.test.Debug;
 import java.io.*;
 import java.nio.*;
 import java.util.*;
@@ -28,18 +29,20 @@ import static com.stellaris.test.Debug.*;
 public class ScriptParser implements AutoCloseable {
 
     private static final int BUFFER_SIZE = 4096;
-    private static final int REFILL_SIZE = 1024;
+    private static final int REFILL_SIZE = 256;
     private static final int CACHE_SIZE = 3;
 
     private final BufferedReader reader;
     private CharBuffer buffer;
     private boolean hasMore;
     private final LinkedList<String> deque;
+    private int lineCounter;
 
     public ScriptParser(Reader in) {
         reader = new BufferedReader(in);
         deque = new LinkedList<>();
         fill();
+        lineCounter = 0;
     }
 
     private static CharBuffer allocateBuffer() {
@@ -154,8 +157,8 @@ public class ScriptParser implements AutoCloseable {
             throw new AssertionError();
         }
         if (DEBUG) {
-            System.err.format("[NEXT]\tnext=\"%s\"%n\tcache=%d %s%n",
-                    res, deque.size(), deque.toString()
+            System.err.format("[NEXT]\tline=%d, next=\"%s\"%n\tcache=%d %s%n",
+                    lineCounter, res, deque.size(), deque.toString()
             );
         }
         return res;
@@ -184,9 +187,9 @@ public class ScriptParser implements AutoCloseable {
         str = new String(buf);
         res = cache(str);
         if (DEBUG) {
-            System.err.format("[CACHE]\tsrc=%d, dst=%d, str=\"%s\"%n"
+            System.err.format("[CACHE]\tline=%d, src=%d, dst=%d, str=\"%s\"%n"
                     + "\tcache=%d %s%n",
-                    src, dst, str,
+                    lineCounter, src, dst, str,
                     deque.size(), deque.toString()
             );
         }
@@ -226,6 +229,7 @@ public class ScriptParser implements AutoCloseable {
         char c;
         int src, dst;
         String res;
+        boolean isString;
 
         if (!refill()) {
             return null;
@@ -236,6 +240,15 @@ public class ScriptParser implements AutoCloseable {
                 c = buffer.get();
                 if (!Character.isWhitespace(c)) {
                     break;
+                }
+                if (c == '\r') {
+                    buffer.mark();
+                    if (buffer.get() != '\n') {
+                        buffer.reset();
+                    }
+                    ++lineCounter;
+                } else if (c == '\n') {
+                    ++lineCounter;
                 }
             } else {
                 // if there's no remaining characters in the buffer
@@ -252,8 +265,21 @@ public class ScriptParser implements AutoCloseable {
                     break;
                 }
                 c = buffer.get();
-                if (c == '\r' || c == '\n') {
+                if (c == '#') {
+                    src = buffer.position() - 1;
+                    continue;
+                }
+                if (c == '\r') {
                     dst = buffer.position() - 1;
+                    buffer.mark();
+                    if (buffer.get() != '\n') {
+                        buffer.reset();
+                    }
+                    ++lineCounter;
+                    break;
+                } else if (c == '\n') {
+                    dst = buffer.position() - 1;
+                    ++lineCounter;
                     break;
                 }
                 if (buffer.hasRemaining()) {
@@ -261,18 +287,51 @@ public class ScriptParser implements AutoCloseable {
                 }
                 throw new TokenException("Comment token is too long!");
             }
-            res = cache(src, dst);
+            if (dst - src == 1
+                    && buffer.get(src) == '#') {
+                res = next0();
+            } else if (src < dst) {
+                if (Debug.ACCEPT_COMMENT) {
+                    res = cache(src, dst);
+                } else {
+                    res = next0();
+                }
+            } else {
+                res = next0();
+            }
         } else {
             // non-comment token
             src = buffer.position() - 1;
+            isString = c == '"';
             while (true) {
                 if (!buffer.hasRemaining()) {
                     dst = buffer.position();
                     break;
                 }
                 c = buffer.get();
-                if (Character.isWhitespace(c)) {
+                if (isString) {
+                    if (c == '\\') {
+                        buffer.get();
+                        continue;
+                    } else if (c == '"') {
+                        dst = buffer.position();
+                        break;
+                    }
+                } else if (Character.isWhitespace(c)) {
                     dst = buffer.position() - 1;
+                    if (c == '\r') {
+                        buffer.mark();
+                        if (buffer.get() != '\n') {
+                            buffer.reset();
+                        }
+                        ++lineCounter;
+                    } else if (c == '\n') {
+                        ++lineCounter;
+                    }
+                    break;
+                } else if (c == '}') {
+                    dst = buffer.position() - 1;
+                    buffer.position(dst);
                     break;
                 }
                 if (buffer.hasRemaining()) {
@@ -295,14 +354,17 @@ public class ScriptParser implements AutoCloseable {
     }
 
     public static void main(String[] args) {
-        if (args.length < 1) {
-            return;
-        }
         //ScriptFile.newInstance(new java.io.File(args[0]));
+        /*
+        try (ScriptParser parser = new ScriptParser(
+                new java.io.StringReader("\r\n \r \r\n \r\n \n"));) {
+            parser.peek(1024);
+            System.out.format("Line=%d%n", parser.lineCounter);
+        }
+        //*/
         //*
         try (ScriptParser parser = new ScriptParser(
-                new java.io.FileReader(
-                        new java.io.File(args[0], "common/achievements.txt")));) {
+                new java.io.FileReader(new java.io.File(args[0], args[1])));) {
             parser.peek(1024);
         } catch (FileNotFoundException ex) {
         }

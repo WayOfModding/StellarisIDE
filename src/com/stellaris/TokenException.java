@@ -26,4 +26,8 @@ public class TokenException extends RuntimeException {
         super(err);
     }
 
+    TokenException() {
+        super();
+    }
+
 }

@@ -68,6 +68,7 @@ public class ScriptFile extends HashMap<Field, Type> {
         List<String> tokens;
         Field field;
         Type type;
+        boolean isList;
 
         if (DEBUG) {
             System.err.format("[PARSE]\tparent=%s, state=%d%n",
@@ -90,45 +91,72 @@ public class ScriptFile extends HashMap<Field, Type> {
                 field = new Field(parent, key);
 
                 // operator
+                // or list?
                 token = parser.next();
-                if (!"=".equals(token)
+                isList = !"=".equals(token)
                         && !">".equals(token)
-                        && !"<".equals(token)) {
-                    throw new IllegalStateException("\"" + token + "\"");
-                }
+                        && !"<".equals(token);
 
-                // value
-                token = parser.next();
-                if ("{".equals(token)) {
-                    tokens = parser.peek(7);
-                    // { -> min = INTEGER max = INTEGER }
-                    if (Patterns.PS_RANGE.matches(tokens)) {
-                        type = Type.RANGE;
-                        parser.discard(7);
-                    } else {
-                        type = Type.STRUCT;
-                        // add 1 each time a struct is found
-                        state = analyze(field, ++state);
-                    }
-                } else if ("yes".equals(token)
-                        || "no".equals(token)) {
-                    type = Type.BOOLEAN;
-                } else {
-                    try {
-                        // integer
-                        Integer.parseInt(token);
-                        type = Type.INTEGER;
-                    } catch (NumberFormatException e1) {
-                        // float
+                if (isList) {
+                    while (true) {
+                        token = parser.next();
+                        if ("}".equals(token)) {
+                            type = Type.LIST;
+                            put(field, type);
+                            return --state;
+                        }
+                        if ("{".equals(token)
+                                || "yes".equals(token)
+                                || "no".equals(token)) {
+                            throw new TokenException();
+                        }
                         try {
-                            Float.parseFloat(token);
-                            type = Type.FLOAT;
-                        } catch (NumberFormatException e2) {
-                            if (token.startsWith("\"")
-                                    && token.endsWith("\"")) {
-                                type = Type.STRING;
-                            } else {
-                                type = Type.ENUM;
+                            // integer
+                            Integer.parseInt(token);
+                            throw new TokenException();
+                        } catch (NumberFormatException e1) {
+                            // float
+                            try {
+                                Float.parseFloat(token);
+                                throw new TokenException();
+                            } catch (NumberFormatException e2) {
+                            }
+                        }
+                    }
+                } else {
+                    // value
+                    token = parser.next();
+                    if ("{".equals(token)) {
+                        tokens = parser.peek(7);
+                        // { -> min = INTEGER max = INTEGER }
+                        if (Patterns.PS_RANGE.matches(tokens)) {
+                            type = Type.RANGE;
+                            parser.discard(7);
+                        } else {
+                            type = Type.STRUCT;
+                            // add 1 each time a struct is found
+                            state = analyze(field, ++state);
+                        }
+                    } else if ("yes".equals(token)
+                            || "no".equals(token)) {
+                        type = Type.BOOLEAN;
+                    } else {
+                        try {
+                            // integer
+                            Integer.parseInt(token);
+                            type = Type.INTEGER;
+                        } catch (NumberFormatException e1) {
+                            // float
+                            try {
+                                Float.parseFloat(token);
+                                type = Type.FLOAT;
+                            } catch (NumberFormatException e2) {
+                                if (token.startsWith("\"")
+                                        && token.endsWith("\"")) {
+                                    type = Type.STRING;
+                                } else {
+                                    type = Type.ENUM;
+                                }
                             }
                         }
                     }
@@ -146,6 +174,9 @@ public class ScriptFile extends HashMap<Field, Type> {
     public Type put(Field field, Type type) {
         Type old;
 
+        if (field == null) {
+            return null;
+        }
         old = super.put(field, type);
         /*
         if (old == null
@@ -159,5 +190,9 @@ public class ScriptFile extends HashMap<Field, Type> {
         throw new IllegalArgumentException();
          */
         return old;
+    }
+
+    public static void main(String[] args) {
+        ScriptFile.newInstance(new java.io.File(args[0], args[1]));
     }
 }
