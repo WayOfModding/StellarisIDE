@@ -270,6 +270,9 @@ public class ScriptParser implements AutoCloseable {
                     isNewLine = true;
                 }
                 if (isNewLine) {
+                    if (dst == -1) {
+                        throw new AssertionError();
+                    }
                     if (!skipLeadingWhitespace()) {
                         return null;
                     }
