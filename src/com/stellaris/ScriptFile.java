@@ -106,43 +106,12 @@ public class ScriptFile extends HashMap<Field, Type> {
                         && !"<".equals(token);
 
                 if (isList) {
-                    // handle single-element list
-                    if ("}".equals(token)) {
+                    if (handlePlainList(token)) {
                         type = Type.LIST;
                         put(parent, type);
                         return --state;
-                    }
-
-                    {
-                        // handle multiple-element list
-                        while (true) {
-                            token = parser.next();
-                            if ("}".equals(token)) {
-                                type = Type.LIST;
-                                put(parent, type);
-                                return --state;
-                            }
-                            if ("{".equals(token)
-                                    || "yes".equals(token)
-                                    || "no".equals(token)) {
-                                throw new TokenException(parent, token);
-                            }
-                            // number list is allowed
-                            /*
-                            try {
-                                // integer
-                                Integer.parseInt(token);
-                                throw new TokenException(token);
-                            } catch (NumberFormatException e1) {
-                                // float
-                                try {
-                                    Float.parseFloat(token);
-                                    throw new TokenException(token);
-                                } catch (NumberFormatException e2) {
-                                }
-                            }
-                             */
-                        }
+                    } else {
+                        throw new AssertionError();
                     }
                 } else {
                     // value
@@ -277,6 +246,26 @@ public class ScriptFile extends HashMap<Field, Type> {
                 break;
         }
         return patterns;
+    }
+
+    private boolean handlePlainList(String token) {
+        // handle single-element list
+        if ("}".equals(token)) {
+            return true;
+        }
+
+        // handle multiple-element list
+        while (true) {
+            token = parser.next();
+            if ("}".equals(token)) {
+                return true;
+            }
+            if ("{".equals(token)
+                    || "yes".equals(token)
+                    || "no".equals(token)) {
+                throw new TokenException(token);
+            }
+        }
     }
 
     @Override
