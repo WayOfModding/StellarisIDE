@@ -141,7 +141,7 @@ public class ScriptFile extends HashMap<Field, Type> {
                                 } catch (NumberFormatException e2) {
                                 }
                             }
-                            */
+                             */
                         }
                     }
                 } else {
@@ -218,43 +218,43 @@ public class ScriptFile extends HashMap<Field, Type> {
                 break;
         }
 
-        if (patterns != null) {
-            // handle color list
-            tokens = parser.peek(5);
-            while (true) {
-                //System.err.format("Tokens=%s%nPatterns=%s%nMatches=%b%n
-                //tokens, patterns, patterns.matches(tokens));
-                if (patterns.matches(tokens)) {
-                    parser.discard(5);
-                    token = parser.next();
-                    switch (token) {
-                        case "rgb":
-                            // new RGB color element
-                            tokens = parser.peek(5);
-                            patterns = Patterns.PS_COLOR_RGB;
-                            continue;
-                        case "hsv":
-                            // new HSV color element
-                            tokens = parser.peek(5);
-                            patterns = Patterns.PS_COLOR_HSV;
-                            continue;
-                        case "}":
-                            // exit color list
-                            break;
-                        default:
-                            throw new TokenException(token);
-                    }
-                    // exit color list
-                    break;
-                } else {
-                    throw new TokenException(tokens);
-                }
-            }
-
-            return true;
+        if (patterns == null) {
+            return false;
         }
 
-        return false;
+        // handle color list
+        tokens = parser.peek(5);
+        while (true) {
+            //System.err.format("Tokens=%s%nPatterns=%s%nMatches=%b%n
+            //tokens, patterns, patterns.matches(tokens));
+            if (patterns.matches(tokens)) {
+                parser.discard(5);
+                token = parser.next();
+                switch (token) {
+                    case "rgb":
+                        // new RGB color element
+                        tokens = parser.peek(5);
+                        patterns = Patterns.PS_COLOR_RGB;
+                        continue;
+                    case "hsv":
+                        // new HSV color element
+                        tokens = parser.peek(5);
+                        patterns = Patterns.PS_COLOR_HSV;
+                        continue;
+                    case "}":
+                        // exit color list
+                        break;
+                    default:
+                        throw new TokenException(token);
+                }
+                // exit color list
+                break;
+            } else {
+                throw new TokenException(tokens);
+            }
+        }
+
+        return true;
     }
 
     private Type handleColorToken(Patterns patterns) {
@@ -289,22 +289,20 @@ public class ScriptFile extends HashMap<Field, Type> {
     @Override
     public Type put(Field field, Type type) {
         Type old;
+        int idx_n, idx_o;
 
         if (field == null) {
             return null;
         }
         old = super.put(field, type);
-        /*
-        if (old == null
-                || old == type
-                || old == Type.INTEGER
-                && type == Type.RANGE) {
-            return old;
+        idx_n = type.ordinal();
+        idx_o = type.ordinal();
+
+        if (idx_n < idx_o) {
+            super.put(field, old);
+            throw new TypeOverrideException(old, type);
         }
-        // put the old value back
-        super.put(field, old);
-        throw new IllegalArgumentException();
-         */
+
         return old;
     }
 
