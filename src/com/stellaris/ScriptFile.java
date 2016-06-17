@@ -91,8 +91,6 @@ public class ScriptFile extends HashMap<Field, Type> {
             {
                 // key
                 key = token;
-                //isList = key.startsWith("") && key.endsWith("");
-                //if (!isList) {
                 field = new Field(parent, key);
 
                 // operator
@@ -101,9 +99,15 @@ public class ScriptFile extends HashMap<Field, Type> {
                 isList = !"=".equals(token)
                         && !">".equals(token)
                         && !"<".equals(token);
-                //}
 
                 if (isList) {
+                    // handle single-element list
+                    if ("}".equals(token)) {
+                        type = Type.LIST;
+                        put(parent, type);
+                        return --state;
+                    }
+                    // handle multiple-element list
                     while (true) {
                         token = parser.next();
                         if ("}".equals(token)) {
