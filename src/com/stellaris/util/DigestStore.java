@@ -111,6 +111,7 @@ public class DigestStore {
     }
 
     public static void main(String[] args) {
-        System.out.format("user.dir=%s%n", getUserDir());
+        File file = getFileStore();
+        System.out.format("DigestStore=%s%n", file.getAbsolutePath());
     }
 }
