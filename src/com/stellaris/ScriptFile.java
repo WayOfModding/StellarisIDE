@@ -57,7 +57,7 @@ public class ScriptFile extends HashMap<Field, Type> {
         try {
             res = analyze(null, 0);
             if (res != 0) {
-                throw new AssertionError();
+                throw new AssertionError(res);
             }
         } finally {
             parser.close();
