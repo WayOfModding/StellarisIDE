@@ -201,12 +201,16 @@ public class ScriptFile extends HashMap<Field, Type> {
 
     private Patterns checkColorToken(String token) {
         Patterns patterns;
-        if ("hsv".equals(token)) {
-            patterns = Patterns.PS_COLOR_HSV;
-        } else if ("rgb".equals(token)) {
-            patterns = Patterns.PS_COLOR_RGB;
-        } else {
-            patterns = null;
+        switch (token) {
+            case "hsv":
+                patterns = Patterns.PS_COLOR_HSV;
+                break;
+            case "rgb":
+                patterns = Patterns.PS_COLOR_RGB;
+                break;
+            default:
+                patterns = null;
+                break;
         }
         return patterns;
     }
