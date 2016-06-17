@@ -16,6 +16,7 @@
  */
 package com.stellaris;
 
+import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
 import java.io.FileFilter;
@@ -73,7 +74,9 @@ public class Stellaris {
                     continue;
                 }
                 // refresh syntax table
-                System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
+                if (Debug.DEBUG && Debug.DEBUG_REFRESH) {
+                    System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
+                }
                 try {
                     script = ScriptFile.newInstance(file);
                 } catch (IllegalStateException | TokenException | AssertionError ex) {
