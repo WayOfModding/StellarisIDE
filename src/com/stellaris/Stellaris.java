@@ -33,11 +33,15 @@ import java.util.Queue;
 public class Stellaris {
 
     private static final String SUFFIX_TXT = ".txt";
-    private static final String[] BLACKLIST = {
+    private static final String[] BLACKLIST_ALL = {
         "common\\HOW_TO_MAKE_NEW_SHIPS.txt",
         "interface\\credits.txt",
         "interface\\reference.txt",
         "previewer_assets\\previewer_filefilter.txt"
+    };
+    // skip when syntax analysis is ongoing
+    private static final String[] BLACKLIST_SYN = {
+        "common\\component_tags\\00_tags.txt"
     };
     private final DigestStore digestStore;
     private final Map<Field, Type> fields;
@@ -71,7 +75,12 @@ public class Stellaris {
             while (!files.isEmpty()) {
                 file = files.remove();
                 filename = DigestStore.getPath(file);
-                for (String name : BLACKLIST) {
+                for (String name : BLACKLIST_ALL) {
+                    if (name.equals(filename)) {
+                        continue mainloop;
+                    }
+                }
+                for (String name : BLACKLIST_SYN) {
                     if (name.equals(filename)) {
                         continue mainloop;
                     }
