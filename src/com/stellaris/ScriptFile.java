@@ -214,12 +214,7 @@ public class ScriptFile extends HashMap<Field, Type> {
                 patterns = Patterns.PS_COLOR_HSV;
                 break;
             default:
-                patterns = null;
-                break;
-        }
-
-        if (patterns == null) {
-            return false;
+                return false;
         }
 
         // handle color list
