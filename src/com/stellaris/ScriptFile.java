@@ -69,7 +69,6 @@ public class ScriptFile extends HashMap<Field, Type> {
         Field field;
         Type type;
         boolean isList;
-        boolean isColor;
         Patterns patterns;
         int newstate;
 
@@ -89,9 +88,14 @@ public class ScriptFile extends HashMap<Field, Type> {
                 return --state;
             }
             {
-                // key
-                key = token;
-                field = new Field(parent, key);
+                if (handleColorList(token)) {
+                    type = Type.COLORLIST;
+                    put(parent, type);
+                    return --state;
+                } else {
+                    key = token;
+                    field = new Field(parent, key);
+                }
 
                 // operator
                 // or list?
@@ -107,29 +111,32 @@ public class ScriptFile extends HashMap<Field, Type> {
                         put(parent, type);
                         return --state;
                     }
-                    // handle multiple-element list
-                    while (true) {
-                        token = parser.next();
-                        if ("}".equals(token)) {
-                            type = Type.LIST;
-                            put(parent, type);
-                            return --state;
-                        }
-                        if ("{".equals(token)
-                                || "yes".equals(token)
-                                || "no".equals(token)) {
-                            throw new TokenException(parent, token);
-                        }
-                        try {
-                            // integer
-                            Integer.parseInt(token);
-                            throw new TokenException(token);
-                        } catch (NumberFormatException e1) {
-                            // float
+
+                    {
+                        // handle multiple-element list
+                        while (true) {
+                            token = parser.next();
+                            if ("}".equals(token)) {
+                                type = Type.LIST;
+                                put(parent, type);
+                                return --state;
+                            }
+                            if ("{".equals(token)
+                                    || "yes".equals(token)
+                                    || "no".equals(token)) {
+                                throw new TokenException(parent, token);
+                            }
                             try {
-                                Float.parseFloat(token);
+                                // integer
+                                Integer.parseInt(token);
                                 throw new TokenException(token);
-                            } catch (NumberFormatException e2) {
+                            } catch (NumberFormatException e1) {
+                                // float
+                                try {
+                                    Float.parseFloat(token);
+                                    throw new TokenException(token);
+                                } catch (NumberFormatException e2) {
+                                }
                             }
                         }
                     }
@@ -188,6 +195,62 @@ public class ScriptFile extends HashMap<Field, Type> {
         }
 
         return state;
+    }
+
+    private boolean handleColorList(String token) {
+        Patterns patterns;
+        List<String> tokens;
+
+        // detect color list
+        switch (token) {
+            case "rgb":
+                patterns = Patterns.PS_COLOR_RGB;
+                break;
+            case "hsv":
+                patterns = Patterns.PS_COLOR_HSV;
+                break;
+            default:
+                patterns = null;
+                break;
+        }
+
+        if (patterns != null) {
+            // handle color list
+            tokens = parser.peek(5);
+            while (true) {
+                //System.err.format("Tokens=%s%nPatterns=%s%nMatches=%b%n
+                //tokens, patterns, patterns.matches(tokens));
+                if (patterns.matches(tokens)) {
+                    parser.discard(5);
+                    token = parser.next();
+                    switch (token) {
+                        case "rgb":
+                            // new RGB color element
+                            tokens = parser.peek(5);
+                            patterns = Patterns.PS_COLOR_RGB;
+                            continue;
+                        case "hsv":
+                            // new HSV color element
+                            tokens = parser.peek(5);
+                            patterns = Patterns.PS_COLOR_HSV;
+                            continue;
+                        case "}":
+                            // exit color list
+                            break;
+                        default:
+                            throw new TokenException(token);
+                    }
+                    // exit color list
+                    break;
+                } else {
+                    throw new TokenException(tokens);
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     private Type handleColorToken(Patterns patterns) {

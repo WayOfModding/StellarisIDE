@@ -29,5 +29,6 @@ public enum Type {
     BOOLEAN,
     ENUM,
     LIST,
-    COLOR;
+    COLOR,
+    COLORLIST;
 }

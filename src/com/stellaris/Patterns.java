@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 public class Patterns {
 
     private static final String SP_INTEGER = "\\d*";
-    private static final String SP_FLOAT = "\\d*\\.\\d*";
+    private static final String SP_FLOAT = "\\d*(\\.\\d*)?";
     public static final Patterns PS_RANGE
             = compile("min", "=", SP_INTEGER, "max", "=", SP_INTEGER, "\\}");
     public static final Patterns PS_COLOR_HSV
@@ -87,11 +87,30 @@ public class Patterns {
         return true;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb;
+        boolean first;
+
+        sb = new StringBuilder();
+        first = true;
+        for (Pattern p : patterns) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            sb.append(p.pattern());
+        }
+
+        return sb.toString();
+    }
+
     public static void main(String[] args) {
-        String s = "min = 0 max = 3 }";
-        String[] ss = s.split(" ");
+        String s = "{, 142, 188, 241, }";
+        String[] ss = s.split(", ");
         List<String> l = Arrays.asList(ss);
-        System.out.format("Matches: %b%n", PS_RANGE.matches(l));
+        System.out.format("Matches: %b%n", PS_COLOR_RGB.matches(l));
     }
 
 }

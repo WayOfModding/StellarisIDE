@@ -16,6 +16,8 @@
  */
 package com.stellaris;
 
+import java.util.List;
+
 /**
  *
  * @author donizyo
@@ -24,6 +26,10 @@ public class TokenException extends RuntimeException {
 
     TokenException(Field parent, String token) {
         this(String.format("parent=%s, token=%s", parent, token));
+    }
+
+    TokenException(List<String> tokens) {
+        this(tokens == null ? "[]" : tokens.toString());
     }
 
     TokenException(String err) {
