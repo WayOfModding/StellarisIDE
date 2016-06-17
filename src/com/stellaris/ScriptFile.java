@@ -71,6 +71,7 @@ public class ScriptFile extends HashMap<Field, Type> {
         boolean isList;
         boolean isColor;
         Patterns patterns;
+        int newstate;
 
         if (DEBUG) {
             System.err.format("[PARSE]\tparent=%s, state=%d%n",
@@ -157,7 +158,11 @@ public class ScriptFile extends HashMap<Field, Type> {
                             parser.discard(7);
                         } else {
                             // add 1 each time a struct is found
-                            state = analyze(field, ++state);
+                            newstate = analyze(field, state + 1);
+                            if (newstate != state) {
+                                throw new AssertionError();
+                            }
+                            state = newstate;
                             type = get(field);
                             if (type != Type.LIST) {
                                 type = Type.STRUCT;
