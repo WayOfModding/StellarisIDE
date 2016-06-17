@@ -16,6 +16,7 @@
  */
 package com.stellaris;
 
+import com.stellaris.test.Debug;
 import static com.stellaris.test.Debug.DEBUG;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -311,6 +312,7 @@ public class ScriptFile extends HashMap<Field, Type> {
         if (args.length < 2) {
             return;
         }
+        Debug.DEBUG = true;
         System.out.format("Parsing file \"%s\"...%n", args[1]);
         ScriptFile.newInstance(new java.io.File(args[0], args[1]));
     }
