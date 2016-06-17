@@ -21,6 +21,7 @@ import java.io.*;
 import java.nio.*;
 import java.util.*;
 import static com.stellaris.test.Debug.*;
+import java.awt.event.KeyEvent;
 
 /**
  *
@@ -43,6 +44,20 @@ public class ScriptParser implements AutoCloseable {
         deque = new LinkedList<>();
         fill();
         lineCounter = 0;
+        init();
+    }
+
+    private void init() {
+        char first;
+
+        first = buffer.get();
+        if (!isByteOrderMark(first)) {
+            buffer.rewind();
+        }
+    }
+
+    private static boolean isByteOrderMark(char c) {
+        return c == 0xfeff;
     }
 
     private static CharBuffer allocateBuffer() {
