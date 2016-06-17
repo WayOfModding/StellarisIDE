@@ -126,6 +126,8 @@ public class ScriptFile extends HashMap<Field, Type> {
                                     || "no".equals(token)) {
                                 throw new TokenException(parent, token);
                             }
+                            // number list is allowed
+                            /*
                             try {
                                 // integer
                                 Integer.parseInt(token);
@@ -138,6 +140,7 @@ public class ScriptFile extends HashMap<Field, Type> {
                                 } catch (NumberFormatException e2) {
                                 }
                             }
+                            */
                         }
                     }
                 } else {
