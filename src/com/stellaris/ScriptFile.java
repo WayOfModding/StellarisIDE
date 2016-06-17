@@ -91,6 +91,8 @@ public class ScriptFile extends HashMap<Field, Type> {
             {
                 // key
                 key = token;
+                //isList = key.startsWith("") && key.endsWith("");
+                //if (!isList) {
                 field = new Field(parent, key);
 
                 // operator
@@ -99,6 +101,7 @@ public class ScriptFile extends HashMap<Field, Type> {
                 isList = !"=".equals(token)
                         && !">".equals(token)
                         && !"<".equals(token);
+                //}
 
                 if (isList) {
                     while (true) {
@@ -129,27 +132,9 @@ public class ScriptFile extends HashMap<Field, Type> {
                 } else {
                     // value
                     token = parser.next();
-                    if ("hsv".equals(token)) {
-                        isColor = true;
-                        patterns = Patterns.PS_COLOR_HSV;
-                    } else if ("rgb".equals(token)) {
-                        isColor = true;
-                        patterns = Patterns.PS_COLOR_RGB;
-                    } else {
-                        isColor = false;
-                        patterns = null;
-                    }
-                    if (isColor) {
-                        if (patterns == null) {
-                            throw new AssertionError();
-                        }
-                        tokens = parser.peek(5);
-                        if (patterns.matches(tokens)) {
-                            type = Type.COLOR;
-                            parser.discard(5);
-                        } else {
-                            throw new TokenException(parent, token);
-                        }
+                    patterns = checkColorToken(token);
+                    if (patterns != null) {
+                        type = handleColorToken(patterns);
                     } else if ("{".equals(token)) {
                         tokens = parser.peek(7);
                         // { -> min = INTEGER max = INTEGER }
@@ -199,6 +184,31 @@ public class ScriptFile extends HashMap<Field, Type> {
         }
 
         return state;
+    }
+
+    private Type handleColorToken(Patterns patterns) {
+        List<String> tokens;
+        Type type;
+        tokens = parser.peek(5);
+        if (patterns.matches(tokens)) {
+            type = Type.COLOR;
+            parser.discard(5);
+        } else {
+            throw new TokenException("Color token exception");
+        }
+        return type;
+    }
+
+    private Patterns checkColorToken(String token) {
+        Patterns patterns;
+        if ("hsv".equals(token)) {
+            patterns = Patterns.PS_COLOR_HSV;
+        } else if ("rgb".equals(token)) {
+            patterns = Patterns.PS_COLOR_RGB;
+        } else {
+            patterns = null;
+        }
+        return patterns;
     }
 
     @Override
