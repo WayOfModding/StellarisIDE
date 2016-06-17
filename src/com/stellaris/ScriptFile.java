@@ -218,8 +218,8 @@ public class ScriptFile extends HashMap<Field, Type> {
         }
 
         // handle color list
-        tokens = parser.peek(5);
         while (true) {
+            tokens = parser.peek(5);
             //System.err.format("Tokens=%s%nPatterns=%s%nMatches=%b%n
             //tokens, patterns, patterns.matches(tokens));
             if (patterns.matches(tokens)) {
@@ -228,12 +228,10 @@ public class ScriptFile extends HashMap<Field, Type> {
                 switch (token) {
                     case "rgb":
                         // new RGB color element
-                        tokens = parser.peek(5);
                         patterns = Patterns.PS_COLOR_RGB;
                         continue;
                     case "hsv":
                         // new HSV color element
-                        tokens = parser.peek(5);
                         patterns = Patterns.PS_COLOR_HSV;
                         continue;
                     case "}":
