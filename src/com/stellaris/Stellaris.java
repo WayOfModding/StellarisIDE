@@ -70,6 +70,12 @@ public class Stellaris {
             mainloop:
             while (!files.isEmpty()) {
                 file = files.remove();
+                filename = DigestStore.getPath(file);
+                for (String name : BLACKLIST) {
+                    if (name.equals(filename)) {
+                        continue mainloop;
+                    }
+                }
                 if (digestStore.matches(file)) {
                     continue;
                 }
@@ -84,12 +90,6 @@ public class Stellaris {
                             DigestStore.getPath(file));
                     continue;
                 } catch (NoSuchElementException ex) {
-                    filename = DigestStore.getPath(file);
-                    for (String name : BLACKLIST) {
-                        if (name.equals(filename)) {
-                            continue mainloop;
-                        }
-                    }
                     throw new RuntimeException(String.format(
                             "A non-blacklisted file \"%s\" has serious error!",
                             filename),
