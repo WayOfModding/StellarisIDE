@@ -464,9 +464,32 @@ public class ScriptParser implements AutoCloseable {
         }
         //*/
         //*
+        if (args.length < 2) {
+            return;
+        }
         try (ScriptParser parser = new ScriptParser(
                 new java.io.FileReader(new java.io.File(args[0], args[1])));) {
-            parser.peek(1024);
+            int count0; // count {
+            int count1; // count }
+            CharBuffer buffer;
+            char c;
+
+            count0 = count1 = 0;
+            buffer = parser.buffer;
+            while (buffer.hasRemaining()) {
+                c = buffer.get();
+                switch (c) {
+                    case '{':
+                        ++count0;
+                        break;
+                    case '}':
+                        ++count1;
+                        break;
+                }
+            }
+            System.out.format("Count['{']=%d%nCount['}']=%d%n", count0, count1);
+
+            //parser.peek(1024);
         } catch (FileNotFoundException ex) {
         }
         //*/
