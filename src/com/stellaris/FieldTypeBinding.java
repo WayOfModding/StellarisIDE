@@ -117,18 +117,15 @@ public class FieldTypeBinding {
         Properties prop;
         Set<Field> keyset;
         SortedSet<Type> set;
-        Type val;
         String strKey, strVal;
 
-        clean();
         prop = new Properties();
         keyset = map.keySet();
         for (Field field : keyset) {
             try {
                 set = map.get(field);
-                val = set.first();
                 strKey = field.toString();
-                strVal = val.name();
+                strVal = set.toString();
                 prop.put(strKey, strVal);
             } catch (NullPointerException | NoSuchElementException ex) {
                 throw new AssertionError(ex);
@@ -192,6 +189,8 @@ public class FieldTypeBinding {
         SortedSet<Type> set;
         Object objVal;
         String strVal;
+        int lenVal;
+        String[] types;
         Type val;
         Field field;
 
@@ -200,9 +199,14 @@ public class FieldTypeBinding {
             try {
                 objVal = prop.get(strKey);
                 strVal = (String) objVal;
-                val = Type.getType(strVal);
+                lenVal = strVal.length();
+                strVal = strVal.substring(1, lenVal - 1);
+                types = strVal.split(", ");
                 set = new TreeSet<>(DEFAULT_COMPARATOR);
-                set.add(val);
+                for (String type : types) {
+                    val = Type.getType(type);
+                    set.add(val);
+                }
                 field = getField(strKey);
                 map.put(field, set);
             } catch (NullPointerException | NoSuchElementException ex) {
@@ -256,7 +260,7 @@ public class FieldTypeBinding {
 
         @Override
         public int compare(Type o1, Type o2) {
-            return o1.ordinal() - o2.ordinal();
+            return o2.ordinal() - o1.ordinal();
         }
     }
 }
