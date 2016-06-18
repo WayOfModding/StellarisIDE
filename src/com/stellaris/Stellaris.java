@@ -183,6 +183,7 @@ public class Stellaris {
         } finally {
             if (st != null) {
                 st.digestStore.store();
+                FieldTypeBinding.store(st.fields);
             }
         }
         /*
