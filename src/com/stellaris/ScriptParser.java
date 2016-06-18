@@ -241,11 +241,15 @@ public class ScriptParser implements AutoCloseable {
     }
 
     private boolean refill() {
+        return refill(false);
+    }
+
+    private boolean refill(boolean force) {
         int rem;
 
         rem = buffer.remaining();
         // check if there are enough remaining characters in the buffer
-        if (rem < REFILL_SIZE) {
+        if (force || rem < REFILL_SIZE) {
             if (hasMore) {
                 // re-fill if there are more characters in the stream
                 fill();
