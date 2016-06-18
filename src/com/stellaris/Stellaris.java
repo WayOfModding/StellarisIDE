@@ -20,6 +20,8 @@ import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Queue;
@@ -31,6 +33,12 @@ import java.util.Queue;
 public class Stellaris {
 
     private static final String SUFFIX_TXT = ".txt";
+    private static final String SUFFIX_GUI = ".gui";
+    private static final String SUFFIX_GFX = ".gfx";
+    private static final String[] SUFFIXES = {
+        SUFFIX_TXT, //SUFFIX_GUI, SUFFIX_GFX
+    };
+
     private static final String[] BLACKLIST_ALL = {
         "common\\HOW_TO_MAKE_NEW_SHIPS.txt",
         "interface\\credits.txt",
@@ -93,15 +101,17 @@ public class Stellaris {
                 }
                 try {
                     script = ScriptFile.newInstance(file);
-                } catch (IllegalStateException | TokenException | AssertionError ex) {
+                } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
                     System.err.format("[ERROR] Found at file \"%s\"%n",
                             DigestStore.getPath(file));
                     continue;
                 } catch (NoSuchElementException ex) {
-                    throw new RuntimeException(String.format(
-                            "A non-blacklisted file \"%s\" has serious error!",
-                            filename),
-                            ex);
+                    throw new RuntimeException(
+                            String.format(
+                                    "A non-blacklisted file \"%s\" has serious error!",
+                                    filename),
+                            ex
+                    );
                 }
                 fields.putAll(script);
             }
@@ -137,8 +147,11 @@ public class Stellaris {
                 dirs.add(file);
             } else if (file.isFile()) {
                 name = file.getName();
-                if (name.endsWith(SUFFIX_TXT)) {
-                    files.add(file);
+                for (String suffix : SUFFIXES) {
+                    if (name.endsWith(suffix)) {
+                        files.add(file);
+                        break;
+                    }
                 }
             }
             return false;
@@ -186,12 +199,5 @@ public class Stellaris {
                 FieldTypeBinding.store(st.fields);
             }
         }
-        /*
-        for (Field field : st.fields.keySet()) {
-            System.out.format("%s%n\t\t%s",
-                    field.toString(),
-                    st.fields.get(field).name().toLowerCase());
-        }
-        //*/
     }
 }
