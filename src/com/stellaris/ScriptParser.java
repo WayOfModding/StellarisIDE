@@ -259,6 +259,14 @@ public class ScriptParser implements AutoCloseable {
         return true;
     }
 
+    private boolean isTerminalCharacter(char c) {
+        return c == '{'
+                || c == '}'
+                || c == '='
+                || c == '>'
+                || c == '<';
+    }
+
     /**
      * Retrieves the next token string
      *
@@ -287,11 +295,7 @@ public class ScriptParser implements AutoCloseable {
             // handle leading terminal characters
             pos = buffer.position();
             src = pos - 1;
-            if (c == '{'
-                    || c == '}'
-                    || c == '='
-                    || c == '>'
-                    || c == '<') {
+            if (isTerminalCharacter(c)) {
                 dst = pos;
             } else {
                 isString = c == '"';
@@ -321,10 +325,7 @@ public class ScriptParser implements AutoCloseable {
                             ++lineCounter;
                         }
                         break;
-                    } else if (c == '='
-                            || c == '>'
-                            || c == '<'
-                            || c == '}'
+                    } else if (isTerminalCharacter(c)
                             || c == '#') {
                         // handle ending terminal characters
                         // handle immediate ending comment
