@@ -24,14 +24,33 @@ import java.util.*;
  */
 public class FieldTypeBinding {
 
-    private final Map<Field, Set<Type>> map;
+    private static final Comparator<Type> DEFAULT_COMPARATOR
+            = new TypeComparator();
+    private final Map<Field, SortedSet<Type>> map;
 
     public FieldTypeBinding() {
         map = new HashMap<>();
     }
 
+    public SortedSet<Type> getAll(Field field) {
+        if (field == null) {
+            return null;
+        }
+        return map.get(field);
+    }
+
+    public Type get(Field field) {
+        SortedSet<Type> set;
+
+        if (field == null) {
+            return null;
+        }
+        set = getAll(field);
+        return set.first();
+    }
+
     public boolean put(Field field, Type type) {
-        Set<Type> set;
+        SortedSet<Type> set;
 
         if (field == null) {
             return false;
@@ -41,9 +60,17 @@ public class FieldTypeBinding {
         }
         set = map.get(field);
         if (set == null) {
-            set = new HashSet<>();
+            set = new TreeSet<>(DEFAULT_COMPARATOR);
             map.put(field, set);
         }
         return set.add(type);
+    }
+
+    private static class TypeComparator implements Comparator<Type> {
+
+        @Override
+        public int compare(Type o1, Type o2) {
+            return o1.ordinal() - o2.ordinal();
+        }
     }
 }

@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -30,7 +29,7 @@ import java.util.List;
  *
  * @author donizyo
  */
-public class ScriptFile extends HashMap<Field, Type> {
+public class ScriptFile extends FieldTypeBinding {
 
     private ScriptParser parser;
 
@@ -135,6 +134,9 @@ public class ScriptFile extends HashMap<Field, Type> {
                             type = get(field);
                             if (type != Type.LIST) {
                                 type = Type.STRUCT;
+                            } else {
+                                // skip binding procedure
+                                type = null;
                             }
                         }
                     } else if ("yes".equals(token)
@@ -266,26 +268,6 @@ public class ScriptFile extends HashMap<Field, Type> {
                 throw new TokenException(token);
             }
         }
-    }
-
-    @Override
-    public Type put(Field field, Type type) {
-        Type old;
-        int idx_n, idx_o;
-
-        if (field == null) {
-            return null;
-        }
-        old = super.put(field, type);
-        idx_n = type.ordinal();
-        idx_o = type.ordinal();
-
-        if (idx_n < idx_o) {
-            super.put(field, old);
-            throw new TypeOverrideException(old, type);
-        }
-
-        return old;
     }
 
     public static void main(String[] args) {
