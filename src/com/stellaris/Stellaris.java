@@ -45,10 +45,10 @@ public class Stellaris {
         "common\\component_tags\\00_tags.txt"
     };
     private final DigestStore digestStore;
-    private final Map<Field, Type> fields;
+    private final FieldTypeBinding fields;
 
     public Stellaris() {
-        fields = new HashMap<>();
+        fields = new FieldTypeBinding();
         digestStore = new DigestStore();
     }
 
