@@ -224,14 +224,35 @@ public class FieldTypeBinding {
         return file;
     }
 
+    private Set<String> getFieldNameSet() {
+        Set<Field> keyset;
+        Set<String> set;
+        String name;
+
+        keyset = map.keySet();
+        set = new HashSet<>();
+        for (Field field : keyset) {
+            name = field.getName();
+            set.add(name);
+        }
+
+        return set;
+    }
+
     public static void store(FieldTypeBinding ftb) {
         File file;
         Properties prop;
+        Set<String> nameSet;
+        int nameCount;
+        String comment;
 
         file = getDefaultFile();
         prop = ftb.toProperties();
+        nameSet = ftb.getFieldNameSet();
+        nameCount = nameSet.size();
+        comment = String.format("Field Type Binding%nName-count: %d%n", nameCount);
         try (FileOutputStream out = new FileOutputStream(file);) {
-            prop.store(out, "Field Type Binding");
+            prop.store(out, comment);
         } catch (IOException ex) {
             Logger.getLogger(FieldTypeBinding.class.getName()).log(Level.SEVERE, null, ex);
         }

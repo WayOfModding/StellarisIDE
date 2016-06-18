@@ -34,6 +34,10 @@ public final class Field {
         this.name = name;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb;
@@ -42,10 +46,30 @@ public final class Field {
             return name;
         }
         sb = new StringBuilder();
-        sb.append(parent.toString());
+        sb.append(parent.getName());
         sb.append(SEPERATOR);
         sb.append(name);
 
         return sb.toString();
+    }
+
+    public boolean equals(Field field) {
+        Field p;
+        String mp;
+        String mn;
+        String fp;
+        String fn;
+
+        if (field == null) {
+            return false;
+        }
+
+        p = field.parent;
+        mp = parent == null ? null : parent.getName();
+        fp = p == null ? null : p.getName();
+        mn = getName();
+        fn = field.getName();
+
+        return mp == null ? mp == null : mp.equals(fp) && mn.equals(fn);
     }
 }
