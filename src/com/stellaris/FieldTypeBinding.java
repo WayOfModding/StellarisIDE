@@ -62,7 +62,11 @@ public class FieldTypeBinding {
         for (Field field : keyset) {
             v0 = map.get(field);
             v1 = _map.get(field);
-            v0.addAll(v1);
+            if (v0 == null) {
+                map.put(field, v1);
+            } else {
+                v0.addAll(v1);
+            }
         }
     }
 
