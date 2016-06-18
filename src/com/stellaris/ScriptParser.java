@@ -312,7 +312,7 @@ public class ScriptParser implements AutoCloseable {
                     if (isString) {
                         if (c == '\\') {
                             buffer.get();
-                            continue;
+                            //continue;
                         } else if (c == '"') {
                             dst = buffer.position();
                             break;
@@ -338,10 +338,6 @@ public class ScriptParser implements AutoCloseable {
                         buffer.position(dst);
                         break;
                     }
-                    if (buffer.hasRemaining()) {
-                        continue;
-                    }
-                    throw new TokenException("Key token is too long!");
                 }
             }
             res = cache(src, dst);
