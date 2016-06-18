@@ -31,4 +31,21 @@ public enum Type {
     LIST,
     COLOR,
     COLORLIST;
+
+    public static Type getType(String str) {
+        Type[] types;
+        String name;
+
+        if (str == null) {
+            return null;
+        }
+        types = Type.values();
+        for (Type type : types) {
+            name = type.name();
+            if (name.equals(str)) {
+                return type;
+            }
+        }
+        return null;
+    }
 }

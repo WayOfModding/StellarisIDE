@@ -22,6 +22,7 @@ package com.stellaris;
  */
 public final class Field {
 
+    public static final char SEPERATOR = '.';
     private final Field parent;
     private final String name;
 
@@ -42,7 +43,7 @@ public final class Field {
         }
         sb = new StringBuilder();
         sb.append(parent.toString());
-        sb.append('.');
+        sb.append(SEPERATOR);
         sb.append(name);
 
         return sb.toString();
