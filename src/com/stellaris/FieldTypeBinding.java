@@ -49,6 +49,20 @@ public class FieldTypeBinding {
         return set.first();
     }
 
+    public void putAll(FieldTypeBinding ftb) {
+        Map<Field, SortedSet<Type>> _map;
+        Set<Field> keyset;
+        SortedSet<Type> v0, v1;
+
+        _map = ftb.map;
+        keyset = _map.keySet();
+        for (Field field : keyset) {
+            v0 = map.get(field);
+            v1 = _map.get(field);
+            v0.addAll(v1);
+        }
+    }
+
     public boolean put(Field field, Type type) {
         SortedSet<Type> set;
 
