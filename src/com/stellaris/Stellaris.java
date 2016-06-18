@@ -20,9 +20,7 @@ import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
 import java.io.FileFilter;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 
