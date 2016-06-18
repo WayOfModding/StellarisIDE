@@ -27,7 +27,7 @@ public enum Type {
     FLOAT,
     STRUCT,
     BOOLEAN,
-    ENUM,
+    VARIABLE,
     LIST,
     COLOR,
     COLORLIST;

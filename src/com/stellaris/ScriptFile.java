@@ -155,7 +155,7 @@ public class ScriptFile extends HashMap<Field, Type> {
                                         && token.endsWith("\"")) {
                                     type = Type.STRING;
                                 } else {
-                                    type = Type.ENUM;
+                                    type = Type.VARIABLE;
                                 }
                             }
                         }
