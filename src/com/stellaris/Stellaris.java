@@ -50,7 +50,7 @@ public class Stellaris {
         digestStore = new DigestStore();
     }
 
-    public void init(String path) {
+    public void init(String path, boolean forceUpdate) {
         File root;
         DirectoryFilter df;
         ScriptFilter sf;
@@ -84,7 +84,7 @@ public class Stellaris {
                         continue mainloop;
                     }
                 }
-                if (digestStore.matches(file)) {
+                if (!forceUpdate && digestStore.matches(file)) {
                     continue;
                 }
                 // refresh syntax table
@@ -179,7 +179,7 @@ public class Stellaris {
         st = null;
         try {
             st = new Stellaris();
-            st.init(path);
+            st.init(path, true);
         } finally {
             if (st != null) {
                 st.digestStore.store();
