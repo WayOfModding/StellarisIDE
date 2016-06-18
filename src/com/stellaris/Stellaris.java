@@ -37,7 +37,8 @@ public class Stellaris {
         "common\\HOW_TO_MAKE_NEW_SHIPS.txt",
         "interface\\credits.txt",
         "interface\\reference.txt",
-        "previewer_assets\\previewer_filefilter.txt"
+        "previewer_assets\\previewer_filefilter.txt",
+        "pdx_launcher\\game\\motd.txt"
     };
     // skip when syntax analysis is ongoing
     private static final String[] BLACKLIST_SYN = {
