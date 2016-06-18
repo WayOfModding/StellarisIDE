@@ -60,6 +60,7 @@ public class ScriptFile extends FieldTypeBinding {
             }
         } finally {
             parser.close();
+            parser = null;
         }
     }
 
