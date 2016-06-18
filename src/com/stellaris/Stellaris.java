@@ -176,8 +176,15 @@ public class Stellaris {
         }
         path = args[0];
         System.out.format("Checkout directory \"%s\"...%n", path);
-        st = new Stellaris();
-        st.init(path);
+        st = null;
+        try {
+            st = new Stellaris();
+            st.init(path);
+        } finally {
+            if (st != null) {
+                st.digestStore.store();
+            }
+        }
         /*
         for (Field field : st.fields.keySet()) {
             System.out.format("%s%n\t\t%s",
