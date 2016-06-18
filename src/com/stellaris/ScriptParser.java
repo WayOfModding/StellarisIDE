@@ -266,6 +266,7 @@ public class ScriptParser implements AutoCloseable {
      */
     private String next0() {
         char c;
+        char c1;
         int src, dst, pos;
         String res;
         boolean isString;
@@ -311,9 +312,9 @@ public class ScriptParser implements AutoCloseable {
                     } else if (Character.isWhitespace(c)) {
                         dst = buffer.position() - 1;
                         if (c == '\r') {
-                            buffer.mark();
-                            if (buffer.get() != '\n') {
-                                buffer.reset();
+                            c1 = buffer.get();
+                            if (c1 != '\n') {
+                                throw new AssertionError(c1);
                             }
                             ++lineCounter;
                         } else if (c == '\n') {
@@ -346,6 +347,7 @@ public class ScriptParser implements AutoCloseable {
 
     private boolean skipLeadingWhitespace() {
         char c;
+        char c1;
         int pos;
 
         while (true) {
@@ -356,9 +358,9 @@ public class ScriptParser implements AutoCloseable {
                     break;
                 }
                 if (c == '\r') {
-                    buffer.mark();
-                    if (buffer.get() != '\n') {
-                        buffer.reset();
+                    c1 = buffer.get();
+                    if (c1 != '\n') {
+                        throw new AssertionError(c1);
                     }
                     ++lineCounter;
                 } else if (c == '\n') {
@@ -379,6 +381,7 @@ public class ScriptParser implements AutoCloseable {
         int src, dst;
         boolean isNewLine;
         char c;
+        char c1;
         String res;
 
         // find a comment token
@@ -397,10 +400,9 @@ public class ScriptParser implements AutoCloseable {
             dst = -1;
             if (c == '\r') {
                 dst = buffer.position() - 1;
-                buffer.mark();
-                c = buffer.get();
-                if (c != '\n') {
-                    throw new AssertionError();
+                c1 = buffer.get();
+                if (c1 != '\n') {
+                    throw new AssertionError(c1);
                 }
                 ++lineCounter;
                 isNewLine = true;
