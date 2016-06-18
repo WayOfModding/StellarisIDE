@@ -46,6 +46,9 @@ public class FieldTypeBinding {
             return null;
         }
         set = getAll(field);
+        if (set == null) {
+            return null;
+        }
         return set.first();
     }
 
