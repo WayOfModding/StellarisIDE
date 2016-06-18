@@ -93,6 +93,10 @@ public class FieldTypeBinding {
         return set.add(type);
     }
 
+    public void clear() {
+        map.clear();
+    }
+
     /**
      * Clean up the binding map, remove succeeding elements in the sorted set
      */
