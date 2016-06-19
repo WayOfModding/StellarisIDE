@@ -41,7 +41,6 @@ import java.util.Queue;
  */
 public class ModLoader {
 
-    private static final String SUFFIX_MOD = ".mod";
     private static final String DEFAULT_STELLARIS_DIRECTORY;
 
     static {
@@ -179,49 +178,6 @@ public class ModLoader {
 
     private void validateScript(ScriptFile script) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    private static class DescriptorFilter implements FileFilter {
-
-        private final Queue<ModLoader> queue;
-
-        public DescriptorFilter(Queue<ModLoader> q) {
-            queue = q;
-        }
-
-        @Override
-        public boolean accept(File file) {
-            String filename;
-            int idx;
-            String prefix;
-            String suffix;
-            ModLoader loader;
-
-            if (!file.isFile()) {
-                return false;
-            }
-            filename = file.getName();
-            idx = filename.lastIndexOf('.');
-            if (idx == -1) {
-                throw new AssertionError(idx);
-            }
-            suffix = filename.substring(idx);
-            if (!SUFFIX_MOD.equals(suffix)) {
-                return false;
-            }
-            prefix = filename.substring(0, idx);
-            try {
-                Integer.parseInt(prefix);
-                return false;
-            } catch (NumberFormatException ex) {
-            }
-
-            System.out.format("[MOD]\tfile=\"%s\"%n", filename);
-            loader = new ModLoader(file);
-            queue.add(loader);
-
-            return false;
-        }
     }
 
     public static void main(String[] args) {
