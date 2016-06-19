@@ -16,9 +16,13 @@
  */
 package com.stellaris.mod;
 
+import com.stellaris.ScriptParser;
 import com.stellaris.test.Debug;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -49,7 +53,48 @@ public class ModLoader {
         DEFAULT_STELLARIS_DIRECTORY = sb.toString();
     }
 
+    private String path;
+
     public ModLoader(File file) {
+        try (FileReader reader = new FileReader(file);) {
+            path = handleFile(reader);
+            System.out.format("Path=%s%n", path);
+        } catch (IOException ex) {
+        }
+    }
+
+    private String handleFile(Reader reader) {
+        ScriptParser parser;
+        String key;
+        String token;
+
+        parser = new ScriptParser(reader);
+        while (parser.hasNext()) {
+            key = parser.next();
+
+            switch (key) {
+                case "tags":
+                    parser.next();
+                    token = parser.next();
+                    if ("{".equals(token)) {
+                        do {
+                            token = parser.next();
+                        } while (!"}".equals(token));
+                    }
+                    break;
+                case "archieve":
+                    return null;
+                case "path":
+                    parser.next();
+                    token = parser.next();
+                    return token;
+                default:
+                    parser.next();
+                    parser.next();
+                    break;
+            }
+        }
+        throw new AssertionError("Invalid descriptor file: path/archieve field not found!");
     }
 
     public static Queue<ModLoader> getModLoaders() {
@@ -105,9 +150,7 @@ public class ModLoader {
 
             loader = new ModLoader(file);
             queue.add(loader);
-            if (Debug.DEBUG) {
-                System.out.format("[MOD]\tname=\"%s\"%n", filename);
-            }
+            System.out.format("[MOD]\tname=\"%s\"%n", filename);
 
             return false;
         }
@@ -116,7 +159,7 @@ public class ModLoader {
     public static void main(String[] args) {
         Queue<ModLoader> q;
 
-        Debug.DEBUG = true;
+        Debug.DEBUG = false;
         q = getModLoaders();
         System.out.format("ModLoader count=%d%n", q.size());
     }
