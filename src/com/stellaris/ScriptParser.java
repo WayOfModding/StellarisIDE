@@ -50,9 +50,11 @@ public class ScriptParser implements AutoCloseable {
     private void init() {
         char first;
 
-        first = buffer.get();
-        if (!isByteOrderMark(first)) {
-            buffer.rewind();
+        if (buffer.hasRemaining()) {
+            first = buffer.get();
+            if (!isByteOrderMark(first)) {
+                buffer.rewind();
+            }
         }
     }
 
