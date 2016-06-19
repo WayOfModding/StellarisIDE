@@ -24,19 +24,19 @@ import java.util.List;
  */
 public class TokenException extends RuntimeException {
 
-    TokenException(Field parent, String token) {
+    public TokenException(Field parent, String token) {
         this(String.format("parent=%s, token=%s", parent, token));
     }
 
-    TokenException(List<String> tokens) {
+    public TokenException(List<String> tokens) {
         this(tokens == null ? "[]" : tokens.toString());
     }
 
-    TokenException(String err) {
+    public TokenException(String err) {
         super(err);
     }
 
-    TokenException() {
+    public TokenException() {
         super();
     }
 

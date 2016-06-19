@@ -17,6 +17,7 @@
 package com.stellaris.mod;
 
 import com.stellaris.ScriptParser;
+import com.stellaris.TokenException;
 import com.stellaris.test.Debug;
 import java.io.File;
 import java.io.FileFilter;
@@ -55,19 +56,20 @@ public class ModLoader {
     }
 
     private String name;
-    private String path;
 
     public ModLoader(File file) {
+        String path;
+
         try (FileReader reader = new FileReader(file);) {
             path = handleFile(reader);
             System.out.format("\tname=\"%s\"%n\tpath=\"%s\"%n", name, path);
-            handleDirectory();
+            handleDirectory(path);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    private void handleDirectory() throws FileNotFoundException {
+    private void handleDirectory(String path) throws FileNotFoundException {
         File file;
 
         file = new File(DEFAULT_STELLARIS_DIRECTORY, path);
@@ -104,7 +106,7 @@ public class ModLoader {
                     }
                     break;
                 case "archieve":
-                    return null;
+                    throw new TokenException("Unexpected token: archieve");
                 case "path":
                     token = parser.next();
                     idx = token.indexOf('/');
