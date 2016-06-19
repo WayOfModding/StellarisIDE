@@ -189,18 +189,23 @@ public class FieldTypeBinding {
     }
 
     private void fromProperties(Properties prop) {
-        Set<String> keyset;
+        Set<Object> keyset;
         SortedSet<Type> set;
         Object objVal;
+        String strKey;
         String strVal;
         int lenVal;
         String[] types;
         Type val;
         Field field;
 
-        keyset = (Set) prop.keySet();
-        for (String strKey : keyset) {
+        keyset = prop.keySet();
+        for (Object objKey : keyset) {
+            if (!(objKey instanceof String)) {
+                continue;
+            }
             try {
+                strKey = (String) objKey;
                 objVal = prop.get(strKey);
                 strVal = (String) objVal;
                 lenVal = strVal.length();
