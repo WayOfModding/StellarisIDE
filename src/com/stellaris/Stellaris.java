@@ -32,13 +32,6 @@ import java.util.Queue;
  */
 public class Stellaris {
 
-    private static final String SUFFIX_TXT = ".txt";
-    private static final String SUFFIX_GUI = ".gui";
-    private static final String SUFFIX_GFX = ".gfx";
-    private static final String[] SUFFIXES = {
-        SUFFIX_TXT, //SUFFIX_GUI, SUFFIX_GFX
-    };
-
     private static final String[] BLACKLIST_ALL = {
         "common\\HOW_TO_MAKE_NEW_SHIPS.txt",
         "interface\\credits.txt",
@@ -115,68 +108,6 @@ public class Stellaris {
                 }
                 fields.putAll(script);
             }
-        }
-    }
-
-    private class ScriptFilter implements FileFilter {
-
-        private final Queue<File> files;
-        private final Queue<File> dirs;
-
-        public ScriptFilter(Queue<File> init) {
-            files = new LinkedList<>();
-            dirs = new LinkedList<>();
-            if (init != null) {
-                dirs.addAll(init);
-            }
-        }
-
-        public Queue<File> getFiles() {
-            return files;
-        }
-
-        public Queue<File> getDirs() {
-            return dirs;
-        }
-
-        @Override
-        public boolean accept(File file) {
-            String name;
-
-            if (file.isDirectory()) {
-                dirs.add(file);
-            } else if (file.isFile()) {
-                name = file.getName();
-                for (String suffix : SUFFIXES) {
-                    if (name.endsWith(suffix)) {
-                        files.add(file);
-                        break;
-                    }
-                }
-            }
-            return false;
-        }
-
-    }
-
-    private class DirectoryFilter implements FileFilter {
-
-        private final Queue<File> dirs;
-
-        public DirectoryFilter() {
-            dirs = new LinkedList<>();
-        }
-
-        public Queue<File> getDirs() {
-            return dirs;
-        }
-
-        @Override
-        public boolean accept(File file) {
-            if (file.isDirectory()) {
-                dirs.add(file);
-            }
-            return false;
         }
     }
 
