@@ -16,16 +16,23 @@
  */
 package com.stellaris.mod;
 
+import com.stellaris.DirectoryFilter;
+import com.stellaris.ScriptFile;
+import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptParser;
 import com.stellaris.TokenException;
 import com.stellaris.test.Debug;
+import com.stellaris.util.DigestStore;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 
 /**
@@ -70,13 +77,46 @@ public class ModLoader {
     }
 
     private void handleDirectory(String path) throws FileNotFoundException {
-        File file;
+        File root, dir, file;
+        DirectoryFilter df;
+        ScriptFilter sf;
+        Queue<File> dirs, files;
+        String filename;
+        ScriptFile script;
 
-        file = new File(DEFAULT_STELLARIS_DIRECTORY, path);
-        if (!file.isDirectory()) {
+        root = new File(DEFAULT_STELLARIS_DIRECTORY, path);
+        if (!root.isDirectory()) {
             throw new FileNotFoundException();
         }
-        System.out.format(">>>\tDirectory \"%s\" found, handling...%n", path);
+        df = new DirectoryFilter();
+        root.listFiles(df);
+        sf = new ScriptFilter(df.getDirs());
+        dirs = sf.getDirs();
+
+        while (!dirs.isEmpty()) {
+            dir = dirs.remove();
+            dir.listFiles(sf);
+
+            files = sf.getFiles();
+            loop:
+            while (!files.isEmpty()) {
+                file = files.remove();
+                filename = DigestStore.getPath(file);
+                try {
+                    script = ScriptFile.newInstance(file);
+                    validateScript(script);
+                } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
+                    System.err.format("[ERROR] Found at file \"%s\"%n", filename);
+                } catch (NoSuchElementException ex) {
+                    throw new RuntimeException(
+                            String.format(
+                                    "A non-blacklisted file \"%s\" has serious error!",
+                                    filename),
+                            ex
+                    );
+                }
+            }
+        }
     }
 
     private String handleFile(Reader reader) {
@@ -135,6 +175,10 @@ public class ModLoader {
         dir.listFiles(filter);
 
         return res;
+    }
+
+    private void validateScript(ScriptFile script) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     private static class DescriptorFilter implements FileFilter {

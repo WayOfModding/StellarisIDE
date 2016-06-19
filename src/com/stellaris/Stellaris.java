@@ -19,10 +19,8 @@ package com.stellaris;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
-import java.io.FileFilter;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
-import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 
@@ -95,8 +93,7 @@ public class Stellaris {
                 try {
                     script = ScriptFile.newInstance(file);
                 } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
-                    System.err.format("[ERROR] Found at file \"%s\"%n",
-                            DigestStore.getPath(file));
+                    System.err.format("[ERROR] Found at file \"%s\"%n", filename);
                     continue;
                 } catch (NoSuchElementException ex) {
                     throw new RuntimeException(
