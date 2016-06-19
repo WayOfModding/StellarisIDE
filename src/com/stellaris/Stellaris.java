@@ -127,7 +127,7 @@ public class Stellaris {
     private static void printCopyrightMessage() {
         System.out.format("\tStellarisIDE is an open-source software licensed under GPLv3.%n"
                 + "\tIt is aimed to help people create non-commercial mods%n"
-                + "\tfor Stellaris®, which is a game developed by Paradox Interactive.%n%n"
+                + "\tfor Stellaris (R), which is a game developed by Paradox Interactive.%n%n"
                 + "\tCopyright (C) 2016  donizyo%n%n");
     }
 
