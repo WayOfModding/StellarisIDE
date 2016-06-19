@@ -20,6 +20,7 @@ import com.stellaris.ScriptParser;
 import com.stellaris.test.Debug;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -53,28 +54,48 @@ public class ModLoader {
         DEFAULT_STELLARIS_DIRECTORY = sb.toString();
     }
 
+    private String name;
     private String path;
 
     public ModLoader(File file) {
         try (FileReader reader = new FileReader(file);) {
             path = handleFile(reader);
-            System.out.format("Path=%s%n", path);
+            System.out.format("\tname=\"%s\"%n\tpath=\"%s\"%n", name, path);
+            handleDirectory();
         } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
+    }
+
+    private void handleDirectory() throws FileNotFoundException {
+        File file;
+
+        file = new File(DEFAULT_STELLARIS_DIRECTORY, path);
+        if (!file.isDirectory()) {
+            throw new FileNotFoundException();
+        }
+        System.out.format(">>>\tDirectory \"%s\" found, handling...%n", path);
     }
 
     private String handleFile(Reader reader) {
         ScriptParser parser;
         String key;
         String token;
+        int idx;
+        int len;
 
         parser = new ScriptParser(reader);
         while (parser.hasNext()) {
             key = parser.next();
 
+            parser.next();
             switch (key) {
+                case "name":
+                    token = parser.next();
+                    len = token.length();
+                    name = token.substring(1, len - 1);
+                    break;
                 case "tags":
-                    parser.next();
                     token = parser.next();
                     if ("{".equals(token)) {
                         do {
@@ -85,11 +106,12 @@ public class ModLoader {
                 case "archieve":
                     return null;
                 case "path":
-                    parser.next();
                     token = parser.next();
+                    idx = token.indexOf('/');
+                    len = token.length();
+                    token = token.substring(idx + 1, len - 1);
                     return token;
                 default:
-                    parser.next();
                     parser.next();
                     break;
             }
@@ -148,9 +170,9 @@ public class ModLoader {
             } catch (NumberFormatException ex) {
             }
 
+            System.out.format("[MOD]\tfile=\"%s\"%n", filename);
             loader = new ModLoader(file);
             queue.add(loader);
-            System.out.format("[MOD]\tname=\"%s\"%n", filename);
 
             return false;
         }
