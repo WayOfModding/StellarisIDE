@@ -41,12 +41,23 @@ public class Stellaris {
     private static final String[] BLACKLIST_SYN = {
         "common\\component_tags\\00_tags.txt"
     };
+
+    private static Stellaris stellaris;
+
     private final DigestStore digestStore;
     private final FieldTypeBinding fields;
 
     public Stellaris() {
         fields = new FieldTypeBinding();
         digestStore = new DigestStore();
+    }
+
+    public static void setDefault(Stellaris val) {
+        stellaris = val;
+    }
+
+    public static Stellaris getDefault() {
+        return stellaris;
     }
 
     public void init(String path, boolean forceUpdate) {
@@ -106,6 +117,10 @@ public class Stellaris {
                 fields.putAll(script);
             }
         }
+    }
+
+    public FieldTypeBinding getAllFields() {
+        return fields;
     }
 
     public static void main(String[] args) {
