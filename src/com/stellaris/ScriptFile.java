@@ -21,6 +21,7 @@ import static com.stellaris.test.Debug.DEBUG;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 
@@ -36,17 +37,13 @@ public class ScriptFile extends FieldTypeBinding {
     public static ScriptFile newInstance(File file) {
         try {
             return new ScriptFile(file);
-        } catch (FileNotFoundException ex) {
+        } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    private ScriptFile(File file) throws FileNotFoundException {
-        this(new FileReader(file));
-    }
-
-    private ScriptFile(Reader reader) {
-        parser = new ScriptParser(reader);
+    private ScriptFile(File file) throws IOException {
+        parser = new ScriptParser(file);
         analyze();
     }
 

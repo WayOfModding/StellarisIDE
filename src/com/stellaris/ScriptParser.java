@@ -21,6 +21,7 @@ import java.io.*;
 import java.nio.*;
 import java.util.*;
 import static com.stellaris.test.Debug.*;
+import com.stellaris.util.BOMReader;
 
 /**
  *
@@ -38,8 +39,12 @@ public final class ScriptParser implements AutoCloseable {
     private final LinkedList<String> deque;
     private int lineCounter;
 
-    public ScriptParser(Reader in) {
-        reader = new BufferedReader(in);
+    public ScriptParser(File file) throws IOException {
+        this(new BOMReader(file));
+    }
+
+    public ScriptParser(BOMReader in) {
+        reader = in;
         deque = new LinkedList<>();
         fill();
         lineCounter = 0;
@@ -469,8 +474,7 @@ public final class ScriptParser implements AutoCloseable {
         if (args.length < 2) {
             return;
         }
-        try (ScriptParser parser = new ScriptParser(
-                new java.io.FileReader(new java.io.File(args[0], args[1])));) {
+        try (ScriptParser parser = new ScriptParser(new File(args[0], args[1]));) {
             int count0; // count {
             int count1; // count }
             CharBuffer buffer;
@@ -492,7 +496,7 @@ public final class ScriptParser implements AutoCloseable {
             System.out.format("Count['{']=%d%nCount['}']=%d%n", count0, count1);
 
             //parser.peek(1024);
-        } catch (FileNotFoundException ex) {
+        } catch (IOException ex) {
         }
         //*/
     }

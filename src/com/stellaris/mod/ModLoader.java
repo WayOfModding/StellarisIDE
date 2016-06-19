@@ -65,8 +65,8 @@ public class ModLoader {
     public ModLoader(File file) {
         String path;
 
-        try (FileReader reader = new FileReader(file);) {
-            path = handleFile(reader);
+        try {
+            path = handleFile(file);
             System.out.format("\tname=\"%s\"%n\tpath=\"%s\"%n", name, path);
             handleDirectory(path);
         } catch (IOException ex) {
@@ -110,14 +110,14 @@ public class ModLoader {
         }
     }
 
-    private String handleFile(Reader reader) {
+    private String handleFile(File file) throws IOException {
         ScriptParser parser;
         String key;
         String token;
         int idx;
         int len;
 
-        parser = new ScriptParser(reader);
+        parser = new ScriptParser(file);
         while (parser.hasNext()) {
             key = parser.next();
 
