@@ -38,6 +38,14 @@ public class FieldTypeBinding {
         map = new HashMap<>();
     }
 
+    public Set<Field> keyset() {
+        Set<Field> keyset;
+
+        keyset = map.keySet();
+        keyset = Collections.unmodifiableSet(keyset);
+        return keyset;
+    }
+
     public SortedSet<Type> getAll(Field field) {
         if (field == null) {
             return null;

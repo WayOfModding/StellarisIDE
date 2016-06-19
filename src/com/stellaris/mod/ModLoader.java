@@ -17,9 +17,11 @@
 package com.stellaris.mod;
 
 import com.stellaris.DirectoryFilter;
+import com.stellaris.FieldTypeBinding;
 import com.stellaris.ScriptFile;
 import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptParser;
+import com.stellaris.Stellaris;
 import com.stellaris.TokenException;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
@@ -106,6 +108,7 @@ public class ModLoader {
                     validateScript(script);
                 } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
                     System.err.format("[ERROR] Found at file \"%s\"%n", filename);
+                    throw ex;
                 } catch (NoSuchElementException ex) {
                     throw new RuntimeException(
                             String.format(
@@ -177,13 +180,26 @@ public class ModLoader {
     }
 
     private void validateScript(ScriptFile script) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Stellaris stellaris;
+        FieldTypeBinding ftb;
+        SyntaxValidator syntaxValidator;
+
+        stellaris = Stellaris.getDefault();
+        if (stellaris == null) {
+            throw new NullPointerException();
+        }
+        ftb = stellaris.getAllFields();
+        syntaxValidator = new SyntaxValidator(ftb);
+        syntaxValidator.validate(script);
     }
 
     public static void main(String[] args) {
         Queue<ModLoader> q;
+        Stellaris main;
 
         Debug.DEBUG = false;
+        main = new Stellaris();
+        Stellaris.setDefault(main);
         q = getModLoaders();
         System.out.format("ModLoader count=%d%n", q.size());
     }

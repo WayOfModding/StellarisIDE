@@ -16,6 +16,8 @@
  */
 package com.stellaris;
 
+import java.util.Objects;
+
 /**
  *
  * @author donizyo
@@ -53,6 +55,26 @@ public final class Field {
         return sb.toString();
     }
 
+    @Override
+    public int hashCode() {
+        int hash;
+        String pn;
+
+        hash = 5;
+        pn = parent == null ? null : parent.getName();
+        hash = 89 * hash + Objects.hashCode(pn);
+        hash = 89 * hash + Objects.hashCode(name);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return this == obj
+                || obj != null
+                && obj instanceof Field
+                && equals((Field) obj);
+    }
+
     public boolean equals(Field field) {
         Field p;
         String mp;
@@ -60,6 +82,9 @@ public final class Field {
         String fp;
         String fn;
 
+        if (this == field) {
+            return true;
+        }
         if (field == null) {
             return false;
         }
