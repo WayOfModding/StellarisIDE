@@ -124,13 +124,31 @@ public class Stellaris {
         return fields;
     }
 
+    private static void printCopyrightMessage() {
+        System.out.format("\tStellarisIDE is an open-source software licensed under GPLv3.%n"
+                + "\tIt is aimed to help people create non-commercial mods%n"
+                + "\tfor Stellaris®, which is a game developed by Paradox Interactive.%n%n"
+                + "\tCopyright (C) 2016  donizyo%n%n");
+    }
+
+    private static void printHelpMessage() {
+        String jarName;
+
+        jarName = new File(Stellaris.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
+        System.out.format("Usage:%n\tjava -jar %s <StellarisPath>%n%n",
+                jarName);
+    }
+
     public static void main(String[] args) {
         String path;
         Stellaris st;
 
         if (args.length < 1) {
+            printHelpMessage();
+            printCopyrightMessage();
             return;
         }
+
         path = args[0];
         System.out.format("Checkout directory \"%s\"...%n", path);
         st = null;
