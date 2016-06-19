@@ -21,13 +21,12 @@ import java.io.*;
 import java.nio.*;
 import java.util.*;
 import static com.stellaris.test.Debug.*;
-import java.awt.event.KeyEvent;
 
 /**
  *
  * @author donizyo
  */
-public class ScriptParser implements AutoCloseable {
+public final class ScriptParser implements AutoCloseable {
 
     private static final int BUFFER_SIZE = 65536;
     private static final int REFILL_SIZE = 256;
