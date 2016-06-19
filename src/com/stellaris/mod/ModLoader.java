@@ -31,10 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.BufferOverflowException;
-import java.nio.BufferUnderflowException;
 import java.util.LinkedList;
-import java.util.NoSuchElementException;
 import java.util.Queue;
 
 /**
@@ -106,16 +103,8 @@ public class ModLoader {
                 try {
                     script = ScriptFile.newInstance(file);
                     validateScript(script);
-                } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
-                    System.err.format("[ERROR] Found at file \"%s\"%n", filename);
-                    throw ex;
-                } catch (NoSuchElementException ex) {
-                    throw new RuntimeException(
-                            String.format(
-                                    "A non-blacklisted file \"%s\" has serious error!",
-                                    filename),
-                            ex
-                    );
+                } catch (RuntimeException ex) {
+                    throw new RuntimeException(filename, ex);
                 }
             }
         }
@@ -186,7 +175,7 @@ public class ModLoader {
 
         stellaris = Stellaris.getDefault();
         if (stellaris == null) {
-            throw new NullPointerException();
+            throw new NullPointerException("Stellaris instance is provided!");
         }
         ftb = stellaris.getAllFields();
         syntaxValidator = new SyntaxValidator(ftb);

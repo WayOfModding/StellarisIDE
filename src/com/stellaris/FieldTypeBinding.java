@@ -38,6 +38,10 @@ public class FieldTypeBinding {
         map = new HashMap<>();
     }
 
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
     public Set<Field> keyset() {
         Set<Field> keyset;
 

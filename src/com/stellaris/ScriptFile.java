@@ -129,7 +129,7 @@ public class ScriptFile extends FieldTypeBinding {
                             // add 1 each time a struct is found
                             newstate = analyze(field, state + 1);
                             if (newstate != state) {
-                                throw new AssertionError();
+                                throw new AssertionError(String.format("old_state=%d, new_state=%d", state, newstate));
                             }
                             state = newstate;
                             type = get(field);

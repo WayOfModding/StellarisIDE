@@ -16,6 +16,7 @@
  */
 package com.stellaris;
 
+import com.stellaris.mod.ModLoader;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
@@ -136,6 +137,8 @@ public class Stellaris {
         try {
             st = new Stellaris();
             st.init(path, true);
+            Stellaris.setDefault(st);
+            ModLoader.getModLoaders();
         } finally {
             if (st != null) {
                 st.digestStore.store();
