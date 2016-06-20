@@ -19,8 +19,6 @@ package com.stellaris;
 import com.stellaris.test.Debug;
 import static com.stellaris.test.Debug.DEBUG;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
@@ -42,9 +40,21 @@ public class ScriptFile extends FieldTypeBinding {
         }
     }
 
-    private ScriptFile(File file) throws IOException {
-        parser = new ScriptParser(file);
+    public static ScriptFile newInstance(Reader reader) {
+        return new ScriptFile(reader);
+    }
+
+    private ScriptFile(ScriptParser parser) {
+        this.parser = parser;
         analyze();
+    }
+
+    private ScriptFile(File file) throws IOException {
+        this(new ScriptParser(file));
+    }
+
+    private ScriptFile(Reader reader) {
+        this(new ScriptParser(reader));
     }
 
     private void analyze() {
