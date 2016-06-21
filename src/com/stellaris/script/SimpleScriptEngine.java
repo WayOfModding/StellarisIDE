@@ -73,12 +73,25 @@ public class SimpleScriptEngine implements ScriptEngine {
 
     @Override
     public void put(String key, Object value) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Bindings bindings;
+
+        bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        bindings.put(key, value);
     }
 
     @Override
     public Object get(String key) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Bindings bindings;
+        Object value;
+
+        bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        value = bindings.get(key);
+        if (value != null) {
+            return value;
+        }
+        bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
+        value = bindings.get(key);
+        return value;
     }
 
     @Override
