@@ -26,12 +26,12 @@ public class ScriptHSVColor extends ScriptColor {
 
     private float h, s, v;
 
-    public ScriptHSVColor(ScriptEngine engine) {
-        super(engine);
+    public ScriptHSVColor() {
+        super();
     }
 
-    public ScriptHSVColor(ScriptEngine engine, float h, float s, float v) {
-        this(engine);
+    public ScriptHSVColor(float h, float s, float v) {
+        this();
         this.h = h;
         this.s = s;
         this.v = v;

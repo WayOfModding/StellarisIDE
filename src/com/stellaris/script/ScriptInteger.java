@@ -26,8 +26,8 @@ public class ScriptInteger extends ScriptValue {
 
     private int intValue;
 
-    public ScriptInteger(ScriptEngine engine, int value) {
-        super(engine);
+    public ScriptInteger(int value) {
+        super();
         intValue = value;
     }
 

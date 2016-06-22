@@ -26,12 +26,12 @@ public class ScriptRGBColor extends ScriptColor {
 
     private int r, g, b;
 
-    public ScriptRGBColor(ScriptEngine engine) {
-        super(engine);
+    public ScriptRGBColor() {
+        super();
     }
 
-    public ScriptRGBColor(ScriptEngine engine, int r, int g, int b) {
-        this(engine);
+    public ScriptRGBColor(int r, int g, int b) {
+        this();
         this.r = r;
         this.g = g;
         this.b = b;

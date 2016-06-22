@@ -18,6 +18,7 @@ package com.stellaris.script;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import javax.script.ScriptEngine;
@@ -32,8 +33,12 @@ public class ScriptList<T extends ScriptValue>
 
     private final List<T> list;
 
-    protected ScriptList(ScriptEngine engine, List<T> list) {
-        super(engine);
+    public ScriptList() {
+        this(new LinkedList<>());
+    }
+
+    protected ScriptList(List<T> list) {
+        super();
         this.list = list;
     }
 

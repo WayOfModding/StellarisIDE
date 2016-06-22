@@ -16,6 +16,7 @@
  */
 package com.stellaris.script;
 
+import com.stellaris.ScriptFile;
 import java.io.Reader;
 import java.io.StringReader;
 import javax.script.*;
@@ -24,12 +25,17 @@ import javax.script.*;
  *
  * @author donizyo
  */
-public class SimpleScriptEngine implements ScriptEngine {
+public class SimpleEngine extends AbstractScriptEngine implements ScriptEngine {
 
-    private ScriptContext context;
+    public SimpleEngine(Bindings bindings) {
+        this();
+        if (bindings != null) {
+            context.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
+        }
+    }
 
-    public SimpleScriptEngine() {
-        context = new SimpleScriptContext();
+    public SimpleEngine() {
+        super();
     }
 
     @Override
@@ -39,26 +45,8 @@ public class SimpleScriptEngine implements ScriptEngine {
 
     @Override
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
-        Bindings bindings;
-
-        bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
-        return eval(reader, bindings);
-    }
-
-    @Override
-    public Object eval(String script) throws ScriptException {
-        Bindings bindings;
-
-        bindings = getBindings(ScriptContext.ENGINE_SCOPE);
-        return eval(script, bindings);
-    }
-
-    @Override
-    public Object eval(Reader reader) throws ScriptException {
-        Bindings bindings;
-
-        bindings = getBindings(ScriptContext.ENGINE_SCOPE);
-        return eval(reader, bindings);
+        ScriptFile.newInstance(reader, context);
+        return null;
     }
 
     @Override
@@ -68,7 +56,10 @@ public class SimpleScriptEngine implements ScriptEngine {
 
     @Override
     public Object eval(Reader reader, Bindings bindings) throws ScriptException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (bindings == null) {
+            bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        }
+        return super.eval(reader, bindings);
     }
 
     @Override
@@ -76,7 +67,9 @@ public class SimpleScriptEngine implements ScriptEngine {
         Bindings bindings;
 
         bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
-        bindings.put(key, value);
+        if (bindings != null) {
+            bindings.put(key, value);
+        }
     }
 
     @Override
@@ -84,12 +77,21 @@ public class SimpleScriptEngine implements ScriptEngine {
         Bindings bindings;
         Object value;
 
+        if (key == null) {
+            return null;
+        }
         bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        if (bindings == null) {
+            return null;
+        }
         value = bindings.get(key);
         if (value != null) {
             return value;
         }
         bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
+        if (bindings == null) {
+            return null;
+        }
         value = bindings.get(key);
         return value;
     }
@@ -110,18 +112,8 @@ public class SimpleScriptEngine implements ScriptEngine {
     }
 
     @Override
-    public ScriptContext getContext() {
-        return this.context;
-    }
-
-    @Override
-    public void setContext(ScriptContext context) {
-        this.context = context;
-    }
-
-    @Override
     public ScriptEngineFactory getFactory() {
-        throw new UnsupportedOperationException();
+        return SimpleFactory.getEngineFactory();
     }
 
 }

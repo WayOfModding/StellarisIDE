@@ -26,8 +26,8 @@ public class ScriptReference extends ScriptValue {
 
     private final String refValue;
 
-    public ScriptReference(ScriptEngine engine, String value) {
-        super(engine);
+    public ScriptReference(String value) {
+        super();
         refValue = value;
     }
 

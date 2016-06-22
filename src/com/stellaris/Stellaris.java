@@ -48,9 +48,15 @@ public class Stellaris {
     private final DigestStore digestStore;
     private final FieldTypeBinding fields;
 
+    private File dirRoot;
+
     public Stellaris() {
         fields = new FieldTypeBinding();
         digestStore = new DigestStore();
+    }
+
+    public File getRootDirectory() {
+        return dirRoot;
     }
 
     public static void setDefault(Stellaris val) {
@@ -62,7 +68,6 @@ public class Stellaris {
     }
 
     public void init(String path, boolean forceUpdate) {
-        File root;
         DirectoryFilter df;
         ScriptFilter sf;
         Queue<File> files, dirs;
@@ -70,9 +75,12 @@ public class Stellaris {
         ScriptFile script;
         String filename;
 
-        root = new File(path);
+        dirRoot = new File(path);
+        if (!dirRoot.isDirectory()) {
+            throw new RuntimeException();
+        }
         df = new DirectoryFilter();
-        root.listFiles(df);
+        dirRoot.listFiles(df);
         sf = new ScriptFilter(df.getDirs());
         dirs = sf.getDirs();
 

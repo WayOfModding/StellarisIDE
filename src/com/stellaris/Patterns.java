@@ -59,6 +59,10 @@ public class Patterns {
     }
 
     public boolean matches(List<String> input) {
+        return matches(input, null);
+    }
+
+    public boolean matches(List<String> input, List<String> output) {
         Pattern p;
         Matcher m;
         String s;
@@ -82,6 +86,10 @@ public class Patterns {
             if (!m.matches()) {
                 //System.out.format("Unmatch @[%d]:%s%n", i, s);
                 return false;
+            }
+            if (output != null) {
+                m.find();
+                output.add(m.group());
             }
         }
         return true;

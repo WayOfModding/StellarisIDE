@@ -26,8 +26,8 @@ public class ScriptFloat extends ScriptValue {
 
     private float floatValue;
 
-    public ScriptFloat(ScriptEngine engine, float value) {
-        super(engine);
+    public ScriptFloat(float value) {
+        super();
         floatValue = value;
     }
 

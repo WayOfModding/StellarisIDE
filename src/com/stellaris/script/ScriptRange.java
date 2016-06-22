@@ -27,12 +27,12 @@ public class ScriptRange extends ScriptValue {
 
     private int minValue, maxValue;
 
-    public ScriptRange(ScriptEngine engine) {
-        super(engine);
+    public ScriptRange() {
+        super();
     }
 
-    public ScriptRange(ScriptEngine engine, int min, int max) {
-        this(engine);
+    public ScriptRange(int min, int max) {
+        this();
         minValue = min;
         maxValue = max;
     }

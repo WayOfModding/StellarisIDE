@@ -30,8 +30,8 @@ public class ScriptStruct extends ScriptValue implements Bindings {
 
     private Bindings structValue;
 
-    public ScriptStruct(ScriptEngine engine) {
-        super(engine);
+    public ScriptStruct() {
+        super();
     }
 
     @Override

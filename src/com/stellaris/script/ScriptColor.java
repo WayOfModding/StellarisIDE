@@ -27,8 +27,8 @@ public abstract class ScriptColor extends ScriptValue {
     protected static final String COLOR_SPACE_RGB = "rgb";
     protected static final String COLOR_SPACE_HSV = "hsv";
 
-    public ScriptColor(ScriptEngine engine) {
-        super(engine);
+    public ScriptColor() {
+        super();
     }
 
     protected abstract String getColorSpace();

@@ -26,8 +26,8 @@ public class ScriptString extends ScriptValue {
 
     private String strValue;
 
-    public ScriptString(ScriptEngine engine, String value) {
-        super(engine);
+    public ScriptString(String value) {
+        super();
         strValue = value;
     }
 

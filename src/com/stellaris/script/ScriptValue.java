@@ -26,9 +26,7 @@ import javax.script.ScriptEngine;
 public abstract class ScriptValue {
 
     protected Type type;
-    private final ScriptEngine engine;
 
-    public ScriptValue(ScriptEngine engine) {
-        this.engine = engine;
+    public ScriptValue() {
     }
 }
