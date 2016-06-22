@@ -31,12 +31,27 @@ import javax.xml.bind.DatatypeConverter;
 public class Digest {
 
     public static final String DEFAULT_ALGORITHM = "MD5";
-    private final String digest;
+    private byte[] result;
 
     public Digest(File file) {
+        this(file, DEFAULT_ALGORITHM);
+    }
+
+    public Digest(File file, String algorithm) {
+        this(file, newMessageDigest(algorithm));
+    }
+
+    private static MessageDigest newMessageDigest(String algorithm) {
+        try {
+            return MessageDigest.getInstance(algorithm);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    public Digest(File file, MessageDigest md) {
         int bufsize;
         byte[] buffer;
-        MessageDigest md;
 
         if (file == null) {
             throw new NullPointerException();
@@ -46,16 +61,10 @@ public class Digest {
         }
         bufsize = 1024;
         buffer = new byte[bufsize];
-        try {
-            md = MessageDigest.getInstance(DEFAULT_ALGORITHM);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IllegalStateException(ex);
-        }
         try (FileInputStream finput = new FileInputStream(file);
                 DigestInputStream dinput = new DigestInputStream(finput, md);) {
             while (dinput.read(buffer) > 0);
-            buffer = md.digest();
-            digest = toString(buffer);
+            result = md.digest();
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }
@@ -69,7 +78,14 @@ public class Digest {
         this(new File(path));
     }
 
+    public byte[] getResult() {
+        return result;
+    }
+
     public String digest() {
+        String digest;
+
+        digest = toString(result);
         return digest;
     }
 
