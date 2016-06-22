@@ -32,6 +32,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.*;
 
 /**
  *
@@ -62,11 +63,11 @@ public class ChecksumManifest {
         return value;
     }
 
-    private byte[] digest(File file) {
+    private Digest digest(File file, Checksum checksum) {
         Digest digest;
 
-        digest = new Digest(file);
-        return digest.getResult();
+        digest = new Digest(file, checksum);
+        return digest;
     }
 
     private void createFilter(Map<String, List<ChecksumEntry>> map,
@@ -102,12 +103,10 @@ public class ChecksumManifest {
                 if (line == null) {
                     break;
                 }
-                switch (line) {
-                    case "directory":
-                        type = line;
-                        break;
-                    default:
-                        throw new UnsupportedOperationException(line);
+                if (line.contains("directory")) {
+                    type = line;
+                } else {
+                    throw new UnsupportedOperationException(line);
                 }
                 // name
                 line = reader.readLine();
@@ -200,11 +199,10 @@ public class ChecksumManifest {
         Queue<File> dirs;
         Queue<File> files;
         File dir;
-        byte[] dig;
-        List<byte[]> list;
+        Checksum checksum;
 
         keyset = map.keySet();
-        list = new LinkedList<>();
+        checksum = new Adler32();
         for (String key : keyset) {
             file = new File(root, key);
             if (!file.isDirectory()) {
@@ -231,19 +229,15 @@ public class ChecksumManifest {
                     // retrieve a file
                     file = files.remove();
                     // digest a file
-                    dig = digest(file);
-                    list.add(dig);
+                    digest(file, checksum);
                 }
             }
         }
 
-        // digest all files
-        digest(list);
-    }
-
-    private int digest(List<byte[]> list) {
-        System.out.format("DigestList=%s%n", list);
-        return -1;
+        // test output
+        long value = checksum.getValue();
+        value &= 0xffff;
+        System.out.format("checksum=\"%x\"%n", value);
     }
 
     public static void main(String[] args) {

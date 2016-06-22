@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.Checksum;
 import javax.xml.bind.DatatypeConverter;
 
 /**
@@ -48,6 +51,28 @@ public class Digest {
             throw new IllegalStateException(ex);
         }
     }
+    
+    public Digest(File file, Checksum cs) {
+        int bufsize;
+        byte[] buffer;
+        int len;
+
+        if (file == null) {
+            throw new NullPointerException();
+        }
+        if (!file.isFile()) {
+            throw new IllegalArgumentException();
+        }
+        bufsize = 1024;
+        buffer = new byte[bufsize];
+        try (FileInputStream finput = new FileInputStream(file);) {
+            while ((len = finput.read(buffer)) > 0) {
+                cs.update(buffer, 0, len);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
     public Digest(File file, MessageDigest md) {
         int bufsize;
@@ -66,7 +91,7 @@ public class Digest {
             while (dinput.read(buffer) > 0);
             result = md.digest();
         } catch (IOException ex) {
-            throw new IllegalStateException(ex);
+            throw new RuntimeException(ex);
         }
     }
 
@@ -87,6 +112,10 @@ public class Digest {
 
         digest = toString(result);
         return digest;
+    }
+
+    public String toString() {
+        return digest();
     }
 
     public static void main(String[] args) {
