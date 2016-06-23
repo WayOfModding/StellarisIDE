@@ -17,7 +17,6 @@
 package com.stellaris.mod;
 
 import com.stellaris.DirectoryFilter;
-import com.stellaris.FieldTypeBinding;
 import com.stellaris.ScriptFile;
 import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptParser;
@@ -28,9 +27,7 @@ import com.stellaris.util.DigestStore;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -170,15 +167,13 @@ public class ModLoader {
 
     private void validateScript(ScriptFile script) {
         Stellaris stellaris;
-        FieldTypeBinding ftb;
         SyntaxValidator syntaxValidator;
 
         stellaris = Stellaris.getDefault();
         if (stellaris == null) {
             throw new NullPointerException("Stellaris instance is provided!");
         }
-        ftb = stellaris.getAllFields();
-        syntaxValidator = new SyntaxValidator(ftb);
+        syntaxValidator = new SyntaxValidator();
         syntaxValidator.validate(script);
     }
 
