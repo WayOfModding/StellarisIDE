@@ -20,6 +20,7 @@ import com.stellaris.script.ScriptColor;
 import com.stellaris.script.ScriptHSVColor;
 import com.stellaris.script.ScriptList;
 import com.stellaris.script.ScriptRGBColor;
+import com.stellaris.script.ScriptStruct;
 import com.stellaris.script.ScriptValue;
 import com.stellaris.test.Debug;
 import static com.stellaris.test.Debug.DEBUG;
@@ -27,7 +28,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.EmptyStackException;
 import java.util.List;
+import java.util.Stack;
 import javax.script.*;
 
 /**
@@ -100,6 +103,95 @@ public class ScriptFile extends FieldTypeBinding {
             parser.close();
             parser = null;
         }
+    }
+
+    public void put(ScriptContext context, Field field, ScriptValue value) {
+        Bindings bindings;
+        Field parent;
+        String fieldName;
+
+        if (isCore) {
+            bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
+        } else {
+            bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        }
+        if (bindings == null) {
+            throw new NullPointerException();
+        }
+        parent = field.getParent();
+        fieldName = field.getName();
+        if (parent != null) {
+            bindings = (ScriptStruct) get(context, parent);
+        }
+        bindings.put(fieldName, value);
+    }
+
+    public ScriptValue get(ScriptContext context, Field field) {
+        Stack<String> stack;
+        Field parent;
+        String name;
+        Bindings bindings;
+        Object obj;
+        ScriptValue value;
+
+        if (field == null) {
+            throw new NullPointerException();
+        }
+        stack = new Stack<>();
+        parent = field;
+        while (parent != null) {
+            name = parent.getName();
+            parent = parent.getParent();
+            stack.push(name);
+        }
+        // root node
+        try {
+            name = stack.pop();
+        } catch (EmptyStackException ex) {
+            throw new AssertionError(ex);
+        }
+        if (isCore) {
+            bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
+        } else {
+            bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+            if (bindings == null) {
+                context.getBindings(ScriptContext.GLOBAL_SCOPE);
+            }
+        }
+        if (bindings == null) {
+            throw new NullPointerException();
+        }
+        obj = bindings.get(name);
+        if (obj == null) {
+            throw new NullPointerException();
+        }
+        if (!(obj instanceof ScriptValue)) {
+            throw new AssertionError(obj.getClass());
+        }
+        value = (ScriptValue) obj;
+        // leaf node
+        while (!stack.isEmpty()) {
+            name = stack.pop();
+            try {
+                bindings = (ScriptStruct) value;
+
+                obj = bindings.get(name);
+                if (obj == null) {
+                    if (stack.isEmpty()) {
+                        return null;
+                    } else {
+                        throw new NullPointerException();
+                    }
+                }
+                value = (ScriptValue) obj;
+            } catch (NullPointerException ex) {
+                throw new AssertionError(ex);
+            } catch (ClassCastException ex) {
+                throw new AssertionError(value.getClass().toString(), ex);
+            }
+        }
+
+        return value;
     }
 
     private int analyze(Field parent, int state, ScriptContext context) {
