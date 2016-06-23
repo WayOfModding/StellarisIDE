@@ -110,11 +110,7 @@ public class ScriptFile extends FieldTypeBinding {
         Field parent;
         String fieldName;
 
-        if (isCore) {
-            bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
-        } else {
-            bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
-        }
+        bindings = getBindings(context);
         if (bindings == null) {
             throw new NullPointerException();
         }
@@ -150,14 +146,7 @@ public class ScriptFile extends FieldTypeBinding {
         } catch (EmptyStackException ex) {
             throw new AssertionError(ex);
         }
-        if (isCore) {
-            bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
-        } else {
-            bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
-            if (bindings == null) {
-                context.getBindings(ScriptContext.GLOBAL_SCOPE);
-            }
-        }
+        bindings = getBindings(context);
         if (bindings == null) {
             throw new NullPointerException();
         }
@@ -306,11 +295,18 @@ public class ScriptFile extends FieldTypeBinding {
     }
 
     private Bindings getBindings(ScriptContext context) {
+        Bindings bindings;
+
         if (isCore) {
-            return context.getBindings(ScriptContext.GLOBAL_SCOPE);
+            bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
         } else {
-            return context.getBindings(ScriptContext.ENGINE_SCOPE);
+            bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+            if (bindings == null) {
+                context.getBindings(ScriptContext.GLOBAL_SCOPE);
+            }
         }
+
+        return bindings;
     }
 
     private boolean handleColorList(String token) {
