@@ -16,6 +16,7 @@
  */
 package com.stellaris.script;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -40,6 +41,10 @@ public class ScriptList<T extends ScriptValue>
     protected ScriptList(List<T> list) {
         super();
         this.list = list;
+    }
+
+    public ScriptList(T... ts) {
+        this(Arrays.asList(ts));
     }
 
     public int size() {
@@ -132,9 +137,5 @@ public class ScriptList<T extends ScriptValue>
 
     public List<T> subList(int fromIndex, int toIndex) {
         return list.subList(fromIndex, toIndex);
-    }
-
-    public void parse(String s) {
-        throw new UnsupportedOperationException();
     }
 }

@@ -16,10 +16,16 @@
  */
 package com.stellaris;
 
+import com.stellaris.script.ScriptBoolean;
 import com.stellaris.script.ScriptColor;
+import com.stellaris.script.ScriptFloat;
 import com.stellaris.script.ScriptHSVColor;
+import com.stellaris.script.ScriptInteger;
 import com.stellaris.script.ScriptList;
 import com.stellaris.script.ScriptRGBColor;
+import com.stellaris.script.ScriptRange;
+import com.stellaris.script.ScriptReference;
+import com.stellaris.script.ScriptString;
 import com.stellaris.script.ScriptStruct;
 import com.stellaris.script.ScriptValue;
 import com.stellaris.test.Debug;
@@ -38,7 +44,7 @@ import javax.script.*;
  *
  * @author donizyo
  */
-public class ScriptFile extends FieldTypeBinding {
+public class ScriptFile {
 
     private ScriptParser parser;
     private boolean isCore;
@@ -187,10 +193,11 @@ public class ScriptFile extends FieldTypeBinding {
         String token, key;
         List<String> tokens;
         Field field;
-        Type type;
+        //Type type;
         boolean isList;
         Patterns patterns;
         int newstate;
+        int min, max;
 
         if (DEBUG) {
             System.err.format("[PARSE]\tparent=%s, state=%d%n",
@@ -205,18 +212,17 @@ public class ScriptFile extends FieldTypeBinding {
             }
             // return
             if ("}".equals(token)) {
+                put(context, parent, cache);
                 return --state;
             }
             {
                 if (handleColorList(token)) {
-                    type = Type.COLORLIST;
-                    put(parent, type);
-                    // TODO do something to map field and value
-                    // @see: 'cache'
+                    //type = Type.COLORLIST;
+                    put(context, parent, cache);
+                    cache = null;
                     return --state;
                 } else {
                     key = token;
-                    field = new Field(parent, key);
                 }
 
                 // operator
@@ -227,32 +233,53 @@ public class ScriptFile extends FieldTypeBinding {
                         && !"<".equals(token);
 
                 if (isList) {
+                    // list entries: key, token, ...
+                    cache = new ScriptList<>(
+                            ScriptValue.parseString(key)
+                    );
                     if (handlePlainList(token)) {
-                        type = Type.LIST;
-                        put(parent, type);
+                        //type = Type.LIST;
+                        //put(parent, type);
+                        put(context, parent, cache);
+                        cache = null;
                         return --state;
                     } else {
                         throw new AssertionError();
                     }
                 } else {
+                    field = new Field(parent, key);
                     // value
                     token = parser.next();
                     patterns = checkColorToken(token);
                     if (patterns != null) {
-                        type = handleColorToken(patterns);
+                        //type = 
+                        handleColorToken(patterns);
+                        put(context, field, cache);
+                        cache = null;
                     } else if ("{".equals(token)) {
                         tokens = parser.peek(7);
                         // { -> min = INTEGER max = INTEGER }
                         if (Patterns.PS_RANGE.matches(tokens)) {
-                            type = Type.RANGE;
-                            parser.discard(7);
+                            //type = Type.RANGE;
+                            //parser.discard(7);
+                            // minimal value
+                            parser.discard(2);
+                            token = parser.next();
+                            min = Integer.parseInt(token);
+                            // maximal value
+                            parser.discard(2);
+                            token = parser.next();
+                            max = Integer.parseInt(token);
+                            put(context, field, new ScriptRange(min, max));
                         } else {
                             // add 1 each time a struct is found
+                            put(context, field, new ScriptStruct());
                             newstate = analyze(field, state + 1, context);
                             if (newstate != state) {
                                 throw new AssertionError(String.format("old_state=%d, new_state=%d", state, newstate));
                             }
                             state = newstate;
+                            /*
                             type = get(field);
                             if (type != Type.LIST) {
                                 type = Type.STRUCT;
@@ -260,26 +287,31 @@ public class ScriptFile extends FieldTypeBinding {
                                 // skip binding procedure
                                 type = null;
                             }
+                             */
                         }
-                    } else if ("yes".equals(token)
-                            || "no".equals(token)) {
-                        type = Type.BOOLEAN;
+                    } else if ("yes".equals(token)) {
+                        put(context, field, new ScriptBoolean(true));
+                    } else if ("no".equals(token)) {
+                        //type = Type.BOOLEAN;
+                        put(context, field, new ScriptBoolean(false));
                     } else {
                         try {
                             // integer
-                            Integer.parseInt(token);
-                            type = Type.INTEGER;
+                            put(context, field, new ScriptInteger(Integer.parseInt(token)));
+                            //type = Type.INTEGER;
                         } catch (NumberFormatException e1) {
                             // float
                             try {
-                                Float.parseFloat(token);
-                                type = Type.FLOAT;
+                                put(context, field, new ScriptFloat(Float.parseFloat(token)));
+                                //type = Type.FLOAT;
                             } catch (NumberFormatException e2) {
                                 if (token.startsWith("\"")
                                         && token.endsWith("\"")) {
-                                    type = Type.STRING;
+                                    //type = Type.STRING;
+                                    put(context, field, new ScriptString(token));
                                 } else {
-                                    type = Type.VARIABLE;
+                                    //type = Type.VARIABLE;
+                                    put(context, field, new ScriptReference(token));
                                 }
                             }
                         }
@@ -287,7 +319,7 @@ public class ScriptFile extends FieldTypeBinding {
                 }
 
                 // field - type binding
-                put(field, type);
+                //put(field, type);
             }
         }
 
@@ -311,101 +343,85 @@ public class ScriptFile extends FieldTypeBinding {
 
     private boolean handleColorList(String token) {
         final int len = 5;
-        boolean isRGB;
         Patterns patterns;
-        List<String> tokens;
-        List<String> output;
-        String[] data;
-        int r, g, b;
-        float h, s, v;
         ScriptColor color;
         ScriptList<ScriptColor> colorList;
 
         // detect color list
-        switch (token) {
-            case "rgb":
-                patterns = Patterns.PS_COLOR_RGB;
-                isRGB = true;
-                break;
-            case "hsv":
-                patterns = Patterns.PS_COLOR_HSV;
-                isRGB = false;
-                break;
-            default:
-                return false;
+        patterns = checkColorToken(token);
+        if (patterns == null) {
+            return false;
         }
 
         colorList = new ScriptList<>();
         // handle color list
         while (true) {
-            tokens = parser.peek(len);
-            //System.err.format("Tokens=%s%nPatterns=%s%nMatches=%b%n
-            //tokens, patterns, patterns.matches(tokens));
-            data = new String[len];
-            output = new ArrayList<>(len);
-            if (patterns.matches(tokens, output)) {
-                output.toArray(data);
-                if (isRGB) {
-                    r = Integer.parseInt(data[1]);
-                    g = Integer.parseInt(data[2]);
-                    b = Integer.parseInt(data[3]);
-                    color = new ScriptRGBColor(r, g, b);
-                } else {
-                    h = Float.parseFloat(data[1]);
-                    s = Float.parseFloat(data[2]);
-                    v = Float.parseFloat(data[3]);
-                    color = new ScriptHSVColor(h, s, v);
-                }
-                colorList.add(color);
-                // prevent loitering
-                data = null;
-                output = null;
-                parser.discard(len);
+            color = handleColorToken(patterns);
+            colorList.add(color);
+            // prevent loitering
+            parser.discard(len);
 
-                token = parser.next();
-                switch (token) {
-                    case "rgb":
-                        // new RGB color element
-                        patterns = Patterns.PS_COLOR_RGB;
-                        isRGB = true;
-                        continue;
-                    case "hsv":
-                        // new HSV color element
-                        patterns = Patterns.PS_COLOR_HSV;
-                        isRGB = false;
-                        continue;
-                    case "}":
-                        // exit color list
-                        break;
-                    default:
-                        throw new TokenException(token);
-                }
-                // exit color list
-                break;
-            } else {
-                throw new TokenException(tokens);
+            token = parser.next();
+            patterns = checkColorToken(token);
+            if (patterns != null) {
+                continue;
             }
+            switch (token) {
+                case "}":
+                    // exit color list
+                    break;
+                default:
+                    throw new TokenException(token);
+            }
+            // exit color list
+            break;
         }
 
         cache = colorList;
         return true;
     }
 
-    private Type handleColorToken(Patterns patterns) {
+    private ScriptColor handleColorToken(Patterns patterns) {
+        final int len = 5;
         List<String> tokens;
-        Type type;
-        tokens = parser.peek(5);
-        if (patterns.matches(tokens)) {
-            type = Type.COLOR;
-            parser.discard(5);
+        String[] data;
+        List<String> output;
+        //Type type;
+        ScriptColor color;
+        int r, g, b;
+        float h, s, v;
+
+        if (patterns == null) {
+            throw new NullPointerException();
+        }
+        tokens = parser.peek(len);
+        data = new String[len];
+        output = new ArrayList<>(len);
+        if (patterns.matches(tokens, output)) {
+            //type = Type.COLOR;
+            output.toArray(data);
+            if (patterns == Patterns.PS_COLOR_RGB) {
+                r = Integer.parseInt(data[1]);
+                g = Integer.parseInt(data[2]);
+                b = Integer.parseInt(data[3]);
+                color = new ScriptRGBColor(r, g, b);
+            } else /*if (patterns == Patterns.PS_COLOR_HSV)*/ {
+                h = Float.parseFloat(data[1]);
+                s = Float.parseFloat(data[2]);
+                v = Float.parseFloat(data[3]);
+                color = new ScriptHSVColor(h, s, v);
+            }
+            parser.discard(len);
         } else {
             throw new TokenException("Color token exception");
         }
-        return type;
+        //return type;
+        return color;
     }
 
     private Patterns checkColorToken(String token) {
         Patterns patterns;
+
         switch (token) {
             case "hsv":
                 patterns = Patterns.PS_COLOR_HSV;
@@ -421,11 +437,15 @@ public class ScriptFile extends FieldTypeBinding {
     }
 
     private boolean handlePlainList(String token) {
+        ScriptList<ScriptValue> list;
+
         // handle single-element list
         if ("}".equals(token)) {
             return true;
         }
 
+        list = (ScriptList<ScriptValue>) cache;
+        list.add(ScriptValue.parseString(token));
         // handle multiple-element list
         while (true) {
             token = parser.next();
@@ -437,6 +457,7 @@ public class ScriptFile extends FieldTypeBinding {
                     || "no".equals(token)) {
                 throw new TokenException(token);
             }
+            list.add(ScriptValue.parseString(token));
         }
     }
 

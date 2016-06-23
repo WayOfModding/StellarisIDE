@@ -29,4 +29,11 @@ public abstract class ScriptValue {
 
     public ScriptValue() {
     }
+
+    public static ScriptValue parseString(String str) {
+        ScriptValue value;
+
+        value = null;
+        return value;
+    }
 }

@@ -79,6 +79,10 @@ public class SimpleFactory implements ScriptEngineFactory {
         return properties;
     }
 
+    public Bindings getBindings() {
+        return bindings;
+    }
+
     @Override
     public String getEngineName() {
         return strEngineName;

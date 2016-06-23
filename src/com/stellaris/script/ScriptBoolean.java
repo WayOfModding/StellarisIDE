@@ -22,7 +22,7 @@ import com.stellaris.TokenException;
  *
  * @author donizyo
  */
-public class ScriptBoolean {
+public class ScriptBoolean extends ScriptValue {
 
     private static final String TRUE = "yes";
     private static final String FALSE = "no";

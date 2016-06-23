@@ -46,12 +46,10 @@ public class Stellaris {
     private static Stellaris stellaris;
 
     private final DigestStore digestStore;
-    private final FieldTypeBinding fields;
 
     private File dirRoot;
 
     public Stellaris() {
-        fields = new FieldTypeBinding();
         digestStore = new DigestStore();
     }
 
@@ -123,13 +121,8 @@ public class Stellaris {
                             ex
                     );
                 }
-                fields.putAll(script);
             }
         }
-    }
-
-    public FieldTypeBinding getAllFields() {
-        return fields;
     }
 
     private static void printCopyrightMessage() {
@@ -168,7 +161,6 @@ public class Stellaris {
         } finally {
             if (st != null) {
                 st.digestStore.store();
-                FieldTypeBinding.store(st.fields);
             }
         }
     }
