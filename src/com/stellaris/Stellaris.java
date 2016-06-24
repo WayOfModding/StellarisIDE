@@ -18,6 +18,7 @@ package com.stellaris;
 
 import com.stellaris.mod.ModLoader;
 import com.stellaris.script.SimpleEngine;
+import com.stellaris.script.SimpleFactory;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
@@ -25,12 +26,13 @@ import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import javax.script.ScriptEngine;
 
 /**
  *
  * @author donizyo
  */
-public class Stellaris extends SimpleEngine {
+public class Stellaris extends SimpleFactory {
 
     private static final String[] BLACKLIST_ALL = {
         "common\\HOW_TO_MAKE_NEW_SHIPS.txt",
@@ -45,13 +47,13 @@ public class Stellaris extends SimpleEngine {
     };
 
     private static Stellaris stellaris;
-
     private final DigestStore digestStore;
-
+    private final ScriptEngine scriptEngine;
     private File dirRoot;
 
     public Stellaris() {
         digestStore = new DigestStore();
+        scriptEngine = super.getScriptEngine();
     }
 
     public File getRootDirectory() {
@@ -110,7 +112,7 @@ public class Stellaris extends SimpleEngine {
                     System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
                 }
                 try {
-                    script = ScriptFile.newInstance(file, getContext());
+                    script = ScriptFile.newInstance(file, scriptEngine.getContext());
                 } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
                     System.err.format("[ERROR] Found at file \"%s\"%n", filename);
                     continue;

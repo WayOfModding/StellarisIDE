@@ -41,7 +41,7 @@ public class SimpleFactory implements ScriptEngineFactory {
         return DEFAULT_FACTORY;
     }
 
-    private SimpleFactory() {
+    protected SimpleFactory() {
         bindings = new SimpleBindings();
     }
 
