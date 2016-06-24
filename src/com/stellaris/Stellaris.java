@@ -156,8 +156,8 @@ public class Stellaris extends SimpleEngine {
         st = null;
         try {
             st = new Stellaris();
-            st.init(path, true);
             Stellaris.setDefault(st);
+            st.init(path, true);
             ModLoader.getModLoaders();
         } finally {
             if (st != null) {
