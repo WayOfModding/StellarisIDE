@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
+import javax.script.SimpleBindings;
 
 /**
  *
@@ -33,6 +34,7 @@ public class ScriptStruct extends ScriptValue implements Bindings {
 
     public ScriptStruct() {
         super();
+        structValue = new SimpleBindings();
     }
 
     protected Type getType() {
