@@ -478,6 +478,8 @@ public class ScriptFile extends ScriptValue {
         File dir;
         File file;
         Stellaris st;
+        ScriptEngine engine;
+        ScriptContext context;
 
         if (args.length < 2) {
             return;
@@ -488,11 +490,13 @@ public class ScriptFile extends ScriptValue {
             st = new Stellaris();
             Stellaris.setDefault(st);
             st.init(sparent, true);
+            engine = st.getScriptEngine();
+            context = engine.getContext();
         }
         dir = new File(sparent);
         file = new File(dir, sname);
         Debug.DEBUG = true;
         System.out.format("%nParsing file \"%s\"...%n", sname);
-        ScriptFile.newInstance(file, null);
+        ScriptFile.newInstance(file, context);
     }
 }
