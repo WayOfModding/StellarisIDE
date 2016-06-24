@@ -18,6 +18,7 @@ package com.stellaris;
 
 import com.stellaris.script.ScriptBoolean;
 import com.stellaris.script.ScriptColor;
+import com.stellaris.script.ScriptColorList;
 import com.stellaris.script.ScriptFloat;
 import com.stellaris.script.ScriptHSVColor;
 import com.stellaris.script.ScriptInteger;
@@ -364,7 +365,7 @@ public class ScriptFile extends ScriptValue {
             return false;
         }
 
-        colorList = new ScriptList<>();
+        colorList = new ScriptColorList();
         // handle color list
         while (true) {
             color = handleColorToken(patterns);

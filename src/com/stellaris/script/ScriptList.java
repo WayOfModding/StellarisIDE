@@ -53,10 +53,6 @@ public class ScriptList<T extends ScriptValue>
     }
 
     protected Type getType() {
-        if (!list.isEmpty()
-                && Type.COLOR.equals(list.iterator().next().getType())) {
-            return Type.COLORLIST;
-        }
         return Type.LIST;
     }
 
