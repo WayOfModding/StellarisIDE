@@ -341,6 +341,9 @@ public class ScriptFile extends ScriptValue {
     private Bindings getBindings(ScriptContext context) {
         Bindings bindings;
 
+        if (context == null) {
+            throw new NullPointerException();
+        }
         if (isCore) {
             bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
         } else {
