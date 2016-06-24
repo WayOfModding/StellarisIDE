@@ -474,16 +474,22 @@ public class ScriptFile extends ScriptValue {
         String sparent, sname;
         File dir;
         File file;
+        Stellaris st;
 
         if (args.length < 2) {
             return;
         }
-        Debug.DEBUG = true;
         sparent = args[0];
         sname = args[1];
+        {
+            st = new Stellaris();
+            Stellaris.setDefault(st);
+            st.init(sparent, true);
+        }
         dir = new File(sparent);
         file = new File(dir, sname);
-        System.out.format("Parsing file \"%s\"...%n", sname);
+        Debug.DEBUG = true;
+        System.out.format("%nParsing file \"%s\"...%n", sname);
         ScriptFile.newInstance(file, null);
     }
 }
