@@ -17,45 +17,11 @@
 package com.stellaris.script;
 
 import com.stellaris.Type;
-import java.io.Reader;
-import javax.script.ScriptEngine;
 
 /**
  *
  * @author donizyo
  */
-public class ScriptRange extends ScriptValue {
+public class ScriptNull extends ScriptValue {
 
-    private int minValue, maxValue;
-
-    public ScriptRange() {
-        super();
-    }
-
-    public ScriptRange(int min, int max) {
-        this();
-        minValue = min;
-        maxValue = max;
-    }
-
-    public void set(int min, int max) {
-        minValue = min;
-        maxValue = max;
-    }
-
-    public int getMin() {
-        return minValue;
-    }
-
-    public int getMax() {
-        return maxValue;
-    }
-
-    protected Type getType() {
-        return Type.RANGE;
-    }
-
-    public void parse(String s) {
-        throw new UnsupportedOperationException();
-    }
 }

@@ -17,6 +17,7 @@
 package com.stellaris;
 
 import com.stellaris.mod.ModLoader;
+import com.stellaris.script.SimpleEngine;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
@@ -29,7 +30,7 @@ import java.util.Queue;
  *
  * @author donizyo
  */
-public class Stellaris {
+public class Stellaris extends SimpleEngine {
 
     private static final String[] BLACKLIST_ALL = {
         "common\\HOW_TO_MAKE_NEW_SHIPS.txt",
@@ -109,7 +110,7 @@ public class Stellaris {
                     System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
                 }
                 try {
-                    script = ScriptFile.newInstance(file);
+                    script = ScriptFile.newInstance(file, getContext());
                 } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
                     System.err.format("[ERROR] Found at file \"%s\"%n", filename);
                     continue;

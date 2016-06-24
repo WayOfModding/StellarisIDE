@@ -22,6 +22,7 @@ import com.stellaris.script.ScriptFloat;
 import com.stellaris.script.ScriptHSVColor;
 import com.stellaris.script.ScriptInteger;
 import com.stellaris.script.ScriptList;
+import com.stellaris.script.ScriptNull;
 import com.stellaris.script.ScriptRGBColor;
 import com.stellaris.script.ScriptRange;
 import com.stellaris.script.ScriptReference;
@@ -44,15 +45,11 @@ import javax.script.*;
  *
  * @author donizyo
  */
-public class ScriptFile {
+public class ScriptFile extends ScriptValue {
 
     private ScriptParser parser;
     private boolean isCore;
-    private ScriptValue cache;
-
-    public static ScriptFile newInstance(File file) {
-        return newInstance(file, null);
-    }
+    private ScriptContext context;
 
     public static ScriptFile newInstance(File file, ScriptContext context) {
         try {
@@ -86,7 +83,8 @@ public class ScriptFile {
     private ScriptFile(ScriptParser parser, boolean isCoreFile, ScriptContext context) {
         this.parser = parser;
         this.isCore = isCoreFile;
-        analyze(context);
+        this.context = context;
+        analyze();
     }
 
     private ScriptFile(File file, ScriptContext context) throws IOException {
@@ -97,11 +95,11 @@ public class ScriptFile {
         this(new ScriptParser(reader), false, context);
     }
 
-    private void analyze(ScriptContext context) {
+    private void analyze() {
         int res;
 
         try {
-            res = analyze(null, 0, context);
+            res = analyze(null, 0);
             if (res != 0) {
                 throw new AssertionError(res);
             }
@@ -111,24 +109,37 @@ public class ScriptFile {
         }
     }
 
-    public void put(ScriptContext context, Field field, ScriptValue value) {
+    public void put(Field field, ScriptValue value) {
         Bindings bindings;
         Field parent;
         String fieldName;
+        Object obj;
+        ScriptValue old;
 
         bindings = getBindings(context);
         if (bindings == null) {
             throw new NullPointerException();
         }
+        if (field == null) {
+            throw new UnsupportedOperationException("Accessing ScriptFile as ScriptValue");
+        }
         parent = field.getParent();
         fieldName = field.getName();
         if (parent != null) {
-            bindings = (ScriptStruct) get(context, parent);
+            bindings = (ScriptStruct) get(parent);
+        }
+        if (value == null) {
+            value = new ScriptNull();
+        }
+        obj = bindings.get(fieldName);
+        if (obj != null && obj instanceof ScriptValue) {
+            old = (ScriptValue) obj;
+            value.updateTypeInfo(old);
         }
         bindings.put(fieldName, value);
     }
 
-    public ScriptValue get(ScriptContext context, Field field) {
+    public ScriptValue get(Field field) {
         Stack<String> stack;
         Field parent;
         String name;
@@ -189,7 +200,7 @@ public class ScriptFile {
         return value;
     }
 
-    private int analyze(Field parent, int state, ScriptContext context) {
+    private int analyze(Field parent, int state) {
         String token, key;
         List<String> tokens;
         Field field;
@@ -198,6 +209,8 @@ public class ScriptFile {
         Patterns patterns;
         int newstate;
         int min, max;
+        ScriptList<ScriptValue> scriptList;
+        ScriptColor scriptColor;
 
         if (DEBUG) {
             System.err.format("[PARSE]\tparent=%s, state=%d%n",
@@ -212,14 +225,12 @@ public class ScriptFile {
             }
             // return
             if ("}".equals(token)) {
-                put(context, parent, cache);
+                //put(parent, cache); cache = null;
                 return --state;
             }
             {
-                if (handleColorList(token)) {
+                if (handleColorList(parent, token)) {
                     //type = Type.COLORLIST;
-                    put(context, parent, cache);
-                    cache = null;
                     return --state;
                 } else {
                     key = token;
@@ -234,14 +245,14 @@ public class ScriptFile {
 
                 if (isList) {
                     // list entries: key, token, ...
-                    cache = new ScriptList<>(
+                    scriptList = new ScriptList<>(
                             ScriptValue.parseString(key)
                     );
-                    if (handlePlainList(token)) {
+                    if (handlePlainList(scriptList, token)) {
                         //type = Type.LIST;
                         //put(parent, type);
-                        put(context, parent, cache);
-                        cache = null;
+                        put(parent, scriptList);
+                        scriptList = null;
                         return --state;
                     } else {
                         throw new AssertionError();
@@ -253,9 +264,9 @@ public class ScriptFile {
                     patterns = checkColorToken(token);
                     if (patterns != null) {
                         //type = 
-                        handleColorToken(patterns);
-                        put(context, field, cache);
-                        cache = null;
+                        scriptColor = handleColorToken(patterns);
+                        put(field, scriptColor);
+                        scriptColor = null;
                     } else if ("{".equals(token)) {
                         tokens = parser.peek(7);
                         // { -> min = INTEGER max = INTEGER }
@@ -270,11 +281,11 @@ public class ScriptFile {
                             parser.discard(2);
                             token = parser.next();
                             max = Integer.parseInt(token);
-                            put(context, field, new ScriptRange(min, max));
+                            put(field, new ScriptRange(min, max));
                         } else {
                             // add 1 each time a struct is found
-                            put(context, field, new ScriptStruct());
-                            newstate = analyze(field, state + 1, context);
+                            put(field, new ScriptStruct());
+                            newstate = analyze(field, state + 1);
                             if (newstate != state) {
                                 throw new AssertionError(String.format("old_state=%d, new_state=%d", state, newstate));
                             }
@@ -290,28 +301,28 @@ public class ScriptFile {
                              */
                         }
                     } else if ("yes".equals(token)) {
-                        put(context, field, new ScriptBoolean(true));
+                        put(field, new ScriptBoolean(true));
                     } else if ("no".equals(token)) {
                         //type = Type.BOOLEAN;
-                        put(context, field, new ScriptBoolean(false));
+                        put(field, new ScriptBoolean(false));
                     } else {
                         try {
                             // integer
-                            put(context, field, new ScriptInteger(Integer.parseInt(token)));
+                            put(field, new ScriptInteger(Integer.parseInt(token)));
                             //type = Type.INTEGER;
                         } catch (NumberFormatException e1) {
                             // float
                             try {
-                                put(context, field, new ScriptFloat(Float.parseFloat(token)));
+                                put(field, new ScriptFloat(Float.parseFloat(token)));
                                 //type = Type.FLOAT;
                             } catch (NumberFormatException e2) {
                                 if (token.startsWith("\"")
                                         && token.endsWith("\"")) {
                                     //type = Type.STRING;
-                                    put(context, field, new ScriptString(token));
+                                    put(field, new ScriptString(token));
                                 } else {
                                     //type = Type.VARIABLE;
-                                    put(context, field, new ScriptReference(token));
+                                    put(field, new ScriptReference(token));
                                 }
                             }
                         }
@@ -341,7 +352,7 @@ public class ScriptFile {
         return bindings;
     }
 
-    private boolean handleColorList(String token) {
+    private boolean handleColorList(Field parent, String token) {
         final int len = 5;
         Patterns patterns;
         ScriptColor color;
@@ -377,7 +388,7 @@ public class ScriptFile {
             break;
         }
 
-        cache = colorList;
+        put(parent, colorList);
         return true;
     }
 
@@ -436,15 +447,12 @@ public class ScriptFile {
         return patterns;
     }
 
-    private boolean handlePlainList(String token) {
-        ScriptList<ScriptValue> list;
-
+    private boolean handlePlainList(ScriptList list, String token) {
         // handle single-element list
         if ("}".equals(token)) {
             return true;
         }
 
-        list = (ScriptList<ScriptValue>) cache;
         list.add(ScriptValue.parseString(token));
         // handle multiple-element list
         while (true) {

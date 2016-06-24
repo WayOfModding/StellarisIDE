@@ -16,6 +16,7 @@
  */
 package com.stellaris.script;
 
+import com.stellaris.Type;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -45,6 +46,14 @@ public class ScriptList<T extends ScriptValue>
 
     public ScriptList(T... ts) {
         this(Arrays.asList(ts));
+    }
+
+    protected Type getType() {
+        if (!list.isEmpty()
+                && Type.COLOR.equals(list.iterator().next().getType())) {
+            return Type.COLORLIST;
+        }
+        return Type.LIST;
     }
 
     public int size() {

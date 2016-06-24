@@ -16,6 +16,7 @@
  */
 package com.stellaris.script;
 
+import com.stellaris.Type;
 import javax.script.ScriptEngine;
 
 /**
@@ -33,6 +34,10 @@ public class ScriptString extends ScriptValue {
 
     public void set(String newValue) {
         strValue = newValue;
+    }
+
+    protected Type getType() {
+        return Type.STRING;
     }
 
     public String get() {

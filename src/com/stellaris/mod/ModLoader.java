@@ -22,6 +22,7 @@ import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptParser;
 import com.stellaris.Stellaris;
 import com.stellaris.TokenException;
+import com.stellaris.script.SimpleEngine;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
@@ -35,7 +36,7 @@ import java.util.Queue;
  *
  * @author donizyo
  */
-public class ModLoader {
+public class ModLoader extends SimpleEngine {
 
     private static final String DEFAULT_STELLARIS_DIRECTORY;
 
@@ -98,7 +99,7 @@ public class ModLoader {
                 file = files.remove();
                 filename = DigestStore.getPath(file);
                 try {
-                    script = ScriptFile.newInstance(file);
+                    script = ScriptFile.newInstance(file, getContext());
                     validateScript(script);
                 } catch (RuntimeException ex) {
                     throw new RuntimeException(filename, ex);

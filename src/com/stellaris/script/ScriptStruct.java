@@ -16,6 +16,7 @@
  */
 package com.stellaris.script;
 
+import com.stellaris.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,10 @@ public class ScriptStruct extends ScriptValue implements Bindings {
 
     public ScriptStruct() {
         super();
+    }
+
+    protected Type getType() {
+        return Type.STRUCT;
     }
 
     @Override

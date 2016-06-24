@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 public class FieldTypeBinding {
 
     private static final String DEFAULT_FILE = "fieldtype.ini";
-    private static final Comparator<Type> DEFAULT_COMPARATOR = new TypeComparator();
+    public static final Comparator<Type> DEFAULT_COMPARATOR = new TypeComparator();
     private final Map<Field, SortedSet<Type>> map;
 
     public FieldTypeBinding() {

@@ -16,6 +16,7 @@
  */
 package com.stellaris.script;
 
+import com.stellaris.Type;
 import javax.script.ScriptEngine;
 
 /**
@@ -29,6 +30,10 @@ public class ScriptReference extends ScriptValue {
     public ScriptReference(String value) {
         super();
         refValue = value;
+    }
+
+    protected Type getType() {
+        return Type.VARIABLE;
     }
 
     public String get() {

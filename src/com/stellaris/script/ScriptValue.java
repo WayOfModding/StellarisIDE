@@ -16,7 +16,10 @@
  */
 package com.stellaris.script;
 
+import com.stellaris.FieldTypeBinding;
 import com.stellaris.Type;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.script.ScriptEngine;
 
 /**
@@ -25,9 +28,43 @@ import javax.script.ScriptEngine;
  */
 public abstract class ScriptValue {
 
-    protected Type type;
+    protected Set<Type> type;
 
     public ScriptValue() {
+    }
+
+    /**
+     * Invoked by ScriptValue.updateTypeInfo
+     *
+     * @return
+     */
+    protected Type getType() {
+        return null;
+    }
+
+    public void updateTypeInfo(ScriptValue oldValue) {
+        Set<Type> set;
+        Type t;
+
+        if (oldValue == null) {
+            return;
+        }
+        if (type == null) {
+            type = new TreeSet<>(FieldTypeBinding.DEFAULT_COMPARATOR);
+            t = getType();
+            if (t != null) {
+                type.add(t);
+            }
+        }
+        set = oldValue.type;
+        if (set == null || set.isEmpty()) {
+            t = oldValue.getType();
+            if (t != null) {
+                type.add(t);
+            }
+        } else {
+            type.addAll(set);
+        }
     }
 
     public static ScriptValue parseString(String str) {

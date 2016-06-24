@@ -16,6 +16,7 @@
  */
 package com.stellaris.script;
 
+import com.stellaris.Type;
 import javax.script.ScriptEngine;
 
 /**
@@ -39,6 +40,10 @@ public class ScriptHSVColor extends ScriptColor {
 
     public String getColorSpace() {
         return COLOR_SPACE_HSV;
+    }
+
+    protected Type getType() {
+        return Type.COLOR;
     }
 
     public String toString() {

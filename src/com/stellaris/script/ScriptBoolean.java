@@ -17,6 +17,7 @@
 package com.stellaris.script;
 
 import com.stellaris.TokenException;
+import com.stellaris.Type;
 
 /**
  *
@@ -50,6 +51,10 @@ public class ScriptBoolean extends ScriptValue {
                 return;
         }
         throw new TokenException(s);
+    }
+
+    protected Type getType() {
+        return Type.BOOLEAN;
     }
 
     public String toString() {
