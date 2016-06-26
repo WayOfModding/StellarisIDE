@@ -28,6 +28,7 @@ import com.stellaris.util.DigestStore;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -98,10 +99,10 @@ public class ModLoader extends SimpleEngine {
             while (!files.isEmpty()) {
                 file = files.remove();
                 filename = DigestStore.getPath(file);
-                try {
-                    script = ScriptFile.newInstance(file, getContext());
+                try (FileReader reader = new FileReader(file);) {
+                    script = ScriptFile.newInstance(reader, getContext());
                     validateScript(script);
-                } catch (RuntimeException ex) {
+                } catch (Exception ex) {
                     throw new RuntimeException(filename, ex);
                 }
             }
