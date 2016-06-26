@@ -16,11 +16,10 @@
  */
 package com.stellaris.script;
 
-import com.stellaris.FieldTypeBinding;
 import com.stellaris.Type;
+import com.stellaris.TypeComparator;
 import java.util.Set;
 import java.util.TreeSet;
-import javax.script.ScriptEngine;
 
 /**
  *
@@ -50,7 +49,7 @@ public abstract class ScriptValue {
             return;
         }
         if (type == null) {
-            type = new TreeSet<>(FieldTypeBinding.DEFAULT_COMPARATOR);
+            type = new TreeSet<>(TypeComparator.DEFAULT_COMPARATOR);
             t = getType();
             if (t != null) {
                 type.add(t);
