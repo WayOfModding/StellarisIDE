@@ -66,6 +66,10 @@ public abstract class ScriptValue {
         }
     }
 
+    public Set<Type> getTypeSet() {
+        return type;
+    }
+
     public static ScriptValue parseString(String str) {
         ScriptValue value;
 
