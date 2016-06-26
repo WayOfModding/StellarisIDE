@@ -69,6 +69,9 @@ public class ScriptFile extends ScriptValue {
         File root;
 
         main = Stellaris.getDefault();
+        if (main == null) {
+            return true;
+        }
         root = main.getRootDirectory();
         return isCoreFile(file, root);
     }
@@ -487,11 +490,13 @@ public class ScriptFile extends ScriptValue {
         sparent = args[0];
         sname = args[1];
         {
-            st = new Stellaris();
-            Stellaris.setDefault(st);
-            st.init(sparent, true);
-            engine = st.getScriptEngine();
-            context = engine.getContext();
+            //st = new Stellaris();
+            //Stellaris.setDefault(st);
+            //st.init(sparent, true);
+            //engine = st.getScriptEngine();
+            //context = engine.getContext();
+            context = new SimpleScriptContext();
+            context.setBindings(new SimpleBindings(), ScriptContext.GLOBAL_SCOPE);
         }
         dir = new File(sparent);
         file = new File(dir, sname);

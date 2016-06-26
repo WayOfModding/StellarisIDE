@@ -87,6 +87,7 @@ public class Patterns {
                 //System.out.format("Unmatch @[%d]:%s%n", i, s);
                 return false;
             }
+            m = p.matcher(s);
             if (output != null) {
                 m.find();
                 output.add(m.group());
