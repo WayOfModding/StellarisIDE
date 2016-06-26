@@ -360,7 +360,6 @@ public class ScriptFile extends ScriptValue {
     }
 
     private boolean handleColorList(Field parent, String token) {
-        final int len = 5;
         Patterns patterns;
         ScriptColor color;
         ScriptList<ScriptColor> colorList;
@@ -376,8 +375,6 @@ public class ScriptFile extends ScriptValue {
         while (true) {
             color = handleColorToken(patterns);
             colorList.add(color);
-            // prevent loitering
-            parser.discard(len);
 
             token = parser.next();
             patterns = checkColorToken(token);
