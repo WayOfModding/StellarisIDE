@@ -17,9 +17,12 @@
 package com.stellaris.script;
 
 import com.stellaris.Type;
+import java.lang.ref.SoftReference;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.SimpleBindings;
@@ -34,11 +37,18 @@ public class ScriptStruct extends ScriptValue implements Bindings {
 
     public ScriptStruct() {
         super();
-        structValue = new SimpleBindings();
+        structValue = new SimpleBindings(new TreeMap<>());
     }
 
     protected Type getType() {
         return Type.STRUCT;
+    }
+
+    public Set<String> getChildren() {
+        Set<String> res;
+
+        res = structValue.keySet();
+        return res;
     }
 
     @Override

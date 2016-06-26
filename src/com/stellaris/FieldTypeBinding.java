@@ -55,12 +55,22 @@ public class FieldTypeBinding {
         Set<String> keySet;
         ScriptValue value;
         Set<Type> set;
+        ScriptStruct struct;
+        Set<String> children;
 
         keySet = map.keySet();
         for (String key : keySet) {
             value = map.get(key);
             set = value.getTypeSet();
-            out.format("%s=%s%n", key, set);
+            if (value instanceof ScriptStruct) {
+                struct = (ScriptStruct) value;
+                children = struct.getChildren();
+                out.format("%s=%s{%s}%n",
+                        key, set, children);
+            } else {
+                out.format("%s=%s%n",
+                        key, set);
+            }
         }
     }
 }
