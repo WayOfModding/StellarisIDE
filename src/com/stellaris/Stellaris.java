@@ -21,12 +21,14 @@ import com.stellaris.script.SimpleEngine;
 import com.stellaris.script.SimpleFactory;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
-import java.io.File;
+import java.io.*;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.util.NoSuchElementException;
 import java.util.Queue;
-import javax.script.ScriptEngine;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.script.*;
 
 /**
  *
@@ -146,6 +148,9 @@ public class Stellaris extends SimpleFactory {
     public static void main(String[] args) {
         String path;
         Stellaris st;
+        ScriptEngine se;
+        ScriptContext sc;
+        FieldTypeBinding ftb;
 
         if (args.length < 1) {
             printHelpMessage();
@@ -160,7 +165,16 @@ public class Stellaris extends SimpleFactory {
             st = new Stellaris();
             Stellaris.setDefault(st);
             st.init(path, true);
-            ModLoader.getModLoaders();
+            //ModLoader.getModLoaders();
+            se = st.scriptEngine;
+            sc = se.getContext();
+            ftb = new FieldTypeBinding(sc);
+            try (FileOutputStream fout = new FileOutputStream("ftb.log");
+                    PrintStream out = new PrintStream(fout);) {
+                ftb.list(out);
+            } catch (IOException ex) {
+                Logger.getLogger(Stellaris.class.getName()).log(Level.SEVERE, null, ex);
+            }
         } finally {
             if (st != null) {
                 st.digestStore.store();

@@ -48,13 +48,7 @@ public abstract class ScriptValue {
         if (oldValue == null) {
             return;
         }
-        if (type == null) {
-            type = new TreeSet<>(TypeComparator.DEFAULT_COMPARATOR);
-            t = getType();
-            if (t != null) {
-                type.add(t);
-            }
-        }
+        getTypeSet();
         set = oldValue.type;
         if (set == null || set.isEmpty()) {
             t = oldValue.getType();
@@ -67,6 +61,15 @@ public abstract class ScriptValue {
     }
 
     public Set<Type> getTypeSet() {
+        Type t;
+
+        if (type == null) {
+            type = new TreeSet<>(TypeComparator.DEFAULT_COMPARATOR);
+            t = getType();
+            if (t != null) {
+                type.add(t);
+            }
+        }
         return type;
     }
 

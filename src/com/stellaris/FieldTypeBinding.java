@@ -17,6 +17,7 @@
 package com.stellaris;
 
 import com.stellaris.script.*;
+import java.io.PrintStream;
 import java.util.*;
 import javax.script.*;
 
@@ -50,7 +51,7 @@ public class FieldTypeBinding {
         }
     }
 
-    public void list() {
+    public void list(PrintStream out) {
         Set<String> keySet;
         ScriptValue value;
         Set<Type> set;
@@ -59,7 +60,7 @@ public class FieldTypeBinding {
         for (String key : keySet) {
             value = map.get(key);
             set = value.getTypeSet();
-            System.out.format("%s=%s%n", key, set);
+            out.format("%s=%s%n", key, set);
         }
     }
 }
