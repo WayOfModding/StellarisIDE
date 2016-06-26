@@ -31,12 +31,17 @@ public class FieldTypeBinding {
 
     public FieldTypeBinding(ScriptContext context) {
         Bindings bindings;
+
+        map = new TreeMap<>();
+        bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
+        loadFromMemory(bindings);
+    }
+
+    private void loadFromMemory(Bindings bindings) {
         Set<String> keySet;
         Object obj;
         ScriptValue value;
 
-        map = new TreeMap<>();
-        bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
         keySet = bindings.keySet();
         for (String key : keySet) {
             obj = bindings.get(key);
@@ -48,6 +53,9 @@ public class FieldTypeBinding {
             }
             value = (ScriptValue) obj;
             map.put(key, value);
+            if (value instanceof ScriptStruct) {
+                loadFromMemory((ScriptStruct) value);
+            }
         }
     }
 
@@ -65,8 +73,12 @@ public class FieldTypeBinding {
             if (value instanceof ScriptStruct) {
                 struct = (ScriptStruct) value;
                 children = struct.getChildren();
-                out.format("%s=%s{%s}%n",
-                        key, set, children);
+                out.format("%s=%s{%n",
+                        key, set);
+                for (String child : children) {
+                    out.format("\t%s%n", child);
+                }
+                out.format("}%n");
             } else {
                 out.format("%s=%s%n",
                         key, set);
