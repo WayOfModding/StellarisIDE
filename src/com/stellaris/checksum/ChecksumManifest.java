@@ -213,13 +213,14 @@ public class ChecksumManifest {
         Checksum checksum;
         String algorithm;
         Digest result;
+        BinaryFileFilter bff;
 
         keyset = map.keySet();
         //checksum = new CRC32();
         //checksum = new Adler32();
-        //checksum = null;
-        checksum = new BSD();
-        algorithm = "SHA-512";
+        checksum = null;
+        //checksum = new BSD();
+        algorithm = "MD5";
         result = null;
         for (String key : keyset) {
             file = new File(root, key);
@@ -253,6 +254,18 @@ public class ChecksumManifest {
                         result = digest(file, checksum);
                     }
                 }
+            }
+        }
+
+        bff = new BinaryFileFilter();
+        root.listFiles(bff);
+        files = bff.getFiles();
+        while (!files.isEmpty()) {
+            file = files.remove();
+            if (checksum == null && algorithm != null) {
+                result = digest(file, algorithm);
+            } else {
+                result = digest(file, checksum);
             }
         }
 
