@@ -122,8 +122,10 @@ public class Digest {
         String path;
         Digest digest;
         String result;
+        MessageDigest md;
 
         if (args.length < 1) {
+            
             return;
         }
         path = args[0];

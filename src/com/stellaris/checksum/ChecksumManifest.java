@@ -66,7 +66,18 @@ public class ChecksumManifest {
     private Digest digest(File file, Checksum checksum) {
         Digest digest;
 
-        digest = new Digest(file, checksum);
+        if (checksum == null) {
+            digest = new Digest(file);
+        } else {
+            digest = new Digest(file, checksum);
+        }
+        return digest;
+    }
+
+    private Digest digest(File file, String algorithm) {
+        Digest digest;
+
+        digest = new Digest(file, algorithm);
         return digest;
     }
 
@@ -200,9 +211,16 @@ public class ChecksumManifest {
         Queue<File> files;
         File dir;
         Checksum checksum;
+        String algorithm;
+        Digest result;
 
         keyset = map.keySet();
-        checksum = new Adler32();
+        //checksum = new CRC32();
+        //checksum = new Adler32();
+        //checksum = null;
+        checksum = new BSD();
+        algorithm = "SHA-512";
+        result = null;
         for (String key : keyset) {
             file = new File(root, key);
             if (!file.isDirectory()) {
@@ -229,15 +247,26 @@ public class ChecksumManifest {
                     // retrieve a file
                     file = files.remove();
                     // digest a file
-                    digest(file, checksum);
+                    if (checksum == null && algorithm != null) {
+                        result = digest(file, algorithm);
+                    } else {
+                        result = digest(file, checksum);
+                    }
                 }
             }
         }
 
-        // test output
-        long value = checksum.getValue();
-        value &= 0xffff;
-        System.out.format("checksum=\"%x\"%n", value);
+        if (checksum == null) {
+            System.out.format("%s=\"%s\"%n",
+                    algorithm == null ? Digest.DEFAULT_ALGORITHM : algorithm,
+                    result.digest().toLowerCase());
+        } else {
+            // test output
+            long value = checksum.getValue();
+            //value &= 0xffff;
+            System.out.format("%s=\"%x\"%n",
+                    checksum.getClass().getSimpleName(), value);
+        }
     }
 
     public static void main(String[] args) {
