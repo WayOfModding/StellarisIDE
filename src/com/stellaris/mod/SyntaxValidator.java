@@ -16,11 +16,13 @@
  */
 package com.stellaris.mod;
 
-import com.stellaris.Field;
-import com.stellaris.FieldTypeBinding;
-import com.stellaris.ScriptFile;
 import com.stellaris.Type;
+import com.stellaris.script.ScriptValue;
+import com.stellaris.script.SimpleFactory;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
+import javax.script.Bindings;
 
 /**
  *
@@ -28,13 +30,7 @@ import java.util.Set;
  */
 public class SyntaxValidator {
 
-    private final FieldTypeBinding syntax;
-
-    public SyntaxValidator(FieldTypeBinding ftb) {
-        if (ftb == null || ftb.isEmpty()) {
-            throw new IllegalArgumentException("Stellaris instance is not initialized!");
-        }
-        syntax = ftb;
+    public SyntaxValidator() {
     }
 
     private boolean isValidType(Type type, Set<Type> bindset) {
@@ -90,27 +86,25 @@ public class SyntaxValidator {
         return false;
     }
 
-    public void validate(ScriptFile script) {
-        Set<Field> keyset;
+    public void validate(ScriptValue value) {
+        SimpleFactory factory;
+        Bindings bindings;
+        Set<String> keyset;
         Set<Type> typeset;
         Set<Type> bindset;
         String fieldName;
 
-        if (script == null) {
+        if (value == null) {
             throw new NullPointerException();
         }
-        keyset = script.keyset();
-        for (Field key : keyset) {
-            bindset = syntax.getAll(key);
-            if (bindset == null) {
-                //throw new SyntaxException(String.format("Variable \"%s\" is invalid!", key));
-                continue;
-            }
-            typeset = script.getAll(key);
-            if (typeset == null) {
-                fieldName = key.toString();
-                throw new AssertionError(String.format("Field \"%s\" has no type binding!", fieldName));
-            }
+        factory = SimpleFactory.getEngineFactory();
+        bindings = factory.getBindings();
+        keyset = bindings.keySet();
+        for (String key : keyset) {
+            //bindset = syntax.getAll(key);
+            bindset = new TreeSet<>();
+            //typeset = script.getAll(key);
+            typeset = new HashSet<>(16);
             for (Type type : typeset) {
                 //if (!bindset.contains(type)) {
                 if (!isValidType(type, bindset)) {

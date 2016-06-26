@@ -17,12 +17,12 @@
 package com.stellaris.mod;
 
 import com.stellaris.DirectoryFilter;
-import com.stellaris.FieldTypeBinding;
 import com.stellaris.ScriptFile;
 import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptParser;
 import com.stellaris.Stellaris;
 import com.stellaris.TokenException;
+import com.stellaris.script.SimpleEngine;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
@@ -30,7 +30,6 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -38,7 +37,7 @@ import java.util.Queue;
  *
  * @author donizyo
  */
-public class ModLoader {
+public class ModLoader extends SimpleEngine {
 
     private static final String DEFAULT_STELLARIS_DIRECTORY;
 
@@ -100,10 +99,10 @@ public class ModLoader {
             while (!files.isEmpty()) {
                 file = files.remove();
                 filename = DigestStore.getPath(file);
-                try {
-                    script = ScriptFile.newInstance(file);
+                try (FileReader reader = new FileReader(file);) {
+                    script = ScriptFile.newInstance(reader, getContext());
                     validateScript(script);
-                } catch (RuntimeException ex) {
+                } catch (Exception ex) {
                     throw new RuntimeException(filename, ex);
                 }
             }
@@ -170,15 +169,13 @@ public class ModLoader {
 
     private void validateScript(ScriptFile script) {
         Stellaris stellaris;
-        FieldTypeBinding ftb;
         SyntaxValidator syntaxValidator;
 
         stellaris = Stellaris.getDefault();
         if (stellaris == null) {
             throw new NullPointerException("Stellaris instance is provided!");
         }
-        ftb = stellaris.getAllFields();
-        syntaxValidator = new SyntaxValidator(ftb);
+        syntaxValidator = new SyntaxValidator();
         syntaxValidator.validate(script);
     }
 

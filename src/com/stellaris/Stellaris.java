@@ -17,19 +17,24 @@
 package com.stellaris;
 
 import com.stellaris.mod.ModLoader;
+import com.stellaris.script.SimpleEngine;
+import com.stellaris.script.SimpleFactory;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
-import java.io.File;
+import java.io.*;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.script.*;
 
 /**
  *
  * @author donizyo
  */
-public class Stellaris {
+public class Stellaris extends SimpleFactory {
 
     private static final String[] BLACKLIST_ALL = {
         "common\\HOW_TO_MAKE_NEW_SHIPS.txt",
@@ -44,13 +49,17 @@ public class Stellaris {
     };
 
     private static Stellaris stellaris;
-
     private final DigestStore digestStore;
-    private final FieldTypeBinding fields;
+    private final ScriptEngine scriptEngine;
+    private File dirRoot;
 
     public Stellaris() {
-        fields = new FieldTypeBinding();
         digestStore = new DigestStore();
+        scriptEngine = super.getScriptEngine();
+    }
+
+    public File getRootDirectory() {
+        return dirRoot;
     }
 
     public static void setDefault(Stellaris val) {
@@ -62,7 +71,6 @@ public class Stellaris {
     }
 
     public void init(String path, boolean forceUpdate) {
-        File root;
         DirectoryFilter df;
         ScriptFilter sf;
         Queue<File> files, dirs;
@@ -70,9 +78,12 @@ public class Stellaris {
         ScriptFile script;
         String filename;
 
-        root = new File(path);
+        dirRoot = new File(path);
+        if (!dirRoot.isDirectory()) {
+            throw new RuntimeException();
+        }
         df = new DirectoryFilter();
-        root.listFiles(df);
+        dirRoot.listFiles(df);
         sf = new ScriptFilter(df.getDirs());
         dirs = sf.getDirs();
 
@@ -103,7 +114,7 @@ public class Stellaris {
                     System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
                 }
                 try {
-                    script = ScriptFile.newInstance(file);
+                    script = ScriptFile.newInstance(file, scriptEngine.getContext());
                 } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
                     System.err.format("[ERROR] Found at file \"%s\"%n", filename);
                     continue;
@@ -115,13 +126,8 @@ public class Stellaris {
                             ex
                     );
                 }
-                fields.putAll(script);
             }
         }
-    }
-
-    public FieldTypeBinding getAllFields() {
-        return fields;
     }
 
     private static void printCopyrightMessage() {
@@ -142,6 +148,9 @@ public class Stellaris {
     public static void main(String[] args) {
         String path;
         Stellaris st;
+        ScriptEngine se;
+        ScriptContext sc;
+        FieldTypeBinding ftb;
 
         if (args.length < 1) {
             printHelpMessage();
@@ -154,13 +163,21 @@ public class Stellaris {
         st = null;
         try {
             st = new Stellaris();
-            st.init(path, true);
             Stellaris.setDefault(st);
-            ModLoader.getModLoaders();
+            st.init(path, true);
+            //ModLoader.getModLoaders();
+            se = st.scriptEngine;
+            sc = se.getContext();
+            ftb = new FieldTypeBinding(sc);
+            try (FileOutputStream fout = new FileOutputStream("ftb.log");
+                    PrintStream out = new PrintStream(fout);) {
+                ftb.list(out);
+            } catch (IOException ex) {
+                Logger.getLogger(Stellaris.class.getName()).log(Level.SEVERE, null, ex);
+            }
         } finally {
             if (st != null) {
                 st.digestStore.store();
-                FieldTypeBinding.store(st.fields);
             }
         }
     }

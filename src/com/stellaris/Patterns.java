@@ -59,11 +59,17 @@ public class Patterns {
     }
 
     public boolean matches(List<String> input) {
+        return matches(input, null);
+    }
+
+    public boolean matches(List<String> input, List<String> output) {
         Pattern p;
         Matcher m;
         String s;
         int i;
         int len;
+        int slen;
+        int end;
 
         if (input == null) {
             throw new NullPointerException();
@@ -79,8 +85,17 @@ public class Patterns {
             }
             p = patterns[i];
             m = p.matcher(s);
-            if (!m.matches()) {
-                //System.out.format("Unmatch @[%d]:%s%n", i, s);
+            if (output != null) {
+                if (!m.find()) {
+                    return false;
+                }
+                end = m.end();
+                slen = s.length();
+                if (end != slen) {
+                    return false;
+                }
+                output.add(m.group());
+            } else if (!m.matches()) {
                 return false;
             }
         }

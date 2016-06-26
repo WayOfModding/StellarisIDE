@@ -36,6 +36,14 @@ public final class Field {
         this.name = name;
     }
 
+    public Field getParent() {
+        return parent;
+    }
+    
+    public String getParentName() {
+        return parent == null ? null : parent.getName();
+    }
+
     public String getName() {
         return name;
     }
@@ -61,7 +69,7 @@ public final class Field {
         String pn;
 
         hash = 5;
-        pn = parent == null ? null : parent.getName();
+        pn = getParentName();
         hash = 89 * hash + Objects.hashCode(pn);
         hash = 89 * hash + Objects.hashCode(name);
         return hash;
@@ -76,7 +84,6 @@ public final class Field {
     }
 
     public boolean equals(Field field) {
-        Field p;
         String mp;
         String mn;
         String fp;
@@ -89,9 +96,8 @@ public final class Field {
             return false;
         }
 
-        p = field.parent;
-        mp = parent == null ? null : parent.getName();
-        fp = p == null ? null : p.getName();
+        mp = getParentName();
+        fp = field.getParentName();
         mn = getName();
         fn = field.getName();
 

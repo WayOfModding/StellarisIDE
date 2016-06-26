@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.Checksum;
 import javax.xml.bind.DatatypeConverter;
 
 /**
@@ -31,12 +34,28 @@ import javax.xml.bind.DatatypeConverter;
 public class Digest {
 
     public static final String DEFAULT_ALGORITHM = "MD5";
-    private final String digest;
+    private byte[] result;
 
     public Digest(File file) {
+        this(file, DEFAULT_ALGORITHM);
+    }
+
+    public Digest(File file, String algorithm) {
+        this(file, newMessageDigest(algorithm));
+    }
+
+    private static MessageDigest newMessageDigest(String algorithm) {
+        try {
+            return MessageDigest.getInstance(algorithm);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+    
+    public Digest(File file, Checksum cs) {
         int bufsize;
         byte[] buffer;
-        MessageDigest md;
+        int len;
 
         if (file == null) {
             throw new NullPointerException();
@@ -46,18 +65,33 @@ public class Digest {
         }
         bufsize = 1024;
         buffer = new byte[bufsize];
-        try {
-            md = MessageDigest.getInstance(DEFAULT_ALGORITHM);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IllegalStateException(ex);
+        try (FileInputStream finput = new FileInputStream(file);) {
+            while ((len = finput.read(buffer)) > 0) {
+                cs.update(buffer, 0, len);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
+    }
+
+    public Digest(File file, MessageDigest md) {
+        int bufsize;
+        byte[] buffer;
+
+        if (file == null) {
+            throw new NullPointerException();
+        }
+        if (!file.isFile()) {
+            throw new IllegalArgumentException();
+        }
+        bufsize = 1024;
+        buffer = new byte[bufsize];
         try (FileInputStream finput = new FileInputStream(file);
                 DigestInputStream dinput = new DigestInputStream(finput, md);) {
             while (dinput.read(buffer) > 0);
-            buffer = md.digest();
-            digest = toString(buffer);
+            result = md.digest();
         } catch (IOException ex) {
-            throw new IllegalStateException(ex);
+            throw new RuntimeException(ex);
         }
     }
 
@@ -69,16 +103,29 @@ public class Digest {
         this(new File(path));
     }
 
+    public byte[] getResult() {
+        return result;
+    }
+
     public String digest() {
+        String digest;
+
+        digest = toString(result);
         return digest;
+    }
+
+    public String toString() {
+        return digest();
     }
 
     public static void main(String[] args) {
         String path;
         Digest digest;
         String result;
+        MessageDigest md;
 
         if (args.length < 1) {
+            
             return;
         }
         path = args[0];

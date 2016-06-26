@@ -16,10 +16,13 @@
  */
 package com.stellaris;
 
+import com.stellaris.util.SoloSet;
 import java.io.File;
 import java.io.FileFilter;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 
 /**
  *
@@ -27,22 +30,41 @@ import java.util.Queue;
  */
 public class ScriptFilter implements FileFilter {
 
-    private static final String SUFFIX_TXT = ".txt";
-    private static final String SUFFIX_GUI = ".gui";
-    private static final String SUFFIX_GFX = ".gfx";
-    private static final String[] SUFFIXES = {
-        SUFFIX_TXT, SUFFIX_GUI, SUFFIX_GFX
-    };
+    private static final Set<String> DEFAULT_SUFFIXES;
 
-    private final Queue<File> files;
-    private final Queue<File> dirs;
+    static {
+        DEFAULT_SUFFIXES = new HashSet<>(4);
+        DEFAULT_SUFFIXES.add(".txt");
+        DEFAULT_SUFFIXES.add(".gui");
+        DEFAULT_SUFFIXES.add(".gfx");
+    }
+
+    private final Set<String> ext;
+    protected final Queue<File> files;
+    protected final Queue<File> dirs;
 
     public ScriptFilter(Queue<File> init) {
+        this(DEFAULT_SUFFIXES, init);
+    }
+
+    public ScriptFilter(Set<String> suffixes, Queue<File> init) {
+        ext = suffixes;
         files = new LinkedList<>();
         dirs = new LinkedList<>();
         if (init != null) {
             dirs.addAll(init);
         }
+    }
+
+    public ScriptFilter(String suffix, Queue<File> init) {
+        this(toSet(suffix), init);
+    }
+
+    private static Set<String> toSet(String suffix) {
+        Set<String> suffixes;
+
+        suffixes = new SoloSet<>(suffix);
+        return suffixes;
     }
 
     public Queue<File> getFiles() {
@@ -61,7 +83,7 @@ public class ScriptFilter implements FileFilter {
             dirs.add(file);
         } else if (file.isFile()) {
             name = file.getName();
-            for (String suffix : SUFFIXES) {
+            for (String suffix : ext) {
                 if (name.endsWith(suffix)) {
                     files.add(file);
                     break;

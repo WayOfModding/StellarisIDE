@@ -43,8 +43,10 @@ public final class ScriptParser implements AutoCloseable {
         this(new BOMReader(file));
     }
 
-    public ScriptParser(BOMReader in) {
-        reader = in;
+    public ScriptParser(Reader in) {
+        reader = in instanceof BufferedReader
+                ? (BufferedReader) in
+                : new BufferedReader(in);
         deque = new LinkedList<>();
         fill();
         lineCounter = 0;
