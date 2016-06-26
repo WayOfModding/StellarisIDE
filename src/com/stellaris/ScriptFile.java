@@ -285,6 +285,8 @@ public class ScriptFile extends ScriptValue {
                             parser.discard(2);
                             token = parser.next();
                             max = Integer.parseInt(token);
+                            // discard the ending '}'
+                            parser.discard(1);
                             put(field, new ScriptRange(min, max));
                         } else {
                             // add 1 each time a struct is found
