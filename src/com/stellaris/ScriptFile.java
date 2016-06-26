@@ -70,6 +70,7 @@ public class ScriptFile extends ScriptValue {
 
         main = Stellaris.getDefault();
         if (main == null) {
+            System.err.format("[WARN] Stellaris instance is null!%n");
             return true;
         }
         root = main.getRootDirectory();
