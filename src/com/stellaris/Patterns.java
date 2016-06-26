@@ -68,6 +68,8 @@ public class Patterns {
         String s;
         int i;
         int len;
+        int slen;
+        int end;
 
         if (input == null) {
             throw new NullPointerException();
@@ -83,14 +85,18 @@ public class Patterns {
             }
             p = patterns[i];
             m = p.matcher(s);
-            if (!m.matches()) {
-                //System.out.format("Unmatch @[%d]:%s%n", i, s);
-                return false;
-            }
-            m = p.matcher(s);
             if (output != null) {
-                m.find();
+                if (!m.find()) {
+                    return false;
+                }
+                end = m.end();
+                slen = s.length();
+                if (end != slen) {
+                    return false;
+                }
                 output.add(m.group());
+            } else if (!m.matches()) {
+                return false;
             }
         }
         return true;
