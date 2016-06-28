@@ -16,116 +16,147 @@
  */
 package com.stellaris;
 
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  *
  * @author donizyo
  */
-public class Patterns {
+public abstract class Patterns {
 
-    private static final String SP_INTEGER = "\\d*";
-    private static final String SP_FLOAT = "\\d*(\\.\\d*)?";
-    public static final Patterns PS_RANGE
-            = compile("min", "=", SP_INTEGER, "max", "=", SP_INTEGER, "\\}");
-    public static final Patterns PS_COLOR_HSV
-            = compile("\\{", SP_FLOAT, SP_FLOAT, SP_FLOAT, "\\}");
-    public static final Patterns PS_COLOR_RGB
-            = compile("\\{", SP_INTEGER, SP_INTEGER, SP_INTEGER, "\\}");
+    public static final Patterns PS_RANGE = new Patterns() {
+        public boolean matches(List<String> input, List<String> output) {
+            int size;
+            Iterator<String> itr;
+            String str;
+            int counter;
 
-    private final Pattern[] patterns;
+            size = input.size();
+            if (size != 7) {
+                throw new IllegalArgumentException(Integer.toString(size));
+            }
+            itr = input.iterator();
 
-    private Patterns(Pattern[] ps) {
-        patterns = ps;
-    }
+            str = itr.next();
+            if (!"min".equals(str)) {
+                throw new TokenException(str);
+            }
 
-    public static Patterns compile(String... patterns) {
-        int len;
-        String str;
-        Pattern[] ps;
-        int i;
+            str = itr.next();
+            if (!"=".equals(str)) {
+                throw new TokenException(str);
+            }
 
-        len = patterns.length;
-        ps = new Pattern[len];
-        for (i = 0; i < len; i++) {
-            str = patterns[i];
-            ps[i] = Pattern.compile(str);
+            str = itr.next();
+            Integer.parseInt(str);
+            output.add(str);
+
+            str = itr.next();
+            if (!"max".equals(str)) {
+                throw new TokenException(str);
+            }
+
+            str = itr.next();
+            if (!"=".equals(str)) {
+                throw new TokenException(str);
+            }
+
+            str = itr.next();
+            Integer.parseInt(str);
+            output.add(str);
+
+            str = itr.next();
+            if (!"}".equals(str)) {
+                throw new TokenException(str);
+            }
+            return true;
         }
+    };
 
-        return new Patterns(ps);
+    public static final Patterns PS_COLOR_HSV = new Patterns() {
+        public boolean matches(List<String> input, List<String> output) {
+            int size;
+            Iterator<String> itr;
+            String str;
+            int counter;
+            float[] value;
+
+            size = input.size();
+            if (size != 6) {
+                throw new IllegalArgumentException(Integer.toString(size));
+            }
+            itr = input.iterator();
+            str = itr.next();
+            if (!"{".equals(str)) {
+                throw new TokenException();
+            }
+            counter = 0;
+            value = new float[4];
+            while (itr.hasNext()) {
+                str = itr.next();
+                if ("}".equals(str)) {
+                    break;
+                }
+                try {
+                    value[counter++] = Float.parseFloat(str);
+                    output.add(str);
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    throw new IllegalStateException("Too many entries", ex);
+                }
+            }
+            if (counter < 3) {
+                throw new IllegalStateException("Too few entries");
+            }
+            return true;
+        }
+    };
+
+    public static final Patterns PS_COLOR_RGB = new Patterns() {
+        public boolean matches(List<String> input, List<String> output) {
+            int size;
+            Iterator<String> itr;
+            String str;
+            int counter;
+            int[] value;
+
+            size = input.size();
+            if (size != 6) {
+                throw new IllegalArgumentException(Integer.toString(size));
+            }
+            itr = input.iterator();
+            str = itr.next();
+            if (!"{".equals(str)) {
+                throw new TokenException();
+            }
+            counter = 0;
+            value = new int[4];
+            while (itr.hasNext()) {
+                str = itr.next();
+                if ("}".equals(str)) {
+                    break;
+                }
+                try {
+                    value[counter++] = Integer.parseInt(str);
+                    output.add(str);
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    throw new IllegalStateException("Too many entries", ex);
+                }
+            }
+            if (counter < 3) {
+                throw new IllegalStateException("Too few entries");
+            }
+            return true;
+        }
+    };
+
+    private Patterns() {
     }
 
     public boolean matches(List<String> input) {
         return matches(input, null);
     }
 
-    public boolean matches(List<String> input, List<String> output) {
-        Pattern p;
-        Matcher m;
-        String s;
-        int i;
-        int len;
-        int slen;
-        int end;
-
-        if (input == null) {
-            throw new NullPointerException();
-        }
-        len = input.size();
-        if (len != patterns.length) {
-            return false;
-        }
-        for (i = 0; i < len; i++) {
-            s = input.get(i);
-            if (s == null) {
-                return false;
-            }
-            p = patterns[i];
-            m = p.matcher(s);
-            if (output != null) {
-                if (!m.find()) {
-                    return false;
-                }
-                end = m.end();
-                slen = s.length();
-                if (end != slen) {
-                    return false;
-                }
-                output.add(m.group());
-            } else if (!m.matches()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb;
-        boolean first;
-
-        sb = new StringBuilder();
-        first = true;
-        for (Pattern p : patterns) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-            sb.append(p.pattern());
-        }
-
-        return sb.toString();
-    }
-
-    public static void main(String[] args) {
-        String s = "{, 142, 188, 241, }";
-        String[] ss = s.split(", ");
-        List<String> l = Arrays.asList(ss);
-        System.out.format("Matches: %b%n", PS_COLOR_RGB.matches(l));
-    }
+    public abstract boolean matches(List<String> input, List<String> output);
 
 }
