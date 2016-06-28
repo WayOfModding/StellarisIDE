@@ -39,12 +39,12 @@ public abstract class Patterns {
 
             str = itr.next();
             if (!"min".equals(str)) {
-                throw new TokenException(str);
+                return false;
             }
 
             str = itr.next();
             if (!"=".equals(str)) {
-                throw new TokenException(str);
+                return false;
             }
 
             str = itr.next();
@@ -55,12 +55,12 @@ public abstract class Patterns {
 
             str = itr.next();
             if (!"max".equals(str)) {
-                throw new TokenException(str);
+                return false;
             }
 
             str = itr.next();
             if (!"=".equals(str)) {
-                throw new TokenException(str);
+                return false;
             }
 
             str = itr.next();
@@ -70,10 +70,7 @@ public abstract class Patterns {
             }
 
             str = itr.next();
-            if (!"}".equals(str)) {
-                throw new TokenException(str);
-            }
-            return true;
+            return "}".equals(str);
         }
     };
 
