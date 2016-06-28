@@ -49,7 +49,9 @@ public abstract class Patterns {
 
             str = itr.next();
             Integer.parseInt(str);
-            output.add(str);
+            if (output != null) {
+                output.add(str);
+            }
 
             str = itr.next();
             if (!"max".equals(str)) {
@@ -63,7 +65,9 @@ public abstract class Patterns {
 
             str = itr.next();
             Integer.parseInt(str);
-            output.add(str);
+            if (output != null) {
+                output.add(str);
+            }
 
             str = itr.next();
             if (!"}".equals(str)) {
@@ -99,7 +103,9 @@ public abstract class Patterns {
                 }
                 try {
                     value[counter++] = Float.parseFloat(str);
-                    output.add(str);
+                    if (output != null) {
+                        output.add(str);
+                    }
                 } catch (ArrayIndexOutOfBoundsException ex) {
                     throw new IllegalStateException("Too many entries", ex);
                 }
@@ -137,7 +143,9 @@ public abstract class Patterns {
                 }
                 try {
                     value[counter++] = Integer.parseInt(str);
-                    output.add(str);
+                    if (output != null) {
+                        output.add(str);
+                    }
                 } catch (ArrayIndexOutOfBoundsException ex) {
                     throw new IllegalStateException("Too many entries", ex);
                 }

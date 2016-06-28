@@ -399,8 +399,10 @@ public class ScriptFile extends ScriptValue {
         return true;
     }
 
+    // rgb -> { INT INT INT }
+    // rgb -> { INT INT INT INT }
     private ScriptColor handleColorToken(Patterns patterns) {
-        final int len = 6;
+        int len;
         List<String> tokens;
         String[] data;
         List<String> output;
@@ -413,10 +415,13 @@ public class ScriptFile extends ScriptValue {
         if (patterns == null) {
             throw new NullPointerException();
         }
+        len = 6;
         tokens = parser.peek(len);
-        data = new String[len];
         output = new ArrayList<>(len);
         if (patterns.matches(tokens, output)) {
+            len = output.size();
+            data = new String[len];
+
             output.toArray(data);
             if (patterns == Patterns.PS_COLOR_RGB) {
                 r = Integer.parseInt(data[0]);
@@ -443,6 +448,7 @@ public class ScriptFile extends ScriptValue {
             } else {
                 throw new AssertionError(patterns.getClass());
             }
+
             parser.discard(len);
         } else {
             throw new TokenException("Color token exception");
