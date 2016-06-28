@@ -400,14 +400,15 @@ public class ScriptFile extends ScriptValue {
     }
 
     private ScriptColor handleColorToken(Patterns patterns) {
-        final int len = 5;
+        final int len = 6;
         List<String> tokens;
         String[] data;
         List<String> output;
         //Type type;
         ScriptColor color;
-        int r, g, b;
-        float h, s, v;
+        String sa;
+        int r, g, b, a0;
+        float h, s, v, a1;
 
         if (patterns == null) {
             throw new NullPointerException();
@@ -416,18 +417,31 @@ public class ScriptFile extends ScriptValue {
         data = new String[len];
         output = new ArrayList<>(len);
         if (patterns.matches(tokens, output)) {
-            //type = Type.COLOR;
             output.toArray(data);
             if (patterns == Patterns.PS_COLOR_RGB) {
-                r = Integer.parseInt(data[1]);
-                g = Integer.parseInt(data[2]);
-                b = Integer.parseInt(data[3]);
-                color = new ScriptRGBColor(r, g, b);
-            } else /*if (patterns == Patterns.PS_COLOR_HSV)*/ {
-                h = Float.parseFloat(data[1]);
-                s = Float.parseFloat(data[2]);
-                v = Float.parseFloat(data[3]);
-                color = new ScriptHSVColor(h, s, v);
+                r = Integer.parseInt(data[0]);
+                g = Integer.parseInt(data[1]);
+                b = Integer.parseInt(data[2]);
+                sa = data[3];
+                if (sa != null) {
+                    a0 = Integer.parseInt(sa);
+                    color = new ScriptRGBColor(r, g, b, a0);
+                } else {
+                    color = new ScriptRGBColor(r, g, b);
+                }
+            } else if (patterns == Patterns.PS_COLOR_HSV) {
+                h = Float.parseFloat(data[0]);
+                s = Float.parseFloat(data[1]);
+                v = Float.parseFloat(data[2]);
+                sa = data[3];
+                if (sa != null) {
+                    a1 = Float.parseFloat(sa);
+                    color = new ScriptHSVColor(h, s, v, a1);
+                } else {
+                    color = new ScriptHSVColor(h, s, v);
+                }
+            } else {
+                throw new AssertionError(patterns.getClass());
             }
             parser.discard(len);
         } else {

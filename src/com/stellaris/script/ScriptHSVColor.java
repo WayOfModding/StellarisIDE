@@ -25,17 +25,22 @@ import javax.script.ScriptEngine;
  */
 public class ScriptHSVColor extends ScriptColor {
 
-    private float h, s, v;
+    private float h, s, v, a;
 
     public ScriptHSVColor() {
         super();
     }
 
     public ScriptHSVColor(float h, float s, float v) {
+        this(h, s, v, 0.0f);
+    }
+
+    public ScriptHSVColor(float h, float s, float v, float a) {
         this();
         this.h = h;
         this.s = s;
         this.v = v;
+        this.a = a;
     }
 
     public String getColorSpace() {

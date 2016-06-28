@@ -25,17 +25,22 @@ import javax.script.ScriptEngine;
  */
 public class ScriptRGBColor extends ScriptColor {
 
-    private int r, g, b;
+    private int r, g, b, a;
 
     public ScriptRGBColor() {
         super();
     }
 
     public ScriptRGBColor(int r, int g, int b) {
+        this(r, g, b, 0);
+    }
+
+    public ScriptRGBColor(int r, int g, int b, int a) {
         this();
         this.r = r;
         this.g = g;
         this.b = b;
+        this.a = a;
     }
 
     public String getColorSpace() {
