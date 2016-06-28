@@ -24,10 +24,10 @@ public class Debug {
 
     public static boolean DEBUG = false;
     public static boolean DEBUG_REFRESH = false;
-    public static boolean DEBUG_FILL = true;
+    public static boolean DEBUG_FILL = false;
     public static boolean DEBUG_NEXT = false;
     public static boolean DEBUG_CACHE = false;
-    public static boolean DEBUG_DISCARD = true;
+    public static boolean DEBUG_DISCARD = false;
     public static boolean ACCEPT_COMMENT = false;
 
 }
