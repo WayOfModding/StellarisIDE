@@ -105,7 +105,7 @@ public class ScriptFile extends ScriptValue {
         int res;
 
         try {
-            res = analyze(null, 0);
+            res = analyze(null, 0, 0);
             if (res != 0) {
                 throw new AssertionError(res);
             }
@@ -206,7 +206,7 @@ public class ScriptFile extends ScriptValue {
         return value;
     }
 
-    private int analyze(Field parent, int state) {
+    private int analyze(Field parent, int state, int index) {
         String token, key;
         List<String> tokens;
         List<String> output;
@@ -221,10 +221,11 @@ public class ScriptFile extends ScriptValue {
         ScriptColor scriptColor;
 
         if (DEBUG) {
-            System.err.format("[PARSE]\tparent=%s, state=%d%n",
-                    parent, state
+            System.err.format("[PARSE]\tparent=%s, state=%d, index=%d%n",
+                    parent, state, index
             );
         }
+        index = 0;
         while (parser.hasNext()) {
             token = parser.next();
             // ignore comment token
@@ -267,6 +268,9 @@ public class ScriptFile extends ScriptValue {
                     }
                 } else {
                     field = new Field(parent, key);
+                    System.err.format("[FIELD]\tparent=%s, key=%s, index=%d%n",
+                            parent, key, index);
+                    ++index;
                     // value
                     token = parser.next();
                     patterns = checkColorToken(token);
@@ -292,7 +296,7 @@ public class ScriptFile extends ScriptValue {
                         } else {
                             // add 1 each time a struct is found
                             put(field, new ScriptStruct());
-                            newstate = analyze(field, state + 1);
+                            newstate = analyze(field, state + 1, index - 1);
                             if (newstate != state) {
                                 throw new AssertionError(String.format("old_state=%d, new_state=%d", state, newstate));
                             }
