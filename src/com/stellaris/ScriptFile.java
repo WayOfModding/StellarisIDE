@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 import javax.script.*;
@@ -208,6 +209,8 @@ public class ScriptFile extends ScriptValue {
     private int analyze(Field parent, int state) {
         String token, key;
         List<String> tokens;
+        List<String> output;
+        Iterator<String> itr;
         Field field;
         //Type type;
         boolean isList;
@@ -274,21 +277,18 @@ public class ScriptFile extends ScriptValue {
                         scriptColor = null;
                     } else if ("{".equals(token)) {
                         tokens = parser.peek(7);
+                        output = new ArrayList<>(2);
                         // { -> min = INTEGER max = INTEGER }
-                        if (Patterns.PS_RANGE.matches(tokens)) {
-                            //type = Type.RANGE;
-                            //parser.discard(7);
-                            // minimal value
-                            parser.discard(2);
-                            token = parser.next();
+                        if (Patterns.PS_RANGE.matches(tokens, output)) {
+                            itr = output.iterator();
+
+                            token = itr.next();
                             min = Integer.parseInt(token);
-                            // maximal value
-                            parser.discard(2);
-                            token = parser.next();
+                            token = itr.next();
                             max = Integer.parseInt(token);
-                            // discard the ending '}'
-                            parser.discard(1);
+
                             put(field, new ScriptRange(min, max));
+                            parser.discard(7);
                         } else {
                             // add 1 each time a struct is found
                             put(field, new ScriptStruct());
