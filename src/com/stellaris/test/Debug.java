@@ -29,5 +29,6 @@ public class Debug {
     public static boolean DEBUG_CACHE = false;
     public static boolean DEBUG_DISCARD = false;
     public static boolean ACCEPT_COMMENT = false;
+    public static boolean DEBUG_FIELD = false;
 
 }

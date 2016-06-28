@@ -268,8 +268,10 @@ public class ScriptFile extends ScriptValue {
                     }
                 } else {
                     field = new Field(parent, key);
-                    System.err.format("[FIELD]\tparent=%s, key=%s, index=%d%n",
-                            parent, key, index);
+                    if (Debug.DEBUG_FIELD) {
+                        System.err.format("[FIELD]\tparent=%s, key=%s, index=%d%n",
+                                parent, key, index);
+                    }
                     ++index;
                     // value
                     token = parser.next();
@@ -521,6 +523,9 @@ public class ScriptFile extends ScriptValue {
         }
         dir = new File(sparent);
         file = new File(dir, sname);
+        Debug.DEBUG = true;
+        Debug.DEBUG_NEXT = true;
+        Debug.DEBUG_DISCARD = true;
         Debug.DEBUG = true;
         System.out.format("%nParsing file \"%s\"...%n", sname);
         ScriptFile.newInstance(file, context);
