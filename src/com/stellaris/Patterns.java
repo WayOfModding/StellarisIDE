@@ -30,7 +30,6 @@ public abstract class Patterns {
             int size;
             Iterator<String> itr;
             String str;
-            int counter;
 
             size = input.size();
             if (size != 7) {
