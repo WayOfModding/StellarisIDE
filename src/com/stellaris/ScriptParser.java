@@ -177,6 +177,9 @@ public final class ScriptParser implements AutoCloseable {
         int i;
         String str;
 
+        if (DEBUG && DEBUG_DISCARD) {
+            System.err.format("[DSCD]\tcount=%d%n", count);
+        }
         i = 0;
         while (i++ < count) {
             str = deque.remove();

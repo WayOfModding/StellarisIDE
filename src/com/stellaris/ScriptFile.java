@@ -406,7 +406,6 @@ public class ScriptFile extends ScriptValue {
         List<String> tokens;
         String[] data;
         List<String> output;
-        //Type type;
         ScriptColor color;
         String sa;
         int r, g, b, a0;
@@ -420,6 +419,7 @@ public class ScriptFile extends ScriptValue {
         output = new ArrayList<>(len);
         if (patterns.matches(tokens, output)) {
             len = output.size();
+            parser.discard(len + 2);
             data = new String[len];
 
             output.toArray(data);
@@ -448,12 +448,9 @@ public class ScriptFile extends ScriptValue {
             } else {
                 throw new AssertionError(patterns.getClass());
             }
-
-            parser.discard(len);
         } else {
             throw new TokenException("Color token exception");
         }
-        //return type;
         return color;
     }
 
