@@ -40,6 +40,8 @@ import java.util.EmptyStackException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.script.*;
 
 /**
@@ -61,7 +63,7 @@ public class ScriptFile extends ScriptValue {
         }
     }
 
-    public static ScriptFile newInstance(Reader reader, ScriptContext context) {
+    public static ScriptFile newInstance(Reader reader, ScriptContext context) throws IOException {
         return new ScriptFile(reader, context);
     }
 
@@ -97,7 +99,7 @@ public class ScriptFile extends ScriptValue {
         this(new ScriptParser(file), isCoreFile(file), context);
     }
 
-    private ScriptFile(Reader reader, ScriptContext context) {
+    private ScriptFile(Reader reader, ScriptContext context) throws IOException {
         this(new ScriptParser(reader), false, context);
     }
 
@@ -109,8 +111,14 @@ public class ScriptFile extends ScriptValue {
             if (res != 0) {
                 throw new AssertionError(res);
             }
+        } catch (IOException ex) {
+            Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
-            parser.close();
+            try {
+                parser.close();
+            } catch (IOException ex) {
+                Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
+            }
             parser = null;
         }
     }
@@ -206,7 +214,7 @@ public class ScriptFile extends ScriptValue {
         return value;
     }
 
-    private int analyze(Field parent, int state, int index) {
+    private int analyze(Field parent, int state, int index) throws IOException {
         String token, key;
         List<String> tokens;
         List<String> output;
@@ -368,7 +376,7 @@ public class ScriptFile extends ScriptValue {
         return bindings;
     }
 
-    private boolean handleColorList(Field parent, String token) {
+    private boolean handleColorList(Field parent, String token) throws IOException {
         Patterns patterns;
         ScriptColor color;
         ScriptList<ScriptColor> colorList;
@@ -407,7 +415,7 @@ public class ScriptFile extends ScriptValue {
 
     // rgb -> { INT INT INT }
     // rgb -> { INT INT INT INT }
-    private ScriptColor handleColorToken(Patterns patterns) {
+    private ScriptColor handleColorToken(Patterns patterns) throws IOException {
         int len;
         List<String> tokens;
         String[] data;
@@ -477,7 +485,7 @@ public class ScriptFile extends ScriptValue {
         return patterns;
     }
 
-    private boolean handlePlainList(ScriptList list, String token) {
+    private boolean handlePlainList(ScriptList list, String token) throws IOException {
         // handle single-element list
         if ("}".equals(token)) {
             return true;
