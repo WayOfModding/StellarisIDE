@@ -242,8 +242,9 @@ public class ScriptFile extends ScriptValue {
             try {
                 token = parser.nextToken();
             } catch (TokenException ex) {
-                Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
-                parser.skipCurrentLine();
+                Logger.getLogger(ScriptFile.class.getName()).log(
+                        Level.SEVERE, parser.skipCurrentLine(), ex
+                );
                 continue;
             }
             // ignore comment token
@@ -263,8 +264,9 @@ public class ScriptFile extends ScriptValue {
                     key = token;
                 }
             } catch (TokenException ex) {
-                parser.skipCurrentLine();
-                Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ScriptFile.class.getName()).log(
+                        Level.SEVERE, parser.skipCurrentLine(), ex
+                );
                 continue;
             }
 
@@ -273,8 +275,9 @@ public class ScriptFile extends ScriptValue {
             try {
                 token = parser.nextToken();
             } catch (TokenException ex) {
-                parser.skipCurrentLine();
-                Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ScriptFile.class.getName()).log(
+                        Level.SEVERE, parser.skipCurrentLine(), ex
+                );
                 continue;
             }
             isList = !"=".equals(token)
@@ -289,8 +292,9 @@ public class ScriptFile extends ScriptValue {
                 try {
                     isList = handlePlainList(scriptList, token);
                 } catch (TokenException ex) {
-                    parser.skipCurrentLine();
-                    Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(ScriptFile.class.getName()).log(
+                            Level.SEVERE, parser.skipCurrentLine(), ex
+                    );
                     continue;
                 }
                 if (isList) {
@@ -313,8 +317,9 @@ public class ScriptFile extends ScriptValue {
                 try {
                     token = parser.nextToken();
                 } catch (TokenException ex) {
-                    parser.skipCurrentLine();
-                    Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(ScriptFile.class.getName()).log(
+                            Level.SEVERE, parser.skipCurrentLine(), ex
+                    );
                     continue;
                 }
                 patterns = checkColorToken(token);
@@ -322,8 +327,9 @@ public class ScriptFile extends ScriptValue {
                     try {
                         scriptColor = handleColorToken(patterns);
                     } catch (TokenException ex) {
-                        parser.skipCurrentLine();
-                        Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(ScriptFile.class.getName()).log(
+                                Level.SEVERE, parser.skipCurrentLine(), ex
+                        );
                         continue;
                     }
                     put(field, scriptColor);
@@ -332,8 +338,9 @@ public class ScriptFile extends ScriptValue {
                     try {
                         tokens = parser.peekToken(7);
                     } catch (TokenException ex) {
-                        parser.skipCurrentLine();
-                        Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(ScriptFile.class.getName()).log(
+                                Level.SEVERE, parser.skipCurrentLine(), ex
+                        );
                         continue;
                     }
                     output = new ArrayList<>(2);

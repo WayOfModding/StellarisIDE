@@ -50,8 +50,15 @@ public final class ScriptParser extends AbstractParser {
         line = null;
     }
 
-    public void skipCurrentLine() {
+    public String skipCurrentLine() {
+        CharBuffer buf;
+        String res;
+
+        buf = line;
+        buf.reset();
+        res = buf.toString();
         line = null;
+        return res;
     }
 
     private boolean hasRemaining() {
@@ -217,6 +224,8 @@ public final class ScriptParser extends AbstractParser {
                 // empty line
                 buf = nextLine();
             }
+            // mark the beginning of the new buffer
+            buf.mark();
         }
         if (buf == null) {
             // hit EOF
