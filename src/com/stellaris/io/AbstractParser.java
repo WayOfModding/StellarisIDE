@@ -207,6 +207,7 @@ public class AbstractParser implements AutoCloseable {
                     len = dst - src;
                     res = CharBuffer.wrap(hb, src, len);
                 }
+                res.mark();
                 return res;
             }
             if (!buf.hasRemaining()) {
@@ -233,6 +234,7 @@ public class AbstractParser implements AutoCloseable {
                     len -= src;
                     res = CharBuffer.wrap(hb, src, len);
                     // hit EOF, return null
+                    res.mark();
                     return res;
                 }
                 // fail to find NEWLINE throughout the first buffer

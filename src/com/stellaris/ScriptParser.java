@@ -225,8 +225,6 @@ public final class ScriptParser extends AbstractParser {
                 && !skipLeadingWhitespace(buf)) {
             // empty line
             buf = nextLine();
-            // mark the beginning of the new buffer
-            buf.mark();
         }
         if (buf == null) {
             // hit EOF
