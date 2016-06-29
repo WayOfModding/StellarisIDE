@@ -504,22 +504,22 @@ public class ScriptFile extends ScriptValue {
                 r = Integer.parseInt(data[0]);
                 g = Integer.parseInt(data[1]);
                 b = Integer.parseInt(data[2]);
-                sa = data[3];
-                if (sa != null) {
+                try {
+                    sa = data[3];
                     a0 = Integer.parseInt(sa);
                     color = new ScriptRGBColor(r, g, b, a0);
-                } else {
+                } catch (ArrayIndexOutOfBoundsException | NullPointerException ex) {
                     color = new ScriptRGBColor(r, g, b);
                 }
             } else if (patterns == Patterns.PS_COLOR_HSV) {
                 h = Float.parseFloat(data[0]);
                 s = Float.parseFloat(data[1]);
                 v = Float.parseFloat(data[2]);
-                sa = data[3];
-                if (sa != null) {
+                try {
+                    sa = data[3];
                     a1 = Float.parseFloat(sa);
                     color = new ScriptHSVColor(h, s, v, a1);
-                } else {
+                } catch (ArrayIndexOutOfBoundsException | NullPointerException ex) {
                     color = new ScriptHSVColor(h, s, v);
                 }
             } else {
