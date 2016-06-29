@@ -95,7 +95,7 @@ public class AbstractParser {
         return nbits;
     }
 
-    CharBuffer nextLine() throws IOException {
+    protected CharBuffer nextLine() throws IOException {
         CharBuffer buf;
         char c;
         int pos;
@@ -256,7 +256,7 @@ public class AbstractParser {
         }
     }
 
-    String nextLineString() throws IOException {
+    protected String nextLineString() throws IOException {
         CharBuffer buf;
         String res;
 
@@ -269,15 +269,6 @@ public class AbstractParser {
         return res;
     }
 
-    /*
-    public abstract CharBuffer nextToken();
-
-    public abstract CharBuffer peek();
-
-    public abstract Queue<CharBuffer> peek(int count);
-
-    public abstract void discard(int count);
-     */
     public static void main(String[] args) {
         String root, path;
         File file;
