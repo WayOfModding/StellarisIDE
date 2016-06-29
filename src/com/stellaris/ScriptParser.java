@@ -226,6 +226,7 @@ public final class ScriptParser extends AbstractParser {
             }
             // mark the beginning of the new buffer
             buf.mark();
+            System.err.format("[LINE]\t%s%n", buf);
         }
         if (buf == null) {
             // hit EOF
