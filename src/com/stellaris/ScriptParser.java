@@ -232,7 +232,7 @@ public final class ScriptParser extends AbstractParser {
             // hit EOF
             return null;
         }
-        System.err.format("[LINE]\t%s%n", buf);
+        //System.err.format("[LINE]\t%s%n", buf);
 
         isComment = false;
         c = buf.get();
