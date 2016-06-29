@@ -217,7 +217,6 @@ public final class ScriptParser extends AbstractParser {
             // get a new line
             buf = nextLine();
             // mark the beginning of the new buffer
-            buf.mark();
         }
         // skip empty line:         "\r?\n"
         // skip white-space line:   "\s+\r?\n"
