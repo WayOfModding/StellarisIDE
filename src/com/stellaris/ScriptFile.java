@@ -582,7 +582,7 @@ public class ScriptFile extends ScriptValue {
         Debug.DEBUG = true;
         Debug.DEBUG_NEXT = true;
         Debug.DEBUG_DISCARD = true;
-        Debug.DEBUG = true;
+        Debug.DEBUG_CACHE = true;
         System.out.format("%nParsing file \"%s\"...%n", sname);
         ScriptFile.newInstance(file, context);
     }
