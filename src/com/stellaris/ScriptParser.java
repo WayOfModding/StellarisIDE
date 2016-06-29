@@ -385,7 +385,8 @@ public final class ScriptParser extends AbstractParser {
                     }
                 }
             }
-            System.out.format("Count['{']=%d%nCount['}']=%d%n", count0, count1);
+            System.out.format("Count['{']=%d%nCount['}']=%d%nDelta=%d%n",
+                    count0, count1, count0 - count1);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
