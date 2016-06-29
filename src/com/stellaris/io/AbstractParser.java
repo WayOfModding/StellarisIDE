@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  *
  * @author donizyo
  */
-public class AbstractParser {
+public class AbstractParser implements AutoCloseable {
 
     private Reader reader;
     private CharBuffer buffer;
@@ -49,10 +49,14 @@ public class AbstractParser {
         isEOF = false;
     }
 
-    public void setReader(Reader in) {
+    public void setReader(Reader in) throws IOException {
         int limit;
         int cap;
 
+        if (in == null) {
+            return;
+        }
+        close();
         reader = in;
         cap = buffer.capacity();
         buffer.rewind();
@@ -298,4 +302,16 @@ public class AbstractParser {
             Logger.getLogger(AbstractParser.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
+    @Override
+    public void close() throws IOException {
+        Reader in;
+
+        in = reader;
+        if (in != null) {
+            in.close();
+            reader = null;
+        }
+    }
+
 }
