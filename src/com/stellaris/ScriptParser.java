@@ -302,7 +302,7 @@ public final class ScriptParser extends AbstractParser {
             if (c == '#') {
                 continue;
             }
-            src = buf.position() - 1;
+            src = buf.position() - 2;
             buf.position(src);
             res = buf.toString();
             return res;
