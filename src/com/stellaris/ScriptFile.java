@@ -51,7 +51,7 @@ import javax.script.*;
  */
 public class ScriptFile extends ScriptValue {
 
-    private ScriptParser parser;
+    private ScriptParser scriptParser;
     private boolean isCore;
     private ScriptContext context;
 
@@ -89,7 +89,7 @@ public class ScriptFile extends ScriptValue {
     }
 
     private ScriptFile(ScriptParser parser, boolean isCoreFile, ScriptContext context) {
-        this.parser = parser;
+        this.scriptParser = parser;
         this.isCore = isCoreFile;
         this.context = context;
         analyze();
@@ -115,11 +115,11 @@ public class ScriptFile extends ScriptValue {
             Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                parser.close();
+                scriptParser.close();
             } catch (IOException ex) {
                 Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
             }
-            parser = null;
+            scriptParser = null;
         }
     }
 
@@ -215,6 +215,7 @@ public class ScriptFile extends ScriptValue {
     }
 
     private int analyze(Field parent, int state, int index) throws IOException {
+        ScriptParser parser;
         String token, key;
         List<String> tokens;
         List<String> output;
@@ -234,6 +235,7 @@ public class ScriptFile extends ScriptValue {
             );
         }
         index = 0;
+        parser = scriptParser;
         while (parser.hasNext()) {
             token = parser.next();
             // ignore comment token
@@ -393,7 +395,7 @@ public class ScriptFile extends ScriptValue {
             color = handleColorToken(patterns);
             colorList.add(color);
 
-            token = parser.next();
+            token = scriptParser.next();
             patterns = checkColorToken(token);
             if (patterns != null) {
                 continue;
@@ -429,11 +431,11 @@ public class ScriptFile extends ScriptValue {
             throw new NullPointerException();
         }
         len = 6;
-        tokens = parser.peek(len);
+        tokens = scriptParser.peek(len);
         output = new ArrayList<>(len);
         if (patterns.matches(tokens, output)) {
             len = output.size();
-            parser.discard(len + 2);
+            scriptParser.discard(len + 2);
             data = new String[len];
 
             output.toArray(data);
@@ -494,7 +496,7 @@ public class ScriptFile extends ScriptValue {
         list.add(ScriptValue.parseString(token));
         // handle multiple-element list
         while (true) {
-            token = parser.next();
+            token = scriptParser.next();
             if ("}".equals(token)) {
                 return true;
             }
