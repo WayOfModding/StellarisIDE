@@ -49,7 +49,7 @@ public class AbstractParser implements AutoCloseable {
         isEOF = false;
     }
 
-    public void setReader(Reader in) throws IOException {
+    public final void setReader(Reader in) throws IOException {
         int limit;
         int cap;
 
@@ -95,11 +95,11 @@ public class AbstractParser implements AutoCloseable {
         return nbits;
     }
 
-    protected int getLineNumber() {
+    protected final int getLineNumber() {
         return line;
     }
 
-    protected CharBuffer nextLine() throws IOException {
+    protected final CharBuffer nextLine() throws IOException {
         CharBuffer buf;
         char c;
         int pos;
@@ -261,7 +261,7 @@ public class AbstractParser implements AutoCloseable {
         }
     }
 
-    protected String nextLineString() throws IOException {
+    protected final String nextLineString() throws IOException {
         CharBuffer buf;
         String res;
 
@@ -272,6 +272,17 @@ public class AbstractParser implements AutoCloseable {
             res = buf.toString();
         }
         return res;
+    }
+
+    @Override
+    public final void close() throws IOException {
+        Reader in;
+
+        in = reader;
+        if (in != null) {
+            in.close();
+            reader = null;
+        }
     }
 
     public static void main(String[] args) {
@@ -300,17 +311,6 @@ public class AbstractParser implements AutoCloseable {
             }
         } catch (IOException ex) {
             Logger.getLogger(AbstractParser.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    @Override
-    public void close() throws IOException {
-        Reader in;
-
-        in = reader;
-        if (in != null) {
-            in.close();
-            reader = null;
         }
     }
 
