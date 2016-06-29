@@ -33,7 +33,7 @@ public final class ScriptParser extends AbstractParser {
     private static final int BUFFER_SIZE = 65536;
     private static final int CACHE_SIZE = 3;
 
-    private final LinkedList<Token> queue;
+    private LinkedList<Token> queue;
     // refrigerator for leftover
     private CharBuffer line;
 
@@ -53,11 +53,32 @@ public final class ScriptParser extends AbstractParser {
     public String skipCurrentLine() {
         CharBuffer buf;
         String res;
+        int idx;
+        Queue<Token> q;
+        Queue<Token> p;
+        Token t;
+        int tl;
 
         buf = line;
         buf.reset();
         res = buf.toString();
         line = null;
+
+        idx = getLineNumber();
+        q = queue;
+        if (!q.isEmpty()) {
+            p = new LinkedList<>();
+            while (!q.isEmpty()) {
+                t = q.remove();
+                tl = t.getLineNumber();
+                if (tl == idx) {
+                    continue;
+                }
+                p.add(t);
+            }
+            q = p;
+        }
+
         return res;
     }
 
