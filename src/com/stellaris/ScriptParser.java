@@ -131,7 +131,7 @@ public final class ScriptParser extends AbstractParser {
      * @return
      * @throws java.io.IOException
      */
-    public String next() throws IOException {
+    public String next() throws IOException, NoSuchElementException {
         String res;
 
         if (!hasNext()) {
@@ -153,7 +153,8 @@ public final class ScriptParser extends AbstractParser {
      * @param dst
      * @return
      */
-    private String cache(CharBuffer charBuffer, int src, int dst) {
+    private String cache(CharBuffer charBuffer, int src, int dst)
+            throws AssertionError {
         int len;
         char[] buf;
         String str;
@@ -188,7 +189,8 @@ public final class ScriptParser extends AbstractParser {
      *
      * @return
      */
-    private String next0() throws IOException {
+    private String next0()
+            throws IOException, TokenException {
         char c;
         int src, dst, pos;
         String res;
