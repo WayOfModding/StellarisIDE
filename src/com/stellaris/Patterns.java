@@ -26,9 +26,10 @@ import java.util.List;
 public abstract class Patterns {
 
     public static final Patterns PS_RANGE = new Patterns() {
-        public boolean matches(List<String> input, List<String> output) {
+        public boolean matches(List<Token> input, List<String> output) {
             int size;
-            Iterator<String> itr;
+            Iterator<Token> itr;
+            Token token;
             String str;
 
             size = input.size();
@@ -37,47 +38,55 @@ public abstract class Patterns {
             }
             itr = input.iterator();
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"min".equals(str)) {
                 return false;
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"=".equals(str)) {
                 return false;
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             Integer.parseInt(str);
             if (output != null) {
                 output.add(str);
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"max".equals(str)) {
                 return false;
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"=".equals(str)) {
                 return false;
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             Integer.parseInt(str);
             if (output != null) {
                 output.add(str);
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             return "}".equals(str);
         }
     };
 
     public static final Patterns PS_COLOR_HSV = new Patterns() {
-        public boolean matches(List<String> input, List<String> output) {
+        public boolean matches(List<Token> input, List<String> output) {
             int size;
-            Iterator<String> itr;
+            Iterator<Token> itr;
+            Token token;
             String str;
             int counter;
             float[] value;
@@ -87,14 +96,16 @@ public abstract class Patterns {
                 throw new TokenException(Integer.toString(size));
             }
             itr = input.iterator();
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"{".equals(str)) {
                 throw new TokenException(str);
             }
             counter = 0;
             value = new float[4];
             while (itr.hasNext()) {
-                str = itr.next();
+                token = itr.next();
+                str = token.getValue();
                 if ("}".equals(str)) {
                     break;
                 }
@@ -115,9 +126,10 @@ public abstract class Patterns {
     };
 
     public static final Patterns PS_COLOR_RGB = new Patterns() {
-        public boolean matches(List<String> input, List<String> output) {
+        public boolean matches(List<Token> input, List<String> output) {
             int size;
-            Iterator<String> itr;
+            Iterator<Token> itr;
+            Token token;
             String str;
             int counter;
             int[] value;
@@ -127,14 +139,15 @@ public abstract class Patterns {
                 throw new TokenException(Integer.toString(size));
             }
             itr = input.iterator();
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"{".equals(str)) {
                 throw new TokenException();
             }
             counter = 0;
             value = new int[4];
             while (itr.hasNext()) {
-                str = itr.next();
+                token = itr.next();
                 if ("}".equals(str)) {
                     break;
                 }
@@ -157,10 +170,10 @@ public abstract class Patterns {
     private Patterns() {
     }
 
-    public boolean matches(List<String> input) {
+    public boolean matches(List<Token> input) {
         return matches(input, null);
     }
 
-    public abstract boolean matches(List<String> input, List<String> output);
+    public abstract boolean matches(List<Token> input, List<String> output);
 
 }

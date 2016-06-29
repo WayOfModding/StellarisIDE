@@ -33,7 +33,7 @@ public final class ScriptParser extends AbstractParser {
     private static final int BUFFER_SIZE = 65536;
     private static final int CACHE_SIZE = 3;
 
-    private final LinkedList<String> queue;
+    private final LinkedList<Token> queue;
     // refrigerator for leftover
     private CharBuffer line;
 
@@ -74,8 +74,8 @@ public final class ScriptParser extends AbstractParser {
 
     private boolean cache(int count)
             throws IOException, TokenException {
-        Queue<String> q;
-        String str;
+        Queue<Token> q;
+        Token str;
         boolean res;
 
         q = queue;
@@ -89,8 +89,8 @@ public final class ScriptParser extends AbstractParser {
         return res;
     }
 
-    private boolean cache(String s) {
-        Queue<String> q;
+    private boolean cache(Token s) {
+        Queue<Token> q;
 
         if (s == null) {
             return false;
@@ -99,9 +99,9 @@ public final class ScriptParser extends AbstractParser {
         return q.add(s);
     }
 
-    public List<String> peekToken(int count)
+    public List<Token> peekToken(int count)
             throws IOException, TokenException {
-        List<String> res;
+        List<Token> res;
         int size;
 
         cache(count);
@@ -122,7 +122,7 @@ public final class ScriptParser extends AbstractParser {
      */
     public void discardToken(int count) {
         int i;
-        String str;
+        Token str;
 
         if (DEBUG && DEBUG_DISCARD) {
             System.err.format("[DSCD]\tcount=%d%n", count);
@@ -144,8 +144,8 @@ public final class ScriptParser extends AbstractParser {
      * @return
      * @throws java.io.IOException
      */
-    public String nextToken() throws IOException, NoSuchElementException {
-        String res;
+    public Token nextToken() throws IOException, NoSuchElementException {
+        Token res;
 
         if (!hasNextToken()) {
             throw new NoSuchElementException();
@@ -166,7 +166,7 @@ public final class ScriptParser extends AbstractParser {
      * @param dst
      * @return
      */
-    private String cache(CharBuffer charBuffer, int src, int dst)
+    private Token cache(CharBuffer charBuffer, int src, int dst)
             throws AssertionError {
         int len;
         char[] buf;
@@ -186,7 +186,7 @@ public final class ScriptParser extends AbstractParser {
             );
         }
 
-        return str;
+        return new Token(str, getLineNumber());
     }
 
     private boolean isTerminalCharacter(char c) {
@@ -202,11 +202,11 @@ public final class ScriptParser extends AbstractParser {
      *
      * @return
      */
-    private String next()
+    private Token next()
             throws IOException, TokenException {
         char c;
         int src, dst, pos;
-        String res;
+        Token res;
         boolean isComment;
         boolean isString;
         CharBuffer buf;
@@ -320,7 +320,7 @@ public final class ScriptParser extends AbstractParser {
         }
     }
 
-    private String handleComment(CharBuffer buf) {
+    private Token handleComment(CharBuffer buf) {
         int src;
         char c;
         String res;
@@ -334,10 +334,10 @@ public final class ScriptParser extends AbstractParser {
             src = buf.position() - 2;
             buf.position(src);
             res = buf.toString();
-            return res;
+            return new Token(res, getLineNumber());
         }
         res = "#";
-        return res;
+        return new Token(res, getLineNumber());
     }
 
     public static void main(String[] args) {
