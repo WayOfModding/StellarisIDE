@@ -18,7 +18,6 @@ package com.stellaris.io;
 
 import java.io.*;
 import java.nio.*;
-import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
