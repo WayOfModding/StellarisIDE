@@ -95,6 +95,10 @@ public class AbstractParser {
         return nbits;
     }
 
+    protected int getLineNumber() {
+        return line;
+    }
+
     protected CharBuffer nextLine() throws IOException {
         CharBuffer buf;
         char c;
@@ -122,8 +126,9 @@ public class AbstractParser {
         pos = -1;
         c = 0;
 
-        if (isEOF)
+        if (isEOF) {
             return null;
+        }
         while (true) {
             while (buf.hasRemaining()) {
                 c = buf.get();
