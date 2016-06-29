@@ -17,6 +17,7 @@
 package com.stellaris;
 
 import com.stellaris.io.AbstractParser;
+import com.stellaris.test.Debug;
 import java.io.*;
 import java.nio.*;
 import java.util.*;
@@ -60,11 +61,6 @@ public final class ScriptParser extends AbstractParser {
         return res;
     }
 
-    /**
-     * Fill the deque
-     *
-     * @param count
-     */
     private boolean cache(int count) throws IOException {
         Queue<String> q;
         String str;
@@ -76,10 +72,19 @@ public final class ScriptParser extends AbstractParser {
             if (str == null) {
                 break;
             }
-            q.add(str);
         }
         res = hasRemaining();
         return res;
+    }
+
+    private boolean cache(String s) {
+        Queue<String> q;
+
+        if (s == null) {
+            return false;
+        }
+        q = queue;
+        return q.add(s);
     }
 
     public List<String> peek(int count) throws IOException {
@@ -187,6 +192,7 @@ public final class ScriptParser extends AbstractParser {
         char c;
         int src, dst, pos;
         String res;
+        boolean isComment;
         boolean isString;
         CharBuffer buf;
 
@@ -209,9 +215,14 @@ public final class ScriptParser extends AbstractParser {
             return null;
         }
 
+        isComment = false;
         c = buf.get();
         if (c == '#') {
+            isComment = true;
             res = handleComment(buf);
+            if (Debug.ACCEPT_COMMENT) {
+                cache(res);
+            }
         } else {
             // non-comment token
 
@@ -255,9 +266,10 @@ public final class ScriptParser extends AbstractParser {
                 }
             }
             res = cache(buf, src, dst);
+            cache(res);
         }
 
-        if (!buf.hasRemaining()) {
+        if (!buf.hasRemaining() || isComment) {
             buf = null;
         }
         line = buf;
