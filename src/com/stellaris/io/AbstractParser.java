@@ -31,7 +31,6 @@ public class AbstractParser {
     private Reader reader;
     private CharBuffer buffer;
     private CharBuffer bupher;
-    private final LinkedList<CharBuffer> queue;
     private int line;
     private boolean isEOF;
 
@@ -47,7 +46,6 @@ public class AbstractParser {
         buffer = buf;
         fillBuffer(buf);
         bupher = CharBuffer.allocate(bufferSize);
-        queue = new LinkedList<>();
         line = 0;
         isEOF = false;
     }
@@ -69,7 +67,6 @@ public class AbstractParser {
         if (limit != cap) {
             bupher.limit(cap);
         }
-        queue.clear();
         line = 0;
         isEOF = false;
     }
