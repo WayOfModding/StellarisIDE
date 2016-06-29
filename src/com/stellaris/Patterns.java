@@ -33,7 +33,7 @@ public abstract class Patterns {
 
             size = input.size();
             if (size != 7) {
-                throw new IllegalArgumentException(Integer.toString(size));
+                return false;
             }
             itr = input.iterator();
 
@@ -84,12 +84,12 @@ public abstract class Patterns {
 
             size = input.size();
             if (size != 6) {
-                throw new IllegalArgumentException(Integer.toString(size));
+                throw new TokenException(Integer.toString(size));
             }
             itr = input.iterator();
             str = itr.next();
             if (!"{".equals(str)) {
-                throw new TokenException();
+                throw new TokenException(str);
             }
             counter = 0;
             value = new float[4];
@@ -104,11 +104,11 @@ public abstract class Patterns {
                         output.add(str);
                     }
                 } catch (ArrayIndexOutOfBoundsException ex) {
-                    throw new IllegalStateException("Too many entries", ex);
+                    throw new TokenException("Too many entries");
                 }
             }
             if (counter < 3) {
-                throw new IllegalStateException("Too few entries");
+                throw new TokenException("Too few entries");
             }
             return true;
         }
@@ -124,7 +124,7 @@ public abstract class Patterns {
 
             size = input.size();
             if (size != 6) {
-                throw new IllegalArgumentException(Integer.toString(size));
+                throw new TokenException(Integer.toString(size));
             }
             itr = input.iterator();
             str = itr.next();
@@ -144,11 +144,11 @@ public abstract class Patterns {
                         output.add(str);
                     }
                 } catch (ArrayIndexOutOfBoundsException ex) {
-                    throw new IllegalStateException("Too many entries", ex);
+                    throw new TokenException("Too many entries");
                 }
             }
             if (counter < 3) {
-                throw new IllegalStateException("Too few entries");
+                throw new TokenException("Too few entries");
             }
             return true;
         }

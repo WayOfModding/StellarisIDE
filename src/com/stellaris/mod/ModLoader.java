@@ -117,34 +117,34 @@ public class ModLoader extends SimpleEngine {
         int len;
 
         parser = new ScriptParser(file);
-        while (parser.hasNext()) {
-            key = parser.next();
+        while (parser.hasNextToken()) {
+            key = parser.nextToken();
 
-            parser.next();
+            parser.nextToken();
             switch (key) {
                 case "name":
-                    token = parser.next();
+                    token = parser.nextToken();
                     len = token.length();
                     name = token.substring(1, len - 1);
                     break;
                 case "tags":
-                    token = parser.next();
+                    token = parser.nextToken();
                     if ("{".equals(token)) {
                         do {
-                            token = parser.next();
+                            token = parser.nextToken();
                         } while (!"}".equals(token));
                     }
                     break;
                 case "archieve":
                     throw new TokenException("Unexpected token: archieve");
                 case "path":
-                    token = parser.next();
+                    token = parser.nextToken();
                     idx = token.indexOf('/');
                     len = token.length();
                     token = token.substring(idx + 1, len - 1);
                     return token;
                 default:
-                    parser.next();
+                    parser.nextToken();
                     break;
             }
         }

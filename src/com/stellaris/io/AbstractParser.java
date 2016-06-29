@@ -117,7 +117,7 @@ public class AbstractParser implements AutoCloseable {
 
         buf = buffer;
         if (buf == null) {
-            throw new NullPointerException();
+            throw new AssertionError("null");
         }
         ++line;
         isNewLine = false;

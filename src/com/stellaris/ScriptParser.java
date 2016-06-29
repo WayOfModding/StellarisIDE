@@ -50,25 +50,30 @@ public final class ScriptParser extends AbstractParser {
         line = null;
     }
 
+    public void skipCurrentLine() {
+        line = null;
+    }
+
     private boolean hasRemaining() {
         return !queue.isEmpty();
     }
 
-    public boolean hasNext() throws IOException {
+    public boolean hasNextToken() throws IOException, TokenException {
         boolean res;
 
         res = hasRemaining() || cache(CACHE_SIZE);
         return res;
     }
 
-    private boolean cache(int count) throws IOException {
+    private boolean cache(int count)
+            throws IOException, TokenException {
         Queue<String> q;
         String str;
         boolean res;
 
         q = queue;
         while (q.size() < count) {
-            str = next0();
+            str = next();
             if (str == null) {
                 break;
             }
@@ -87,7 +92,8 @@ public final class ScriptParser extends AbstractParser {
         return q.add(s);
     }
 
-    public List<String> peek(int count) throws IOException {
+    public List<String> peekToken(int count)
+            throws IOException, TokenException {
         List<String> res;
         int size;
 
@@ -107,7 +113,7 @@ public final class ScriptParser extends AbstractParser {
      *
      * @param count
      */
-    public void discard(int count) {
+    public void discardToken(int count) {
         int i;
         String str;
 
@@ -131,10 +137,10 @@ public final class ScriptParser extends AbstractParser {
      * @return
      * @throws java.io.IOException
      */
-    public String next() throws IOException, NoSuchElementException {
+    public String nextToken() throws IOException, NoSuchElementException {
         String res;
 
-        if (!hasNext()) {
+        if (!hasNextToken()) {
             throw new NoSuchElementException();
         }
         res = queue.remove();
@@ -189,7 +195,7 @@ public final class ScriptParser extends AbstractParser {
      *
      * @return
      */
-    private String next0()
+    private String next()
             throws IOException, TokenException {
         char c;
         int src, dst, pos;
