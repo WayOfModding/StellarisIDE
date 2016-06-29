@@ -266,7 +266,7 @@ public class ScriptFile extends ScriptValue {
                     key = token;
                     sKey = key.getValue();
                 }
-            } catch (TokenException ex) {
+            } catch (TokenException | NumberFormatException ex) {
                 Logger.getLogger(ScriptFile.class.getName()).log(
                         Level.SEVERE, parser.skipCurrentLine(), ex
                 );
@@ -342,7 +342,7 @@ public class ScriptFile extends ScriptValue {
                 if (patterns != null) {
                     try {
                         scriptColor = handleColorToken(patterns);
-                    } catch (TokenException ex) {
+                    } catch (TokenException | NumberFormatException ex) {
                         Logger.getLogger(ScriptFile.class.getName()).log(
                                 Level.SEVERE, parser.skipCurrentLine(), ex
                         );
