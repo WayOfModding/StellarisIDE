@@ -283,6 +283,17 @@ public class ScriptFile extends ScriptValue {
             isList = !"=".equals(token)
                     && !">".equals(token)
                     && !"<".equals(token);
+            // update for Stellaris v1.2
+            if (checkColorToken(token) != null) {
+                try {
+                    throw new TokenException("Unexpected color token");
+                } catch (TokenException ex) {
+                    Logger.getLogger(ScriptFile.class.getName()).log(
+                            Level.SEVERE, parser.skipCurrentLine(), ex
+                    );
+                    continue;
+                }
+            }
 
             if (isList) {
                 // list entries: key, token, ...
