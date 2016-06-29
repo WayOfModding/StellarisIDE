@@ -16,6 +16,7 @@
  */
 package com.stellaris;
 
+import com.stellaris.io.AbstractParser;
 import com.stellaris.test.Debug;
 import java.io.*;
 import java.nio.*;
@@ -27,125 +28,81 @@ import com.stellaris.util.BOMReader;
  *
  * @author donizyo
  */
-public final class ScriptParser implements AutoCloseable {
+public final class ScriptParser extends AbstractParser {
 
     private static final int BUFFER_SIZE = 65536;
-    private static final int REFILL_SIZE = 256;
     private static final int CACHE_SIZE = 3;
 
-    private final BufferedReader reader;
-    private CharBuffer buffer;
-    private boolean hasMore;
-    private final LinkedList<String> deque;
-    private int lineCounter;
+    private LinkedList<Token> queue;
+    // refrigerator for leftover
+    private CharBuffer line;
 
     public ScriptParser(File file) throws IOException {
         this(new BOMReader(file));
     }
 
-    public ScriptParser(Reader in) {
-        reader = in instanceof BufferedReader
+    public ScriptParser(Reader in) throws IOException {
+        super(in instanceof BufferedReader
                 ? (BufferedReader) in
-                : new BufferedReader(in);
-        deque = new LinkedList<>();
-        fill();
-        lineCounter = 0;
-        init();
+                : new BufferedReader(in),
+                BUFFER_SIZE);
+        queue = new LinkedList<>();
+        line = null;
     }
 
-    private void init() {
-        char first;
+    public String skipCurrentLine() {
+        CharBuffer buf;
+        String res;
+        int idx;
+        Queue<Token> q;
+        Queue<Token> p;
+        Token t;
+        int tl;
 
-        if (buffer.hasRemaining()) {
-            first = buffer.get();
-            if (!isByteOrderMark(first)) {
-                buffer.rewind();
+        buf = line;
+        buf.reset();
+        res = buf.toString();
+        line = null;
+
+        idx = getLineNumber();
+        q = queue;
+        if (!q.isEmpty()) {
+            p = new LinkedList<>();
+            while (!q.isEmpty()) {
+                t = q.remove();
+                tl = t.getLineNumber();
+                if (tl == idx) {
+                    continue;
+                }
+                p.add(t);
             }
-        }
-    }
-
-    private static boolean isByteOrderMark(char c) {
-        return c == 0xfeff;
-    }
-
-    private static CharBuffer allocateBuffer() {
-        return CharBuffer.allocate(BUFFER_SIZE);
-    }
-
-    /**
-     * Fill up the whole buffer
-     *
-     * @throws IOException
-     */
-    private void fill() {
-        CharBuffer copy;
-        int res;
-
-        if (buffer == null) {
-            buffer = allocateBuffer();
-        } else {
-            copy = allocateBuffer();
-            copy.put(buffer);
-            buffer = copy;
+            q = p;
         }
 
-        try {
-            res = reader.read(buffer);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        hasMore = res > 0 && !buffer.hasRemaining();
-        buffer.flip();
-        if (DEBUG && DEBUG_FILL) {
-            System.out.format("[FILL]\tfile_size=%d, total_line=%d%n",
-                    res, countLines()
-            );
-        }
-    }
-
-    private int countLines() {
-        int count;
-        char c;
-
-        count = 1;
-        while (buffer.hasRemaining()) {
-            c = buffer.get();
-            if (c == '\r') {
-                buffer.get();
-                ++count;
-            } else if (c == '\n') {
-                ++count;
-            }
-        }
-        buffer.rewind();
-
-        return count;
+        return res;
     }
 
     private boolean hasRemaining() {
-        return !deque.isEmpty();
+        return !queue.isEmpty();
     }
 
-    public boolean hasNext() {
+    public boolean hasNextToken() throws IOException, TokenException {
         boolean res;
 
         res = hasRemaining() || cache(CACHE_SIZE);
         return res;
     }
 
-    /**
-     * Fill the deque
-     *
-     * @param count
-     */
-    private boolean cache(int count) {
-        String str;
+    private boolean cache(int count)
+            throws IOException, TokenException {
+        Queue<Token> q;
+        Token str;
         boolean res;
 
-        while (deque.size() < count) {
-            str = next0();
+        q = queue;
+        while (q.size() < count) {
+            str = next();
             if (str == null) {
-                hasMore = false;
                 break;
             }
         }
@@ -153,16 +110,27 @@ public final class ScriptParser implements AutoCloseable {
         return res;
     }
 
-    public List<String> peek(int count) {
-        List<String> res;
+    private boolean cache(Token s) {
+        Queue<Token> q;
+
+        if (s == null) {
+            return false;
+        }
+        q = queue;
+        return q.add(s);
+    }
+
+    public List<Token> peekToken(int count)
+            throws IOException, TokenException {
+        List<Token> res;
         int size;
 
         cache(count);
-        size = deque.size();
+        size = queue.size();
         if (size < count) {
             count = size;
         }
-        res = deque.subList(0, count);
+        res = queue.subList(0, count);
         res = Collections.unmodifiableList(res);
         return res;
     }
@@ -173,19 +141,19 @@ public final class ScriptParser implements AutoCloseable {
      *
      * @param count
      */
-    public void discard(int count) {
+    public void discardToken(int count) {
         int i;
-        String str;
+        Token str;
 
         if (DEBUG && DEBUG_DISCARD) {
             System.err.format("[DSCD]\tcount=%d%n", count);
         }
         i = 0;
         while (i++ < count) {
-            str = deque.remove();
+            str = queue.remove();
             if (DEBUG && DEBUG_DISCARD) {
                 System.err.format("[DSCD]\tstr=\"%s\"%n\tcache=%d %s%n",
-                        str, deque.size(), deque.toString()
+                        str, queue.size(), queue.toString()
                 );
             }
         }
@@ -195,20 +163,18 @@ public final class ScriptParser implements AutoCloseable {
      * Get next token
      *
      * @return
+     * @throws java.io.IOException
      */
-    public String next() {
-        String res;
+    public Token nextToken() throws IOException, NoSuchElementException {
+        Token res;
 
-        if (!hasNext()) {
+        if (!hasNextToken()) {
             throw new NoSuchElementException();
         }
-        res = deque.remove();
-        if (res == null) {
-            throw new AssertionError();
-        }
+        res = queue.remove();
         if (DEBUG && DEBUG_NEXT) {
             System.err.format("[NEXT]\tline=%d, next=\"%s\"%n\tcache=%d %s%n",
-                    lineCounter, res, deque.size(), deque.toString()
+                    getLineNumber(), res, queue.size(), queue.toString()
             );
         }
         return res;
@@ -221,57 +187,27 @@ public final class ScriptParser implements AutoCloseable {
      * @param dst
      * @return
      */
-    private String cache(int src, int dst) {
+    private Token cache(CharBuffer charBuffer, int src, int dst)
+            throws AssertionError {
         int len;
         char[] buf;
         String str;
-        boolean res;
 
         if (src == dst) {
-            throw new AssertionError();
+            throw new AssertionError("Empty string");
         }
         len = dst - src;
-        buf = new char[len];
-        buffer.position(src);
-        buffer.get(buf);
-        str = new String(buf);
-        res = cache(str);
+        buf = charBuffer.array();
+        str = new String(buf, src, len);
         if (DEBUG && DEBUG_CACHE) {
             System.err.format("[CACHE]\tline=%d, src=%d, dst=%d, str=\"%s\"%n"
                     + "\tcache=%d %s%n",
-                    lineCounter, src, dst, str,
-                    deque.size(), deque.toString()
+                    getLineNumber(), src, dst, str,
+                    queue.size(), queue.toString()
             );
         }
 
-        return str;
-    }
-
-    private boolean cache(String str) {
-        return deque.add(str);
-    }
-
-    private boolean refill() {
-        return refill(false);
-    }
-
-    private boolean refill(boolean force) {
-        int rem;
-
-        rem = buffer.remaining();
-        // check if there are enough remaining characters in the buffer
-        if (force || rem < REFILL_SIZE) {
-            if (hasMore) {
-                // re-fill if there are more characters in the stream
-                fill();
-            } else if (rem == 0) {
-                // if there ain't more characters in the stream
-                // and if there ain't remaining charactes in the buffer
-                // there won't be any possible token to be parsed
-                return false;
-            }
-        }
-        return true;
+        return new Token(str, getLineNumber());
     }
 
     private boolean isTerminalCharacter(char c) {
@@ -287,195 +223,145 @@ public final class ScriptParser implements AutoCloseable {
      *
      * @return
      */
-    private String next0() {
+    private Token next()
+            throws IOException, TokenException {
         char c;
-        char c1;
         int src, dst, pos;
-        String res;
+        Token res;
+        boolean isComment;
         boolean isString;
+        CharBuffer buf;
 
-        if (!refill()) {
+        buf = line;
+        if (buf == null) {
+            // no leftover available
+            // get a new line
+            buf = nextLine();
+            // mark the beginning of the new buffer
+        }
+        // skip empty line:         "\r?\n"
+        // skip white-space line:   "\s+\r?\n"
+        while (buf != null
+                //&& !buf.hasRemaining()
+                && !skipLeadingWhitespace(buf)) {
+            // empty line
+            buf = nextLine();
+        }
+        if (buf == null) {
+            // hit EOF
             return null;
         }
-        if (!skipLeadingWhitespace()) {
-            return null;
-        }
+        //System.err.format("[LINE]\t%s%n", buf);
 
-        c = buffer.get();
+        isComment = false;
+        c = buf.get();
         if (c == '#') {
-            res = handleComment();
+            isComment = true;
+            res = handleComment(buf);
+            if (Debug.ACCEPT_COMMENT) {
+                cache(res);
+            }
         } else {
             // non-comment token
 
             // handle leading terminal characters
-            pos = buffer.position();
+            pos = buf.position();
             src = pos - 1;
             if (isTerminalCharacter(c)) {
                 dst = pos;
             } else {
                 isString = c == '"';
                 while (true) {
-                    if (!buffer.hasRemaining()) {
-                        dst = buffer.position();
+                    if (!buf.hasRemaining()) {
+                        if (isString) {
+                            throw new TokenException("String is not closed");
+                        }
+                        // NEWLINE or EOF
+                        dst = buf.position();
                         break;
                     }
-                    c = buffer.get();
+                    c = buf.get();
                     if (isString) {
                         if (c == '\\') {
-                            buffer.get();
+                            buf.get();
                             //continue;
                         } else if (c == '"') {
-                            dst = buffer.position();
+                            dst = buf.position();
                             break;
                         }
                     } else if (Character.isWhitespace(c)) {
-                        dst = buffer.position() - 1;
-                        if (c == '\r') {
-                            c1 = buffer.get();
-                            if (c1 != '\n') {
-                                throw new AssertionError(c1);
-                            }
-                            ++lineCounter;
-                        } else if (c == '\n') {
-                            ++lineCounter;
-                        }
+                        dst = buf.position() - 1;
                         break;
                     } else if (isTerminalCharacter(c)
                             || c == '#') {
                         // handle ending terminal characters
                         // handle immediate ending comment
                         // fuck those who don't have good coding habits
-                        dst = buffer.position() - 1;
-                        buffer.position(dst);
+                        dst = buf.position() - 1;
+                        buf.position(dst);
                         break;
                     }
                 }
             }
-            res = cache(src, dst);
+            res = cache(buf, src, dst);
+            cache(res);
         }
+
+        if (!buf.hasRemaining() || isComment) {
+            buf = null;
+        }
+        line = buf;
 
         return res;
     }
 
-    private boolean skipLeadingWhitespace() {
+    /**
+     *
+     * @param buf
+     * @return true, if line is not empty
+     */
+    private boolean skipLeadingWhitespace(CharBuffer buf) {
         char c;
-        char c1;
         int pos;
 
         while (true) {
-            if (buffer.hasRemaining()) {
+            if (buf.hasRemaining()) {
                 // skip the first few whitespace characters
-                c = buffer.get();
-                if (!Character.isWhitespace(c)) {
-                    break;
+                c = buf.get();
+                if (Character.isWhitespace(c)) {
+                    continue;
                 }
-                if (c == '\r') {
-                    c1 = buffer.get();
-                    if (c1 != '\n') {
-                        throw new AssertionError(c1);
-                    }
-                    ++lineCounter;
-                } else if (c == '\n') {
-                    ++lineCounter;
-                }
+                pos = buf.position();
+                buf.position(pos - 1);
+                return true;
             } else {
                 // if there's no remaining characters in the buffer
                 return false;
             }
         }
-
-        pos = buffer.position();
-        buffer.position(pos - 1);
-        return true;
     }
 
-    private String handleComment() {
-        int src, dst;
-        boolean isNewLine;
+    private Token handleComment(CharBuffer buf) {
+        int src;
         char c;
-        char c1;
         String res;
 
         // find a comment token
-        src = buffer.position() - 1;
-        while (true) {
-            if (!buffer.hasRemaining()) {
-                dst = buffer.position();
-                break;
-            }
-            c = buffer.get();
+        while (buf.hasRemaining()) {
+            c = buf.get();
             if (c == '#') {
-                src = buffer.position() - 1;
                 continue;
             }
-            isNewLine = false;
-            dst = -1;
-            if (c == '\r') {
-                dst = buffer.position() - 1;
-                c1 = buffer.get();
-                if (c1 != '\n') {
-                    throw new AssertionError(c1);
-                }
-                ++lineCounter;
-                isNewLine = true;
-            } else if (c == '\n') {
-                dst = buffer.position() - 1;
-                ++lineCounter;
-                isNewLine = true;
-            }
-            if (isNewLine) {
-                if (dst == -1) {
-                    throw new AssertionError();
-                }
-                if (!skipLeadingWhitespace()) {
-                    return null;
-                }
-                buffer.mark();
-                c = buffer.get();
-                if (c == '#') {
-                    continue;
-                }
-                buffer.reset();
-                break;
-            }
-            //if (buffer.hasRemaining()) { continue; }
-            //System.out.format("[ERROR] line=%d, position=%d%n", lineCounter, buffer.position());
-            //throw new TokenException("Comment token is too long!");
+            src = buf.position() - 2;
+            buf.position(src);
+            res = buf.toString();
+            return new Token(res, getLineNumber());
         }
-        if (dst - src == 1
-                && buffer.get(src) == '#') {
-            res = next0();
-        } else if (src < dst) {
-            if (Debug.ACCEPT_COMMENT) {
-                res = cache(src, dst);
-            } else {
-                res = next0();
-            }
-        } else {
-            res = next0();
-        }
-
-        return res;
-    }
-
-    @Override
-    public void close() {
-        try {
-            reader.close();
-        } catch (IOException ex) {
-        }
+        res = "#";
+        return new Token(res, getLineNumber());
     }
 
     public static void main(String[] args) {
-        //ScriptFile.newInstance(new java.io.File(args[0]));
-        /*
-        try (ScriptParser parser = new ScriptParser(
-                new java.io.StringReader("\r\n \r \r\n \r\n \n"));) {
-            parser.peek(1024);
-            System.out.format("Line=%d%n", parser.lineCounter);
-        }
-        //*/
-        //*
         if (args.length < 2) {
             return;
         }
@@ -486,23 +372,22 @@ public final class ScriptParser implements AutoCloseable {
             char c;
 
             count0 = count1 = 0;
-            buffer = parser.buffer;
-            while (buffer.hasRemaining()) {
-                c = buffer.get();
-                switch (c) {
-                    case '{':
-                        ++count0;
-                        break;
-                    case '}':
-                        ++count1;
-                        break;
+            while ((buffer = parser.nextLine()) != null) {
+                while (buffer.hasRemaining()) {
+                    c = buffer.get();
+                    switch (c) {
+                        case '{':
+                            ++count0;
+                            break;
+                        case '}':
+                            ++count1;
+                            break;
+                    }
                 }
             }
             System.out.format("Count['{']=%d%nCount['}']=%d%n", count0, count1);
-
-            //parser.peek(1024);
         } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
-        //*/
     }
 }

@@ -26,75 +26,86 @@ import java.util.List;
 public abstract class Patterns {
 
     public static final Patterns PS_RANGE = new Patterns() {
-        public boolean matches(List<String> input, List<String> output) {
+        public boolean matches(List<Token> input, List<String> output) {
             int size;
-            Iterator<String> itr;
+            Iterator<Token> itr;
+            Token token;
             String str;
 
             size = input.size();
             if (size != 7) {
-                throw new IllegalArgumentException(Integer.toString(size));
+                return false;
             }
             itr = input.iterator();
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"min".equals(str)) {
                 return false;
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"=".equals(str)) {
                 return false;
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             Integer.parseInt(str);
             if (output != null) {
                 output.add(str);
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"max".equals(str)) {
                 return false;
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"=".equals(str)) {
                 return false;
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             Integer.parseInt(str);
             if (output != null) {
                 output.add(str);
             }
 
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             return "}".equals(str);
         }
     };
 
     public static final Patterns PS_COLOR_HSV = new Patterns() {
-        public boolean matches(List<String> input, List<String> output) {
+        public boolean matches(List<Token> input, List<String> output) {
             int size;
-            Iterator<String> itr;
+            Iterator<Token> itr;
+            Token token;
             String str;
             int counter;
             float[] value;
 
             size = input.size();
             if (size != 6) {
-                throw new IllegalArgumentException(Integer.toString(size));
+                throw new TokenException(Integer.toString(size));
             }
             itr = input.iterator();
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"{".equals(str)) {
-                throw new TokenException();
+                throw new TokenException(str);
             }
             counter = 0;
             value = new float[4];
             while (itr.hasNext()) {
-                str = itr.next();
+                token = itr.next();
+                str = token.getValue();
                 if ("}".equals(str)) {
                     break;
                 }
@@ -104,37 +115,39 @@ public abstract class Patterns {
                         output.add(str);
                     }
                 } catch (ArrayIndexOutOfBoundsException ex) {
-                    throw new IllegalStateException("Too many entries", ex);
+                    throw new TokenException("Too many entries");
                 }
             }
             if (counter < 3) {
-                throw new IllegalStateException("Too few entries");
+                throw new TokenException("Too few entries");
             }
             return true;
         }
     };
 
     public static final Patterns PS_COLOR_RGB = new Patterns() {
-        public boolean matches(List<String> input, List<String> output) {
+        public boolean matches(List<Token> input, List<String> output) {
             int size;
-            Iterator<String> itr;
+            Iterator<Token> itr;
+            Token token;
             String str;
             int counter;
             int[] value;
 
             size = input.size();
             if (size != 6) {
-                throw new IllegalArgumentException(Integer.toString(size));
+                throw new TokenException(Integer.toString(size));
             }
             itr = input.iterator();
-            str = itr.next();
+            token = itr.next();
+            str = token.getValue();
             if (!"{".equals(str)) {
                 throw new TokenException();
             }
             counter = 0;
             value = new int[4];
             while (itr.hasNext()) {
-                str = itr.next();
+                token = itr.next();
                 if ("}".equals(str)) {
                     break;
                 }
@@ -144,11 +157,11 @@ public abstract class Patterns {
                         output.add(str);
                     }
                 } catch (ArrayIndexOutOfBoundsException ex) {
-                    throw new IllegalStateException("Too many entries", ex);
+                    throw new TokenException("Too many entries");
                 }
             }
             if (counter < 3) {
-                throw new IllegalStateException("Too few entries");
+                throw new TokenException("Too few entries");
             }
             return true;
         }
@@ -157,10 +170,10 @@ public abstract class Patterns {
     private Patterns() {
     }
 
-    public boolean matches(List<String> input) {
+    public boolean matches(List<Token> input) {
         return matches(input, null);
     }
 
-    public abstract boolean matches(List<String> input, List<String> output);
+    public abstract boolean matches(List<Token> input, List<String> output);
 
 }
