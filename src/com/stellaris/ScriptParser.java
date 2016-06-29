@@ -23,6 +23,7 @@ import java.nio.*;
 import java.util.*;
 import static com.stellaris.test.Debug.*;
 import com.stellaris.util.BOMReader;
+import com.stellaris.util.DigestStore;
 
 /**
  *
@@ -362,10 +363,13 @@ public final class ScriptParser extends AbstractParser {
     }
 
     public static void main(String[] args) {
+        File file;
+
         if (args.length < 2) {
             return;
         }
-        try (ScriptParser parser = new ScriptParser(new File(args[0], args[1]));) {
+        file = new File(args[0], args[1]);
+        try (ScriptParser parser = new ScriptParser(file);) {
             int count0; // count {
             int count1; // count }
             CharBuffer buffer;
@@ -385,8 +389,15 @@ public final class ScriptParser extends AbstractParser {
                     }
                 }
             }
-            System.out.format("Count['{']=%d%nCount['}']=%d%nDelta=%d%n",
-                    count0, count1, count0 - count1);
+            System.out.format("File=\"%s\"%n"
+                    + "Count['{']=%d%n"
+                    + "Count['}']=%d%n"
+                    + "Delta=%d%n",
+                    DigestStore.getPath(file),
+                    count0,
+                    count1,
+                    count0 - count1
+            );
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
