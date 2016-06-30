@@ -73,7 +73,7 @@ public class ScriptFile extends ScriptValue {
 
         main = Stellaris.getDefault();
         if (main == null) {
-            System.err.format("[WARN]\tStellaris instance is null!%n");
+            Debug.err.format("[WARN]\tStellaris instance is null!%n");
             return true;
         }
         root = main.getRootDirectory();
@@ -233,7 +233,7 @@ public class ScriptFile extends ScriptValue {
         ScriptColor scriptColor;
 
         if (DEBUG) {
-            System.err.format("[PARSE]\tparent=%s, state=%d, index=%d%n",
+            Debug.err.format("[PARSE]\tparent=%s, state=%d, index=%d%n",
                     parent, state, index
             );
         }
@@ -324,7 +324,7 @@ public class ScriptFile extends ScriptValue {
             } else {
                 field = new Field(parent, sKey);
                 if (Debug.DEBUG_FIELD) {
-                    System.err.format("[FIELD]\tparent=%s, key=%s, index=%d%n",
+                    Debug.err.format("[FIELD]\tparent=%s, key=%s, index=%d%n",
                             parent, key, index);
                 }
                 ++index;
@@ -605,7 +605,7 @@ public class ScriptFile extends ScriptValue {
         Debug.DEBUG = true;
         Debug.DEBUG_NEXT = true;
         Debug.DEBUG_DISCARD = true;
-        System.out.format("%nParsing file \"%s\"...%n", sname);
+        Debug.out.format("%nParsing file \"%s\"...%n", sname);
         ScriptFile.newInstance(file, context);
     }
 }

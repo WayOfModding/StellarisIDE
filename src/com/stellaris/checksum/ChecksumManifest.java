@@ -17,6 +17,7 @@
 package com.stellaris.checksum;
 
 import com.stellaris.TokenException;
+import com.stellaris.test.Debug;
 import com.stellaris.util.Digest;
 import java.io.BufferedReader;
 import java.io.File;
@@ -270,14 +271,14 @@ public class ChecksumManifest {
         }
 
         if (checksum == null) {
-            System.out.format("%s=\"%s\"%n",
+            Debug.out.format("%s=\"%s\"%n",
                     algorithm == null ? Digest.DEFAULT_ALGORITHM : algorithm,
                     result.digest().toLowerCase());
         } else {
             // test output
             long value = checksum.getValue();
             //value &= 0xffff;
-            System.out.format("%s=\"%x\"%n",
+            Debug.out.format("%s=\"%x\"%n",
                     checksum.getClass().getSimpleName(), value);
         }
     }

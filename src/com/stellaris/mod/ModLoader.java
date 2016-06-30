@@ -67,7 +67,7 @@ public class ModLoader extends SimpleEngine {
 
         try {
             path = handleFile(file);
-            System.out.format("\tname=\"%s\"%n\tpath=\"%s\"%n", name, path);
+            Debug.out.format("\tname=\"%s\"%n\tpath=\"%s\"%n", name, path);
             handleDirectory(path);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -194,6 +194,6 @@ public class ModLoader extends SimpleEngine {
         main = new Stellaris();
         Stellaris.setDefault(main);
         q = getModLoaders();
-        System.out.format("ModLoader count=%d%n", q.size());
+        Debug.out.format("ModLoader count=%d%n", q.size());
     }
 }

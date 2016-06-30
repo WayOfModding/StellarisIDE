@@ -16,14 +16,13 @@
  */
 package com.stellaris.util;
 
+import com.stellaris.test.Debug;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.Checksum;
 import javax.xml.bind.DatatypeConverter;
 
@@ -51,7 +50,7 @@ public class Digest {
             throw new IllegalStateException(ex);
         }
     }
-    
+
     public Digest(File file, Checksum cs) {
         int bufsize;
         byte[] buffer;
@@ -125,13 +124,13 @@ public class Digest {
         MessageDigest md;
 
         if (args.length < 1) {
-            
+
             return;
         }
         path = args[0];
         digest = new Digest(path);
         result = digest.digest();
-        System.out.format("%s checksum of file \"%s\":\"%s\"%n",
+        Debug.out.format("%s checksum of file \"%s\":\"%s\"%n",
                 Digest.DEFAULT_ALGORITHM, path, result);
     }
 }

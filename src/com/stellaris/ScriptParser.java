@@ -147,13 +147,13 @@ public final class ScriptParser extends AbstractParser {
         Token str;
 
         if (DEBUG && DEBUG_DISCARD) {
-            System.err.format("[DSCD]\tcount=%d%n", count);
+            Debug.err.format("[DSCD]\tcount=%d%n", count);
         }
         i = 0;
         while (i++ < count) {
             str = queue.remove();
             if (DEBUG && DEBUG_DISCARD) {
-                System.err.format("[DSCD]\tstr=\"%s\"%n\tcache=%d %s%n",
+                Debug.err.format("[DSCD]\tstr=\"%s\"%n\tcache=%d %s%n",
                         str, queue.size(), queue.toString()
                 );
             }
@@ -174,7 +174,7 @@ public final class ScriptParser extends AbstractParser {
         }
         res = queue.remove();
         if (DEBUG && DEBUG_NEXT) {
-            System.err.format("[NEXT]\tline=%d, next=\"%s\"%n\tcache=%d %s%n",
+            Debug.err.format("[NEXT]\tline=%d, next=\"%s\"%n\tcache=%d %s%n",
                     getLineNumber(), res, queue.size(), queue.toString()
             );
         }
@@ -201,7 +201,7 @@ public final class ScriptParser extends AbstractParser {
         buf = charBuffer.array();
         str = new String(buf, src, len);
         if (DEBUG && DEBUG_CACHE) {
-            System.err.format("[CACHE]\tline=%d, src=%d, dst=%d, str=\"%s\"%n"
+            Debug.err.format("[CACHE]\tline=%d, src=%d, dst=%d, str=\"%s\"%n"
                     + "\tcache=%d %s%n",
                     getLineNumber(), src, dst, str,
                     queue.size(), queue.toString()
@@ -252,7 +252,7 @@ public final class ScriptParser extends AbstractParser {
             // hit EOF
             return null;
         }
-        //System.err.format("[LINE]\t%s%n", buf);
+        //Debug.err.format("[LINE]\t%s%n", buf);
 
         isComment = false;
         c = buf.get();
@@ -389,7 +389,7 @@ public final class ScriptParser extends AbstractParser {
                     }
                 }
             }
-            System.out.format("File=\"%s\"%n"
+            Debug.out.format("File=\"%s\"%n"
                     + "Count['{']=%d%n"
                     + "Count['}']=%d%n"
                     + "Delta=%d%n",
