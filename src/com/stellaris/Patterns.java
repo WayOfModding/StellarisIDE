@@ -148,6 +148,7 @@ public abstract class Patterns {
             value = new int[4];
             while (itr.hasNext()) {
                 token = itr.next();
+                str = token.getValue();
                 if ("}".equals(str)) {
                     break;
                 }
