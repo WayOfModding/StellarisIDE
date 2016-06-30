@@ -16,6 +16,7 @@
  */
 package com.stellaris.io;
 
+import com.stellaris.test.Debug;
 import java.io.*;
 import java.nio.*;
 import java.util.logging.Level;
@@ -309,7 +310,7 @@ public class AbstractParser implements AutoCloseable {
                 }
                 num = parser.line;
                 len = line.length();
-                System.out.format("Line %4d:%-4d> %s%n", num, len, line);
+                Debug.out.format("Line %4d:%-4d> %s%n", num, len, line);
             }
         } catch (IOException ex) {
             Logger.getLogger(AbstractParser.class.getName()).log(Level.SEVERE, null, ex);

@@ -16,12 +16,16 @@
  */
 package com.stellaris.test;
 
+import java.io.PrintStream;
+
 /**
  *
  * @author donizyo
  */
 public class Debug {
 
+    public static PrintStream out = System.out;
+    public static PrintStream err = System.err;
     public static boolean DEBUG = false;
     public static boolean DEBUG_REFRESH = false;
     public static boolean DEBUG_FILL = false;

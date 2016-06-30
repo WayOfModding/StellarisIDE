@@ -16,6 +16,7 @@
  */
 package com.stellaris.localisation;
 
+import com.stellaris.test.Debug;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -103,7 +104,7 @@ public class LocalisationMap {
         String value;
 
         if (out == null) {
-            out = System.out;
+            out = Debug.out;
         }
         keySet = map.keySet();
         for (String key : keySet) {
@@ -152,7 +153,7 @@ public class LocalisationMap {
                 reader = new LangFileReader(langFilter, file);
                 reader.loadInto(map);
             }
-            //map.list(System.out);
+            //map.list(Debug.out);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }

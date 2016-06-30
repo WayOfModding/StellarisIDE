@@ -16,6 +16,7 @@
  */
 package com.stellaris.util;
 
+import com.stellaris.test.Debug;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -112,6 +113,6 @@ public class DigestStore {
 
     public static void main(String[] args) {
         File file = getFileStore();
-        System.out.format("DigestStore=%s%n", file.getAbsolutePath());
+        Debug.out.format("DigestStore=%s%n", file.getAbsolutePath());
     }
 }

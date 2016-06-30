@@ -16,6 +16,7 @@
  */
 package com.stellaris.mod;
 
+import com.stellaris.test.Debug;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Queue;
@@ -61,7 +62,7 @@ public class DescriptorFilter implements FileFilter {
         } catch (NumberFormatException ex) {
         }
 
-        System.out.format("[MOD]\tfile=\"%s\"%n", filename);
+        Debug.out.format("[MOD]\tfile=\"%s\"%n", filename);
         loader = new ModLoader(file);
         queue.add(loader);
 

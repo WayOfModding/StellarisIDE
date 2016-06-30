@@ -90,7 +90,7 @@ public class LangFileReader {
         if (!Debug.DEBUG) {
             return;
         }
-        System.out.format("[%s] pos=%d, limit=%d, str=\"%s\"%n",
+        Debug.out.format("[%s] pos=%d, limit=%d, str=\"%s\"%n",
                 token,
                 cbuf.position(),
                 cbuf.limit(),
@@ -235,13 +235,13 @@ public class LangFileReader {
             line.rewind();
             String sLine = line.toString();
             if (!sLine.contains(result)) {
-                System.err.println(result);
+                Debug.err.println(result);
                 throw new AssertionError(sLine);
             }
             //*/
             // white-box debugging
             /*
-            System.out.format("%-64s %s \"%s\"%n",
+            Debug.out.format("%-64s %s \"%s\"%n",
                     key.toString(),
                     digit.toString(),
                     value.toString()

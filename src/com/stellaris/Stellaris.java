@@ -111,12 +111,12 @@ public class Stellaris extends SimpleFactory {
                 }
                 // refresh syntax table
                 if (Debug.DEBUG && Debug.DEBUG_REFRESH) {
-                    System.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
+                    Debug.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
                 }
                 try {
                     script = ScriptFile.newInstance(file, scriptEngine.getContext());
                 } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
-                    System.err.format("[ERROR] Found at file \"%s\"%n", filename);
+                    Debug.err.format("[ERROR] Found at file \"%s\"%n", filename);
                     continue;
                 } catch (NoSuchElementException ex) {
                     throw new RuntimeException(
@@ -131,7 +131,7 @@ public class Stellaris extends SimpleFactory {
     }
 
     private static void printCopyrightMessage() {
-        System.out.format("\tStellarisIDE is an open-source software licensed under GPLv3.%n"
+        Debug.out.format("\tStellarisIDE is an open-source software licensed under GPLv3.%n"
                 + "\tIt is aimed to help people create non-commercial mods%n"
                 + "\tfor Stellaris (R), which is a game developed by Paradox Interactive.%n%n"
                 + "\tCopyright (C) 2016  donizyo%n%n");
@@ -141,7 +141,7 @@ public class Stellaris extends SimpleFactory {
         String jarName;
 
         jarName = new File(Stellaris.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
-        System.out.format("Usage:%n\tjava -jar %s <StellarisPath>%n%n",
+        Debug.out.format("Usage:%n\tjava -jar %s <StellarisPath>%n%n",
                 jarName);
     }
 
@@ -159,7 +159,7 @@ public class Stellaris extends SimpleFactory {
         }
 
         path = args[0];
-        System.out.format("Checkout directory \"%s\"...%n", path);
+        Debug.out.format("Checkout directory \"%s\"...%n", path);
         st = null;
         try {
             st = new Stellaris();
