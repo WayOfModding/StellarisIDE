@@ -33,7 +33,10 @@ import com.stellaris.script.ScriptValue;
 import com.stellaris.test.Debug;
 import static com.stellaris.test.Debug.DEBUG;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -582,6 +585,7 @@ public class ScriptFile extends ScriptValue {
         String sparent, sname;
         File dir;
         File file;
+        File log;
         Stellaris st;
         ScriptEngine engine;
         ScriptContext context;
@@ -602,10 +606,17 @@ public class ScriptFile extends ScriptValue {
         }
         dir = new File(sparent);
         file = new File(dir, sname);
-        Debug.DEBUG = true;
-        Debug.DEBUG_NEXT = true;
-        Debug.DEBUG_DISCARD = true;
-        Debug.out.format("%nParsing file \"%s\"...%n", sname);
-        ScriptFile.newInstance(file, context);
+        log = new File("log", sname);
+        log.getParentFile().mkdirs();
+        try (PrintStream logStream = new PrintStream(new FileOutputStream(log));) {
+            Debug.out = Debug.err = logStream;
+            Debug.DEBUG = true;
+            Debug.DEBUG_NEXT = true;
+            Debug.DEBUG_DISCARD = true;
+            Debug.out.format("%nParsing file \"%s\"...%n", sname);
+            ScriptFile.newInstance(file, context);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }
