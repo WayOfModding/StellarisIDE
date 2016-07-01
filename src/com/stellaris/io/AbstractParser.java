@@ -278,7 +278,7 @@ public class AbstractParser implements AutoCloseable {
     }
 
     @Override
-    public final void close() throws IOException {
+    public void close() throws IOException {
         Reader in;
 
         in = reader;

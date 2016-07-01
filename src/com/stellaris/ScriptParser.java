@@ -37,6 +37,7 @@ public final class ScriptParser extends AbstractParser {
     private LinkedList<Token> queue;
     // refrigerator for leftover
     private CharBuffer line;
+    private int bracket;
 
     public ScriptParser(File file) throws IOException {
         this(new BOMReader(file));
@@ -193,6 +194,7 @@ public final class ScriptParser extends AbstractParser {
             throws AssertionError {
         int len;
         char[] buf;
+        char c;
         String str;
 
         if (src == dst) {
@@ -200,6 +202,17 @@ public final class ScriptParser extends AbstractParser {
         }
         len = dst - src;
         buf = charBuffer.array();
+        if (len == 1) {
+            c = buf[src];
+            switch (c) {
+                case '{':
+                    ++bracket;
+                    break;
+                case '}':
+                    --bracket;
+                    break;
+            }
+        }
         str = new String(buf, src, len);
         if (DEBUG && DEBUG_CACHE) {
             Debug.err.format("[CACHE]\tline=%d, src=%d, dst=%d, str=\"%s\"%n"
@@ -213,11 +226,16 @@ public final class ScriptParser extends AbstractParser {
     }
 
     private boolean isTerminalCharacter(char c) {
-        return c == '{'
-                || c == '}'
-                || c == '='
-                || c == '>'
-                || c == '<';
+        switch (c) {
+            case '{':
+            case '}':
+            case '=':
+            case '>':
+            case '<':
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**
@@ -240,8 +258,9 @@ public final class ScriptParser extends AbstractParser {
             // get a new line
             buf = nextLine();
             // mark the beginning of the new buffer
-            if (Debug.DEBUG_LINE && buf != null)
+            if (Debug.DEBUG_LINE && buf != null) {
                 Debug.err.format("[LINE]\t%s%n", buf);
+            }
         }
         // skip empty line:         "\r?\n"
         // skip white-space line:   "\s+\r?\n"
@@ -256,8 +275,9 @@ public final class ScriptParser extends AbstractParser {
             // current line is empty
             // retrieve next line
             buf = nextLine();
-            if (Debug.DEBUG_LINE && buf != null)
+            if (Debug.DEBUG_LINE && buf != null) {
                 Debug.err.format("[LINE]\t%s%n", buf);
+            }
         }
 
         isComment = false;
@@ -366,6 +386,18 @@ public final class ScriptParser extends AbstractParser {
         }
         res = "#";
         return new Token(res, getLineNumber());
+    }
+
+    public void close() throws IOException {
+        super.close();
+        if (bracket != 0) {
+            throw new TokenException(
+                    String.format(
+                            "Unmatching bracket pairs: %d",
+                            bracket
+                    )
+            );
+        }
     }
 
     public static void main(String[] args) {
