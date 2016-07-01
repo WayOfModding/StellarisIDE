@@ -167,7 +167,7 @@ public class Stellaris extends SimpleFactory {
             st = new Stellaris();
             Stellaris.setDefault(st);
             st.init(path, true);
-            //ModLoader.getModLoaders();
+            ModLoader.getModLoaders();
             se = st.scriptEngine;
             sc = se.getContext();
             ftb = new FieldTypeBinding(sc);
