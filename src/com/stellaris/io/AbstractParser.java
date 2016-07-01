@@ -127,7 +127,7 @@ public class AbstractParser implements AutoCloseable {
         pos = -1;
         c = 0;
 
-        if (isEOF) {
+        if (!buf.hasRemaining() && isEOF) {
             return null;
         }
         while (true) {
@@ -155,7 +155,7 @@ public class AbstractParser implements AutoCloseable {
                 }
             }
             if (isNewLine || isEOF) {
-                if (isEOF) {
+                if (!isNewLine && isEOF) {
                     dst = buf.limit();
                 } else {
                     // NEWLINE is found

@@ -239,7 +239,7 @@ public final class ScriptParser extends AbstractParser {
             // get a new line
             buf = nextLine();
             // mark the beginning of the new buffer
-            if (buf != null)
+            if (Debug.DEBUG_LINE && buf != null)
                 Debug.err.format("[LINE]\t%s%n", buf);
         }
         // skip empty line:         "\r?\n"
@@ -255,7 +255,7 @@ public final class ScriptParser extends AbstractParser {
             // current line is empty
             // retrieve next line
             buf = nextLine();
-            if (buf != null)
+            if (Debug.DEBUG_LINE && buf != null)
                 Debug.err.format("[LINE]\t%s%n", buf);
         }
 
