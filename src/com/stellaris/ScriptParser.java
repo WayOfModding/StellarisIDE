@@ -239,6 +239,8 @@ public final class ScriptParser extends AbstractParser {
             // get a new line
             buf = nextLine();
             // mark the beginning of the new buffer
+            if (buf != null)
+                Debug.err.format("[LINE]\t%s%n", buf);
         }
         // skip empty line:         "\r?\n"
         // skip white-space line:   "\s+\r?\n"
@@ -248,12 +250,13 @@ public final class ScriptParser extends AbstractParser {
                 return null;
             }
             if (skipLeadingWhitespace(buf)) {
-                Debug.err.format("[LINE]\t%s%n", buf);
                 break;
             }
             // current line is empty
             // retrieve next line
             buf = nextLine();
+            if (buf != null)
+                Debug.err.format("[LINE]\t%s%n", buf);
         }
 
         isComment = false;
