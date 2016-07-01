@@ -52,7 +52,7 @@ public final class ScriptParser extends AbstractParser {
     public void skipCurrentLine() {
         int idx;
         Queue<Token> q;
-        Queue<Token> p;
+        LinkedList<Token> p;
         Token t;
         int tl;
 
@@ -70,7 +70,7 @@ public final class ScriptParser extends AbstractParser {
                 }
                 p.add(t);
             }
-            q = p;
+            queue = p;
         }
     }
 
