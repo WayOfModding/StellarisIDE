@@ -32,6 +32,7 @@ import com.stellaris.script.ScriptStruct;
 import com.stellaris.script.ScriptValue;
 import com.stellaris.test.Debug;
 import static com.stellaris.test.Debug.DEBUG;
+import static com.stellaris.test.Debug.SKIP_LINE;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -252,10 +253,13 @@ public class ScriptFile extends ScriptValue {
                 token = parser.nextToken();
                 sToken = token.getValue();
             } catch (TokenException ex) {
-                Logger.getLogger(ScriptFile.class.getName()).log(
-                        Level.SEVERE, parser.skipCurrentLine(), ex
-                );
-                continue;
+                if (SKIP_LINE) {
+                    Logger.getLogger(Stellaris.class.getName()).log(
+                            Level.SEVERE, parser.skipCurrentLine(), ex
+                    );
+                    continue;
+                }
+                throw ex;
             }
             // ignore comment token
             if (sToken.charAt(0) == '#') {
@@ -275,10 +279,13 @@ public class ScriptFile extends ScriptValue {
                     sKey = key.getValue();
                 }
             } catch (TokenException | NumberFormatException ex) {
-                Logger.getLogger(ScriptFile.class.getName()).log(
-                        Level.SEVERE, parser.skipCurrentLine(), ex
-                );
-                continue;
+                if (SKIP_LINE) {
+                    Logger.getLogger(Stellaris.class.getName()).log(
+                            Level.SEVERE, parser.skipCurrentLine(), ex
+                    );
+                    continue;
+                }
+                throw ex;
             }
 
             // operator
@@ -287,10 +294,13 @@ public class ScriptFile extends ScriptValue {
                 token = parser.nextToken();
                 sToken = token.getValue();
             } catch (TokenException ex) {
-                Logger.getLogger(ScriptFile.class.getName()).log(
-                        Level.SEVERE, parser.skipCurrentLine(), ex
-                );
-                continue;
+                if (SKIP_LINE) {
+                    Logger.getLogger(Stellaris.class.getName()).log(
+                            Level.SEVERE, parser.skipCurrentLine(), ex
+                    );
+                    continue;
+                }
+                throw ex;
             }
             isList = !"=".equals(sToken)
                     && !">".equals(sToken)
@@ -300,10 +310,13 @@ public class ScriptFile extends ScriptValue {
                 try {
                     throw new TokenException("Unexpected color token");
                 } catch (TokenException ex) {
-                    Logger.getLogger(ScriptFile.class.getName()).log(
-                            Level.SEVERE, parser.skipCurrentLine(), ex
-                    );
-                    continue;
+                    if (SKIP_LINE) {
+                        Logger.getLogger(Stellaris.class.getName()).log(
+                                Level.SEVERE, parser.skipCurrentLine(), ex
+                        );
+                        continue;
+                    }
+                    throw ex;
                 }
             }
 
@@ -315,10 +328,13 @@ public class ScriptFile extends ScriptValue {
                 try {
                     isList = handlePlainList(scriptList, token);
                 } catch (TokenException ex) {
-                    Logger.getLogger(ScriptFile.class.getName()).log(
-                            Level.SEVERE, parser.skipCurrentLine(), ex
-                    );
-                    continue;
+                    if (SKIP_LINE) {
+                        Logger.getLogger(Stellaris.class.getName()).log(
+                                Level.SEVERE, parser.skipCurrentLine(), ex
+                        );
+                        continue;
+                    }
+                    throw ex;
                 }
                 if (isList) {
                     //type = Type.LIST;
@@ -341,20 +357,26 @@ public class ScriptFile extends ScriptValue {
                     token = parser.nextToken();
                     sToken = token.getValue();
                 } catch (TokenException ex) {
-                    Logger.getLogger(ScriptFile.class.getName()).log(
-                            Level.SEVERE, parser.skipCurrentLine(), ex
-                    );
-                    continue;
+                    if (SKIP_LINE) {
+                        Logger.getLogger(Stellaris.class.getName()).log(
+                                Level.SEVERE, parser.skipCurrentLine(), ex
+                        );
+                        continue;
+                    }
+                    throw ex;
                 }
                 patterns = checkColorToken(token);
                 if (patterns != null) {
                     try {
                         scriptColor = handleColorToken(patterns);
                     } catch (TokenException | NumberFormatException ex) {
-                        Logger.getLogger(ScriptFile.class.getName()).log(
-                                Level.SEVERE, parser.skipCurrentLine(), ex
-                        );
-                        continue;
+                        if (SKIP_LINE) {
+                            Logger.getLogger(Stellaris.class.getName()).log(
+                                    Level.SEVERE, parser.skipCurrentLine(), ex
+                            );
+                            continue;
+                        }
+                        throw ex;
                     }
                     put(field, scriptColor);
                     scriptColor = null;
@@ -362,10 +384,13 @@ public class ScriptFile extends ScriptValue {
                     try {
                         tokens = parser.peekToken(7);
                     } catch (TokenException ex) {
-                        Logger.getLogger(ScriptFile.class.getName()).log(
-                                Level.SEVERE, parser.skipCurrentLine(), ex
-                        );
-                        continue;
+                        if (SKIP_LINE) {
+                            Logger.getLogger(Stellaris.class.getName()).log(
+                                    Level.SEVERE, parser.skipCurrentLine(), ex
+                            );
+                            continue;
+                        }
+                        throw ex;
                     }
                     output = new ArrayList<>(2);
                     // { -> min = INTEGER max = INTEGER }
