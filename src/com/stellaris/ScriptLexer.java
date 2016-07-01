@@ -222,6 +222,24 @@ public final class ScriptLexer extends AbstractLexer {
         }
     }
 
+    private static String compact(CharBuffer buf) {
+        CharBuffer tmp;
+        char c;
+
+        tmp = CharBuffer.allocate(buf.remaining());
+        buf.mark();
+        while (buf.hasRemaining()) {
+            c = buf.get();
+            if (Character.isWhitespace(c)) {
+                continue;
+            }
+            tmp.put(c);
+        }
+        buf.reset();
+        tmp.flip();
+        return tmp.toString();
+    }
+
     private boolean tokenize(Queue<String> q, Map<Integer, Queue<String>> m)
             throws IOException, TokenException {
         char c;
@@ -232,6 +250,9 @@ public final class ScriptLexer extends AbstractLexer {
         boolean isString;
         CharBuffer buf;
         Queue<String> p;
+        String line;
+        StringBuilder sb;
+        String lex;
 
         // skip empty line:         "\r?\n"
         // skip white-space line:   "\s+\r?\n"
@@ -251,6 +272,8 @@ public final class ScriptLexer extends AbstractLexer {
 
         lineNumber = getLineNumber();
         p = new LinkedList<>();
+        line = compact(buf);
+        sb = new StringBuilder();
         do {
             isComment = false;
             c = buf.get();
@@ -303,12 +326,27 @@ public final class ScriptLexer extends AbstractLexer {
                 res = cache(buf, src, dst);
             }
 
+            sb.append(res);
             if (!isComment || Debug.ACCEPT_COMMENT) {
                 if (!q.add(res) || !p.add(res)) {
                     throw new IllegalStateException("Fail to add new token");
                 }
             }
         } while (skipLeadingWhitespace(buf));
+
+        lex = sb.toString();
+        if (!lex.equals(line) && !isComment) {
+            throw new AssertionError(
+                    String.format(
+                            "Lexical analysis exception @ %d:%n"
+                            + "\tLine:  %s%n"
+                            + "\tToken: %s%n",
+                            lineNumber,
+                            line,
+                            lex
+                    )
+            );
+        }
 
         // map the line with all tokens in this line
         if (!p.isEmpty()) {
