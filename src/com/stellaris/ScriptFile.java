@@ -112,7 +112,12 @@ public class ScriptFile extends ScriptValue {
         try {
             res = analyze(null, 0, 0);
             if (res != 0) {
-                throw new AssertionError(res);
+                throw new TokenException(
+                        String.format(
+                                "Invalid parsing state: %d\t(expecting: 0)",
+                                res
+                        )
+                );
             }
         } catch (IOException ex) {
             Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
@@ -381,7 +386,12 @@ public class ScriptFile extends ScriptValue {
                         put(field, new ScriptStruct());
                         newstate = analyze(field, state + 1, index - 1);
                         if (newstate != state) {
-                            throw new AssertionError(String.format("old_state=%d, new_state=%d", state, newstate));
+                            throw new TokenException(
+                                    String.format(
+                                            "Invalid parsing state: %d\t(expecting: %d)",
+                                            newstate, state
+                                    )
+                            );
                         }
                         state = newstate;
                     }

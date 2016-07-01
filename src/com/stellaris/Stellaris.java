@@ -115,9 +115,11 @@ public class Stellaris extends SimpleFactory {
                 }
                 try {
                     script = ScriptFile.newInstance(file, scriptEngine.getContext());
-                } catch (IllegalStateException | TokenException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
+                } catch (IllegalStateException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
                     Debug.err.format("[ERROR] Found at file \"%s\"%n", filename);
-                    continue;
+                } catch (TokenException ex) {
+                    Debug.err.format("[ERROR] Found at file \"%s\"%n\t%s%n",
+                            filename, ex);
                 } catch (NoSuchElementException ex) {
                     throw new RuntimeException(
                             String.format(
