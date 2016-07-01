@@ -16,405 +16,618 @@
  */
 package com.stellaris;
 
-import com.stellaris.io.AbstractParser;
+import com.stellaris.script.ScriptBoolean;
+import com.stellaris.script.ScriptColor;
+import com.stellaris.script.ScriptColorList;
+import com.stellaris.script.ScriptFloat;
+import com.stellaris.script.ScriptHSVColor;
+import com.stellaris.script.ScriptInteger;
+import com.stellaris.script.ScriptList;
+import com.stellaris.script.ScriptNull;
+import com.stellaris.script.ScriptRGBColor;
+import com.stellaris.script.ScriptRange;
+import com.stellaris.script.ScriptReference;
+import com.stellaris.script.ScriptString;
+import com.stellaris.script.ScriptStruct;
+import com.stellaris.script.ScriptValue;
 import com.stellaris.test.Debug;
-import java.io.*;
-import java.nio.*;
-import java.util.*;
-import static com.stellaris.test.Debug.*;
-import com.stellaris.util.BOMReader;
-import com.stellaris.util.DigestStore;
+import static com.stellaris.test.Debug.DEBUG;
+import static com.stellaris.test.Debug.SKIP_LINE;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.EmptyStackException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Stack;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.script.*;
 
 /**
+ * Generates AST (a.k.a abstract syntax tree) for Stellaris Script
  *
  * @author donizyo
  */
-public final class ScriptParser extends AbstractParser {
+public class ScriptParser extends ScriptValue {
 
-    private static final int BUFFER_SIZE = 65536;
-    private static final int CACHE_SIZE = 3;
+    private ScriptLexer scriptParser;
+    private boolean isCore;
+    private ScriptContext context;
 
-    private LinkedList<String> queue;
-    private Map<Integer, Queue<String>> map;
-    private int bracket;
-
-    public ScriptParser(File file) throws IOException {
-        this(new BOMReader(file));
-    }
-
-    public ScriptParser(Reader in) throws IOException {
-        super(in instanceof BufferedReader
-                ? (BufferedReader) in
-                : new BufferedReader(in),
-                BUFFER_SIZE);
-        queue = new LinkedList<>();
-        map = new HashMap<>();
-    }
-
-    public void skipCurrentLine() {
-        int idx;
-        Queue<String> q;
-        Map<Integer, Queue<String>> m;
-        Queue<String> p;
-
-        Debug.err.format("[INFO]\tSkip current line!%n");
-
-        idx = getLineNumber();
-        q = queue;
-        // line - token mapping
-        m = map;
-        // retrieve all tokens in this line
-        p = m.remove(idx);
-        if (p != null) {
-            q.removeAll(p);
+    public static ScriptParser newInstance(File file, ScriptContext context) {
+        try {
+            return new ScriptParser(file, context);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
-    private boolean hasRemaining() {
-        return !queue.isEmpty();
+    public static ScriptParser newInstance(Reader reader, ScriptContext context) throws IOException {
+        return new ScriptParser(reader, context);
     }
 
-    public boolean hasNextToken() throws IOException, TokenException {
-        boolean res;
+    private static boolean isCoreFile(File file) {
+        Stellaris main;
+        File root;
 
-        res = hasRemaining() || cache(CACHE_SIZE);
-        return res;
-    }
-
-    private boolean cache(int count)
-            throws IOException, TokenException {
-        Queue<String> q;
-        Map<Integer, Queue<String>> m;
-        boolean res;
-
-        q = queue;
-        m = map;
-        while (q.size() < count) {
-            res = tokenize(q, m);
-            if (!res) {
-                break;
-            }
+        main = Stellaris.getDefault();
+        if (main == null) {
+            Debug.err.format("[WARN]\tStellaris instance is null!%n");
+            return true;
         }
-        res = hasRemaining();
-        return res;
+        root = main.getRootDirectory();
+        return isCoreFile(file, root);
     }
 
-    public List<String> peekToken(int count)
-            throws IOException, TokenException {
-        List<String> res;
-        int size;
+    private static boolean isCoreFile(File file, File root) {
+        String proot, pfile;
 
-        cache(count);
-        size = queue.size();
-        if (size < count) {
-            count = size;
-        }
-        res = queue.subList(0, count);
-        res = Collections.unmodifiableList(res);
-        return res;
+        proot = root.getPath();
+        pfile = file.getPath();
+        return pfile.startsWith(proot);
     }
 
-    /**
-     * Dicard elements buffered in built-in deque Will not ignore elements still
-     * in the stream
-     *
-     * @param count
-     */
-    public void discardToken(int count) {
-        int i;
-        String str;
+    private ScriptParser(ScriptLexer parser, boolean isCoreFile, ScriptContext context) {
+        this.scriptParser = parser;
+        this.isCore = isCoreFile;
+        this.context = context;
+        analyze();
+    }
 
-        if (DEBUG && DEBUG_DISCARD) {
-            Debug.err.format("[DSCD]\tcount=%d%n", count);
-        }
-        i = 0;
-        while (i++ < count) {
-            str = queue.remove();
-            if (DEBUG && DEBUG_DISCARD) {
-                Debug.err.format("[DSCD]\tstr=\"%s\"%n\tcache=%d %s%n",
-                        str, queue.size(), queue.toString()
+    private ScriptParser(File file, ScriptContext context) throws IOException {
+        this(new ScriptLexer(file), isCoreFile(file), context);
+    }
+
+    private ScriptParser(Reader reader, ScriptContext context) throws IOException {
+        this(new ScriptLexer(reader), false, context);
+    }
+
+    private void analyze() {
+        int res;
+        ScriptLexer parser;
+
+        parser = scriptParser;
+        try {
+            res = analyze(null, 0, 0);
+            if (res != 0) {
+                throw new TokenException(
+                        String.format(
+                                "Invalid parsing state: %d\t(expecting: 0)",
+                                res
+                        )
                 );
             }
+        } catch (IOException ex) {
+            Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                parser.close();
+            } catch (IOException ex) {
+                Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            scriptParser = null;
         }
     }
 
-    /**
-     * Get next token
-     *
-     * @return
-     * @throws java.io.IOException
-     */
-    public String nextToken() throws IOException, NoSuchElementException {
-        String res;
+    public void put(Field field, ScriptValue value) {
+        Bindings bindings;
+        Field parent;
+        String fieldName;
+        Object obj;
+        ScriptValue old;
 
-        if (!hasNextToken()) {
-            throw new NoSuchElementException();
+        bindings = getBindings(context);
+        if (bindings == null) {
+            throw new NullPointerException();
         }
-        res = queue.remove();
-        if (DEBUG && DEBUG_NEXT) {
-            Debug.err.format("[NEXT]\tline=%d, next=\"%s\"%n\tcache=%d %s%n",
-                    getLineNumber(), res, queue.size(), queue.toString()
+        if (field == null) {
+            throw new UnsupportedOperationException("Accessing ScriptFile as ScriptValue");
+        }
+        parent = field.getParent();
+        fieldName = field.getName();
+        if (parent != null) {
+            bindings = (ScriptStruct) get(parent);
+        }
+        if (value == null) {
+            value = new ScriptNull();
+        }
+        obj = bindings.get(fieldName);
+        if (obj != null && obj instanceof ScriptValue) {
+            old = (ScriptValue) obj;
+            value.updateTypeInfo(old);
+        }
+        bindings.put(fieldName, value);
+    }
+
+    public ScriptValue get(Field field) {
+        Stack<String> stack;
+        Field parent;
+        String name;
+        Bindings bindings;
+        Object obj;
+        ScriptValue value;
+
+        if (field == null) {
+            throw new NullPointerException();
+        }
+        stack = new Stack<>();
+        parent = field;
+        while (parent != null) {
+            name = parent.getName();
+            parent = parent.getParent();
+            stack.push(name);
+        }
+        // root node
+        try {
+            name = stack.pop();
+        } catch (EmptyStackException ex) {
+            throw new AssertionError(ex);
+        }
+        bindings = getBindings(context);
+        if (bindings == null) {
+            throw new NullPointerException();
+        }
+        obj = bindings.get(name);
+        if (obj == null) {
+            throw new NullPointerException();
+        }
+        if (!(obj instanceof ScriptValue)) {
+            throw new AssertionError(obj.getClass());
+        }
+        value = (ScriptValue) obj;
+        // leaf node
+        while (!stack.isEmpty()) {
+            name = stack.pop();
+            try {
+                bindings = (ScriptStruct) value;
+
+                obj = bindings.get(name);
+                if (obj == null) {
+                    if (stack.isEmpty()) {
+                        return null;
+                    } else {
+                        throw new NullPointerException();
+                    }
+                }
+                value = (ScriptValue) obj;
+            } catch (NullPointerException ex) {
+                throw new AssertionError(ex);
+            } catch (ClassCastException ex) {
+                throw new AssertionError(value.getClass().toString(), ex);
+            }
+        }
+
+        return value;
+    }
+
+    // remember to skip the current line when TokenException is thrown
+    private int analyze(Field parent, int state, int index) throws IOException {
+        ScriptLexer parser;
+        String token, key;
+        List<String> tokens;
+        List<String> output;
+        Iterator<String> itr;
+        Field field;
+        //Type type;
+        boolean isRange;
+        boolean isList;
+        Patterns patterns;
+        int newstate;
+        int min, max;
+        ScriptList<ScriptValue> scriptList;
+        ScriptColor scriptColor;
+
+        if (DEBUG) {
+            Debug.err.format("[PARSE]\tparent=%s, state=%d, index=%d%n",
+                    parent, state, index
             );
         }
-        return res;
-    }
-
-    /**
-     * Create a token string with char data from the buffer
-     *
-     * @param src
-     * @param dst
-     * @return
-     */
-    private String cache(CharBuffer charBuffer,
-            int src, int dst)
-            throws AssertionError {
-        int len;
-        char[] buf;
-        char c;
-        String str;
-
-        if (src == dst) {
-            throw new AssertionError("Empty string");
-        }
-        len = dst - src;
-        buf = charBuffer.array();
-        if (len == 1) {
-            c = buf[src];
-            switch (c) {
-                case '{':
-                    ++bracket;
-                    break;
-                case '}':
-                    --bracket;
-                    break;
+        index = 0;
+        parser = scriptParser;
+        while (parser.hasNextToken()) {
+            try {
+                token = parser.nextToken();
+            } catch (TokenException ex) {
+                if (SKIP_LINE) {
+                    parser.skipCurrentLine();
+                    continue;
+                }
+                throw ex;
             }
-        }
-        str = new String(buf, src, len);
-        if (DEBUG && DEBUG_CACHE) {
-            Debug.err.format("[CACHE]\tline=%d, src=%d, dst=%d, str=\"%s\"%n"
-                    + "\tcache=%d %s%n",
-                    getLineNumber(), src, dst, str,
-                    queue.size(), queue.toString()
-            );
-        }
-
-        return str;
-    }
-
-    private boolean isTerminalCharacter(char c) {
-        switch (c) {
-            case '{':
-            case '}':
-            case '=':
-            case '>':
-            case '<':
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    private void debugLine(CharBuffer buf) {
-        if (Debug.DEBUG_LINE) {
-            Debug.err.format("[LINE]\t%4d>\t%s%n",
-                    buf.remaining(), buf);
-        }
-    }
-
-    private boolean tokenize(Queue<String> q, Map<Integer, Queue<String>> m)
-            throws IOException, TokenException {
-        char c;
-        int src, dst, pos;
-        String res;
-        int lineNumber;
-        boolean isComment;
-        boolean isString;
-        CharBuffer buf;
-        Queue<String> p;
-
-        // skip empty line:         "\r?\n"
-        // skip white-space line:   "\s+\r?\n"
-        while (true) {
-            // current line is empty
-            // retrieve next line
-            buf = nextLine();
-            if (buf == null) {
-                // hit EOF
-                return false;
+            // ignore comment token
+            if (token.charAt(0) == '#') {
+                continue;
             }
-            debugLine(buf);
-            if (skipLeadingWhitespace(buf)) {
-                break;
+            // return
+            if ("}".equals(token)) {
+                //put(parent, cache); cache = null;
+                return --state;
             }
-        }
-
-        lineNumber = getLineNumber();
-        p = new LinkedList<>();
-        do {
-            isComment = false;
-            c = buf.get();
-            if (c == '#') {
-                isComment = true;
-                res = handleComment(buf);
-            } else {
-                // non-comment token
-
-                // handle leading terminal characters
-                pos = buf.position();
-                src = pos - 1;
-                if (isTerminalCharacter(c)) {
-                    dst = pos;
+            try {
+                if (handleColorList(parent, token)) {
+                    //type = Type.COLORLIST;
+                    return --state;
                 } else {
-                    isString = c == '"';
-                    while (true) {
-                        if (!buf.hasRemaining()) {
-                            if (isString) {
-                                throw new TokenException("String is not closed");
-                            }
-                            // NEWLINE or EOF
-                            dst = buf.position();
-                            break;
+                    key = token;
+                }
+            } catch (TokenException | NumberFormatException ex) {
+                if (SKIP_LINE) {
+                    parser.skipCurrentLine();
+                    continue;
+                }
+                throw ex;
+            }
+
+            // operator
+            // or list?
+            try {
+                token = parser.nextToken();
+            } catch (TokenException ex) {
+                if (SKIP_LINE) {
+                    parser.skipCurrentLine();
+                    continue;
+                }
+                throw ex;
+            }
+            isList = !"=".equals(token)
+                    && !">".equals(token)
+                    && !"<".equals(token);
+            // update for Stellaris v1.2
+            if (checkColorToken(token) != null) {
+                try {
+                    throw new TokenException("Unexpected color token");
+                } catch (TokenException ex) {
+                    if (SKIP_LINE) {
+                        parser.skipCurrentLine();
+                        continue;
+                    }
+                    throw ex;
+                }
+            }
+
+            if (isList) {
+                // list entries: key, token, ...
+                scriptList = new ScriptList<>(
+                        ScriptValue.parseString(key)
+                );
+                try {
+                    isList = handlePlainList(scriptList, token);
+                } catch (TokenException ex) {
+                    if (SKIP_LINE) {
+                        parser.skipCurrentLine();
+                        continue;
+                    }
+                    throw ex;
+                }
+                if (isList) {
+                    //type = Type.LIST;
+                    //put(parent, type);
+                    put(parent, scriptList);
+                    scriptList = null;
+                    return --state;
+                } else {
+                    throw new AssertionError();
+                }
+            } else {
+                field = new Field(parent, key);
+                if (Debug.DEBUG_FIELD) {
+                    Debug.err.format("[FIELD]\tparent=%s, key=%s, index=%d%n",
+                            parent, key, index);
+                }
+                ++index;
+                // value
+                try {
+                    token = parser.nextToken();
+                } catch (TokenException ex) {
+                    if (SKIP_LINE) {
+                        parser.skipCurrentLine();
+                        continue;
+                    }
+                    throw ex;
+                }
+                patterns = checkColorToken(token);
+                if (patterns != null) {
+                    try {
+                        scriptColor = handleColorToken(patterns);
+                    } catch (TokenException | NumberFormatException ex) {
+                        if (SKIP_LINE) {
+                            parser.skipCurrentLine();
+                            continue;
                         }
-                        pos = buf.mark().position();
-                        c = buf.get();
-                        if (isString) {
-                            if (c == '\\') {
-                                buf.get();
-                                //continue;
-                            } else if (c == '"') {
-                                dst = pos + 1;
-                                break;
+                        throw ex;
+                    }
+                    put(field, scriptColor);
+                    scriptColor = null;
+                } else if ("{".equals(token)) {
+                    try {
+                        tokens = parser.peekToken(7);
+                    } catch (TokenException ex) {
+                        if (SKIP_LINE) {
+                            parser.skipCurrentLine();
+                            continue;
+                        }
+                        throw ex;
+                    }
+                    output = new ArrayList<>(2);
+                    // { -> min = INTEGER max = INTEGER }
+                    patterns = Patterns.PS_RANGE;
+                    isRange = patterns.matches(tokens, output);
+                    if (isRange) {
+                        itr = output.iterator();
+
+                        token = itr.next();
+                        min = Integer.parseInt(token);
+                        token = itr.next();
+                        max = Integer.parseInt(token);
+
+                        put(field, new ScriptRange(min, max));
+                        parser.discardToken(7);
+                    } else {
+                        // add 1 each time a struct is found
+                        put(field, new ScriptStruct());
+                        newstate = analyze(field, state + 1, index - 1);
+                        if (newstate != state) {
+                            throw new TokenException(
+                                    String.format(
+                                            "Invalid parsing state: %d\t(expecting: %d)",
+                                            newstate, state
+                                    )
+                            );
+                        }
+                        state = newstate;
+                    }
+                } else if ("yes".equals(token)) {
+                    put(field, new ScriptBoolean(true));
+                } else if ("no".equals(token)) {
+                    //type = Type.BOOLEAN;
+                    put(field, new ScriptBoolean(false));
+                } else {
+                    try {
+                        // integer
+                        put(field, new ScriptInteger(Integer.parseInt(token)));
+                        //type = Type.INTEGER;
+                    } catch (NumberFormatException e1) {
+                        // float
+                        try {
+                            put(field, new ScriptFloat(Float.parseFloat(token)));
+                        } catch (NumberFormatException e2) {
+                            if (token.startsWith("\"")
+                                    && token.endsWith("\"")) {
+                                put(field, new ScriptString(token));
+                            } else {
+                                put(field, new ScriptReference(token));
                             }
-                        } else if (Character.isWhitespace(c)) {
-                            dst = pos;
-                            break;
-                        } else if (isTerminalCharacter(c)
-                                || c == '#') {
-                            // handle ending terminal characters
-                            // handle immediate ending comment
-                            // fuck those who don't have good coding habits
-                            dst = pos;
-                            buf.reset();
-                            break;
                         }
                     }
                 }
-                res = cache(buf, src, dst);
             }
-
-            if (!isComment || Debug.ACCEPT_COMMENT) {
-                if (!q.add(res) || !p.add(res)) {
-                    throw new IllegalStateException("Fail to add new token");
-                }
-            }
-        } while (skipLeadingWhitespace(buf));
-
-        // map the line with all tokens in this line
-        if (!p.isEmpty()) {
-            m.put(lineNumber, p);
         }
 
+        return state;
+    }
+
+    private Bindings getBindings(ScriptContext context) {
+        Bindings bindings;
+
+        if (context == null) {
+            throw new NullPointerException();
+        }
+        if (isCore) {
+            bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
+        } else {
+            bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+            if (bindings == null) {
+                context.getBindings(ScriptContext.GLOBAL_SCOPE);
+            }
+        }
+
+        return bindings;
+    }
+
+    private boolean handleColorList(Field parent, String token) throws IOException {
+        Patterns patterns;
+        ScriptColor color;
+        ScriptList<ScriptColor> colorList;
+        ScriptLexer parser;
+
+        // detect color list
+        patterns = checkColorToken(token);
+        if (patterns == null) {
+            return false;
+        }
+
+        colorList = new ScriptColorList();
+        parser = scriptParser;
+        // handle color list
+        while (true) {
+            color = handleColorToken(patterns);
+            colorList.add(color);
+
+            token = parser.nextToken();
+            patterns = checkColorToken(token);
+            if (patterns != null) {
+                continue;
+            }
+            switch (token) {
+                case "}":
+                    // exit color list
+                    break;
+                default:
+                    throw new TokenException(token);
+            }
+            // exit color list
+            break;
+        }
+
+        put(parent, colorList);
         return true;
     }
 
-    /**
-     *
-     * @param buf
-     * @return true, if line is not empty
-     */
-    private boolean skipLeadingWhitespace(CharBuffer buf) {
-        char c;
-        int pos;
+    // rgb -> { INT INT INT }
+    // rgb -> { INT INT INT INT }
+    private ScriptColor handleColorToken(Patterns patterns)
+            throws IOException, TokenException {
+        ScriptLexer parser;
+        int len;
+        List<String> tokens;
+        String[] data;
+        List<String> output;
+        ScriptColor color;
+        String sa;
+        int r, g, b, a0;
+        float h, s, v, a1;
+        boolean isColor;
 
-        while (true) {
-            if (buf.hasRemaining()) {
-                // skip the first few whitespace characters
-                c = buf.get();
-                if (Character.isWhitespace(c)) {
-                    continue;
+        if (patterns == null) {
+            throw new NullPointerException();
+        }
+        parser = scriptParser;
+        len = 6;
+        tokens = parser.peekToken(len);
+        output = new ArrayList<>(len);
+        isColor = patterns.matches(tokens, output);
+        if (isColor) {
+            len = output.size();
+            parser.discardToken(len + 2);
+            data = new String[len];
+
+            output.toArray(data);
+            if (patterns == Patterns.PS_COLOR_RGB) {
+                r = Integer.parseInt(data[0]);
+                g = Integer.parseInt(data[1]);
+                b = Integer.parseInt(data[2]);
+                try {
+                    sa = data[3];
+                    a0 = Integer.parseInt(sa);
+                    color = new ScriptRGBColor(r, g, b, a0);
+                } catch (ArrayIndexOutOfBoundsException | NullPointerException ex) {
+                    color = new ScriptRGBColor(r, g, b);
                 }
-                pos = buf.position();
-                buf.position(pos - 1);
-                return true;
+            } else if (patterns == Patterns.PS_COLOR_HSV) {
+                h = Float.parseFloat(data[0]);
+                s = Float.parseFloat(data[1]);
+                v = Float.parseFloat(data[2]);
+                try {
+                    sa = data[3];
+                    a1 = Float.parseFloat(sa);
+                    color = new ScriptHSVColor(h, s, v, a1);
+                } catch (ArrayIndexOutOfBoundsException | NullPointerException ex) {
+                    color = new ScriptHSVColor(h, s, v);
+                }
             } else {
-                // if there's no remaining characters in the buffer
-                return false;
+                throw new AssertionError(patterns.getClass());
             }
+        } else {
+            throw new TokenException("Color token exception");
         }
+        return color;
     }
 
-    private String handleComment(CharBuffer buf) {
-        int src;
-        char c;
-        String res;
+    private Patterns checkColorToken(String token) {
+        Patterns patterns;
 
-        // find a comment token
-        while (buf.hasRemaining()) {
-            c = buf.get();
-            if (c == '#') {
-                continue;
-            }
-            src = buf.position() - 2;
-            buf.position(src);
-            res = buf.toString();
-            buf.rewind().flip();
-            return res;
+        switch (token) {
+            case "hsv":
+                patterns = Patterns.PS_COLOR_HSV;
+                break;
+            case "rgb":
+                patterns = Patterns.PS_COLOR_RGB;
+                break;
+            default:
+                patterns = null;
+                break;
         }
-        res = "#";
-        return res;
+        return patterns;
     }
 
-    public void close() throws IOException {
-        super.close();
-        if (bracket != 0) {
-            throw new TokenException(
-                    String.format(
-                            "Unmatching bracket pairs: %d",
-                            bracket
-                    )
-            );
+    private boolean handlePlainList(ScriptList list, String token) throws IOException {
+        ScriptLexer parser;
+
+        // handle single-element list
+        if ("}".equals(token)) {
+            return true;
+        }
+
+        parser = scriptParser;
+        list.add(ScriptValue.parseString(token));
+        // handle multiple-element list
+        while (true) {
+            token = parser.nextToken();
+            if ("}".equals(token)) {
+                return true;
+            }
+            if ("{".equals(token)
+                    || "yes".equals(token)
+                    || "no".equals(token)) {
+                throw new TokenException(token);
+            }
+            list.add(ScriptValue.parseString(token));
         }
     }
 
     public static void main(String[] args) {
+        String sparent, sname;
+        File dir;
         File file;
+        File log;
+        Stellaris st;
+        ScriptEngine engine;
+        ScriptContext context;
 
         if (args.length < 2) {
             return;
         }
-        file = new File(args[0], args[1]);
-        try (ScriptParser parser = new ScriptParser(file);) {
-            int count0; // count {
-            int count1; // count }
-            CharBuffer buffer;
-            char c;
-
-            count0 = count1 = 0;
-            while ((buffer = parser.nextLine()) != null) {
-                while (buffer.hasRemaining()) {
-                    c = buffer.get();
-                    switch (c) {
-                        case '{':
-                            ++count0;
-                            break;
-                        case '}':
-                            ++count1;
-                            break;
-                    }
-                }
-            }
-            Debug.out.format("File=\"%s\"%n"
-                    + "Count['{']=%d%n"
-                    + "Count['}']=%d%n"
-                    + "Delta=%d%n",
-                    DigestStore.getPath(file),
-                    count0,
-                    count1,
-                    count0 - count1
-            );
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
+        sparent = args[0];
+        sname = args[1];
+        {
+            //st = new Stellaris();
+            //Stellaris.setDefault(st);
+            //st.init(sparent, true);
+            //engine = st.getScriptEngine();
+            //context = engine.getContext();
+            context = new SimpleScriptContext();
+            context.setBindings(new SimpleBindings(), ScriptContext.GLOBAL_SCOPE);
+        }
+        dir = new File(sparent);
+        file = new File(dir, sname);
+        log = new File("log", sname);
+        log.getParentFile().mkdirs();
+        try (PrintStream logStream = new PrintStream(new FileOutputStream(log));) {
+            Debug.out = Debug.err = logStream;
+            Debug.DEBUG = true;
+            Debug.DEBUG_NEXT = true;
+            Debug.DEBUG_DISCARD = true;
+            Debug.DEBUG_LINE = true;
+            System.out.format("Parsing file \"%s\"...%n", sname);
+            Debug.out.format("Parsing file \"%s\"...%n", sname);
+            ScriptParser.newInstance(file, context);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }

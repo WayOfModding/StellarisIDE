@@ -16,7 +16,7 @@
  */
 package com.stellaris.script;
 
-import com.stellaris.ScriptFile;
+import com.stellaris.ScriptParser;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -47,7 +47,7 @@ public class SimpleEngine extends AbstractScriptEngine implements ScriptEngine {
     @Override
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
         try {
-            ScriptFile.newInstance(reader, context);
+            ScriptParser.newInstance(reader, context);
         } catch (IOException ex) {
             throw new ScriptException(ex);
         }

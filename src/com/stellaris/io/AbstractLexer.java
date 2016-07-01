@@ -26,7 +26,7 @@ import java.util.logging.Logger;
  *
  * @author donizyo
  */
-public class AbstractParser implements AutoCloseable {
+public class AbstractLexer implements AutoCloseable {
 
     private Reader reader;
     private CharBuffer buffer;
@@ -34,11 +34,11 @@ public class AbstractParser implements AutoCloseable {
     private int line;
     private boolean isEOF;
 
-    protected AbstractParser(Reader in) throws IOException {
+    protected AbstractLexer(Reader in) throws IOException {
         this(in, 65536);
     }
 
-    protected AbstractParser(Reader in, int bufferSize) throws IOException {
+    protected AbstractLexer(Reader in, int bufferSize) throws IOException {
         CharBuffer buf;
 
         reader = in;
@@ -278,7 +278,7 @@ public class AbstractParser implements AutoCloseable {
     public static void main(String[] args) {
         String root, path;
         File file;
-        AbstractParser parser;
+        AbstractLexer parser;
         String line;
         int num, len;
 
@@ -289,7 +289,7 @@ public class AbstractParser implements AutoCloseable {
         path = args[1];
         file = new File(root, path);
         try (Reader reader = new FileReader(file);) {
-            parser = new AbstractParser(reader);
+            parser = new AbstractLexer(reader);
             while (true) {
                 line = parser.nextLineString();
                 if (line == null) {
@@ -300,7 +300,7 @@ public class AbstractParser implements AutoCloseable {
                 Debug.out.format("Line %4d:%-4d> %s%n", num, len, line);
             }
         } catch (IOException ex) {
-            Logger.getLogger(AbstractParser.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(AbstractLexer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

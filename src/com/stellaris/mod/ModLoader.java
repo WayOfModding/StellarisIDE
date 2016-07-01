@@ -17,9 +17,9 @@
 package com.stellaris.mod;
 
 import com.stellaris.DirectoryFilter;
-import com.stellaris.ScriptFile;
-import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptParser;
+import com.stellaris.ScriptFilter;
+import com.stellaris.ScriptLexer;
 import com.stellaris.Stellaris;
 import com.stellaris.TokenException;
 import com.stellaris.script.SimpleEngine;
@@ -79,7 +79,7 @@ public class ModLoader extends SimpleEngine {
         ScriptFilter sf;
         Queue<File> dirs, files;
         String filename;
-        ScriptFile script;
+        ScriptParser script;
 
         root = new File(DEFAULT_STELLARIS_DIRECTORY, path);
         if (!root.isDirectory()) {
@@ -100,7 +100,7 @@ public class ModLoader extends SimpleEngine {
                 file = files.remove();
                 filename = DigestStore.getPath(file);
                 try (FileReader reader = new FileReader(file);) {
-                    script = ScriptFile.newInstance(reader, getContext());
+                    script = ScriptParser.newInstance(reader, getContext());
                     validateScript(script);
                 } catch (Exception ex) {
                     throw new RuntimeException(filename, ex);
@@ -110,13 +110,13 @@ public class ModLoader extends SimpleEngine {
     }
 
     private String handleFile(File file) throws IOException {
-        ScriptParser parser;
+        ScriptLexer parser;
         String key;
         String token;
         int idx;
         int len;
 
-        parser = new ScriptParser(file);
+        parser = new ScriptLexer(file);
         while (parser.hasNextToken()) {
             key = parser.nextToken();
 
@@ -167,7 +167,7 @@ public class ModLoader extends SimpleEngine {
         return res;
     }
 
-    private void validateScript(ScriptFile script) {
+    private void validateScript(ScriptParser script) {
         Stellaris stellaris;
         SyntaxValidator syntaxValidator;
 

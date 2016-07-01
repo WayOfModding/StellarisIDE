@@ -75,7 +75,7 @@ public class Stellaris extends SimpleFactory {
         ScriptFilter sf;
         Queue<File> files, dirs;
         File file, dir;
-        ScriptFile script;
+        ScriptParser script;
         String filename;
 
         dirRoot = new File(path);
@@ -114,7 +114,7 @@ public class Stellaris extends SimpleFactory {
                     Debug.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
                 }
                 try {
-                    script = ScriptFile.newInstance(file, scriptEngine.getContext());
+                    script = ScriptParser.newInstance(file, scriptEngine.getContext());
                 } catch (IllegalStateException | AssertionError | BufferUnderflowException | BufferOverflowException ex) {
                     Debug.err.format("[ERROR] Found at file \"%s\"%n", filename);
                 } catch (TokenException ex) {
