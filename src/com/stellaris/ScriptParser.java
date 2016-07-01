@@ -35,8 +35,6 @@ public final class ScriptParser extends AbstractParser {
     private static final int CACHE_SIZE = 3;
 
     private LinkedList<Token> queue;
-    // refrigerator for leftover
-    private CharBuffer line;
     private int bracket;
 
     public ScriptParser(File file) throws IOException {
@@ -49,23 +47,16 @@ public final class ScriptParser extends AbstractParser {
                 : new BufferedReader(in),
                 BUFFER_SIZE);
         queue = new LinkedList<>();
-        line = null;
     }
 
-    public String skipCurrentLine() {
-        CharBuffer buf;
-        String res;
+    public void skipCurrentLine() {
         int idx;
         Queue<Token> q;
-        Queue<Token> p;
+        LinkedList<Token> p;
         Token t;
         int tl;
 
         Debug.err.format("[INFO]\tSkip current line!%n");
-        buf = line;
-        buf.reset();
-        res = buf.toString();
-        line = null;
 
         idx = getLineNumber();
         q = queue;
@@ -79,10 +70,8 @@ public final class ScriptParser extends AbstractParser {
                 }
                 p.add(t);
             }
-            q = p;
+            queue = p;
         }
-
-        return res;
     }
 
     private boolean hasRemaining() {
@@ -99,28 +88,17 @@ public final class ScriptParser extends AbstractParser {
     private boolean cache(int count)
             throws IOException, TokenException {
         Queue<Token> q;
-        Token str;
         boolean res;
 
         q = queue;
         while (q.size() < count) {
-            str = next();
-            if (str == null) {
+            res = tokenize(q);
+            if (!res) {
                 break;
             }
         }
         res = hasRemaining();
         return res;
-    }
-
-    private boolean cache(Token s) {
-        Queue<Token> q;
-
-        if (s == null) {
-            return false;
-        }
-        q = queue;
-        return q.add(s);
     }
 
     public List<Token> peekToken(int count)
@@ -190,7 +168,8 @@ public final class ScriptParser extends AbstractParser {
      * @param dst
      * @return
      */
-    private Token cache(CharBuffer charBuffer, int src, int dst)
+    private Token cache(CharBuffer charBuffer,
+            int src, int dst, int lineNumber)
             throws AssertionError {
         int len;
         char[] buf;
@@ -222,7 +201,7 @@ public final class ScriptParser extends AbstractParser {
             );
         }
 
-        return new Token(str, getLineNumber());
+        return new Token(str, lineNumber);
     }
 
     private boolean isTerminalCharacter(char c) {
@@ -239,110 +218,99 @@ public final class ScriptParser extends AbstractParser {
     }
 
     private void debugLine(CharBuffer buf) {
-        if (Debug.DEBUG_LINE && buf != null) {
+        if (Debug.DEBUG_LINE) {
             Debug.err.format("[LINE]\t%4d>\t%s%n",
                     buf.remaining(), buf);
         }
     }
 
-    /**
-     * Retrieves the next token string
-     *
-     * @return
-     */
-    private Token next()
+    private boolean tokenize(Queue<Token> q)
             throws IOException, TokenException {
         char c;
         int src, dst, pos;
         Token res;
+        int lineNumber;
         boolean isComment;
         boolean isString;
         CharBuffer buf;
 
-        buf = line;
-        if (buf == null) {
-            // no leftover available
-            // get a new line
-            buf = nextLine();
-            // mark the beginning of the new buffer
-            debugLine(buf);
-        }
         // skip empty line:         "\r?\n"
         // skip white-space line:   "\s+\r?\n"
         while (true) {
-            if (buf == null) {
-                // hit EOF
-                return null;
-            }
-            if (skipLeadingWhitespace(buf)) {
-                break;
-            }
             // current line is empty
             // retrieve next line
             buf = nextLine();
+            if (buf == null) {
+                // hit EOF
+                return false;
+            }
             debugLine(buf);
+            if (skipLeadingWhitespace(buf)) {
+                break;
+            }
         }
 
-        isComment = false;
-        c = buf.get();
-        if (c == '#') {
-            isComment = true;
-            res = handleComment(buf);
-            if (Debug.ACCEPT_COMMENT) {
-                cache(res);
-            }
-        } else {
-            // non-comment token
-
-            // handle leading terminal characters
-            pos = buf.position();
-            src = pos - 1;
-            if (isTerminalCharacter(c)) {
-                dst = pos;
+        lineNumber = getLineNumber();
+        do {
+            isComment = false;
+            c = buf.get();
+            if (c == '#') {
+                isComment = true;
+                res = handleComment(buf);
             } else {
-                isString = c == '"';
-                while (true) {
-                    if (!buf.hasRemaining()) {
-                        if (isString) {
-                            throw new TokenException("String is not closed");
-                        }
-                        // NEWLINE or EOF
-                        dst = buf.position();
-                        break;
-                    }
-                    c = buf.get();
-                    if (isString) {
-                        if (c == '\\') {
-                            buf.get();
-                            //continue;
-                        } else if (c == '"') {
+                // non-comment token
+
+                // handle leading terminal characters
+                pos = buf.position();
+                src = pos - 1;
+                if (isTerminalCharacter(c)) {
+                    dst = pos;
+                } else {
+                    isString = c == '"';
+                    while (true) {
+                        if (!buf.hasRemaining()) {
+                            if (isString) {
+                                throw new TokenException("String is not closed");
+                            }
+                            // NEWLINE or EOF
                             dst = buf.position();
                             break;
                         }
-                    } else if (Character.isWhitespace(c)) {
-                        dst = buf.position() - 1;
-                        break;
-                    } else if (isTerminalCharacter(c)
-                            || c == '#') {
-                        // handle ending terminal characters
-                        // handle immediate ending comment
-                        // fuck those who don't have good coding habits
-                        dst = buf.position() - 1;
-                        buf.position(dst);
-                        break;
+                        pos = buf.mark().position();
+                        c = buf.get();
+                        if (isString) {
+                            if (c == '\\') {
+                                buf.get();
+                                //continue;
+                            } else if (c == '"') {
+                                dst = pos + 1;
+                                break;
+                            }
+                        } else if (Character.isWhitespace(c)) {
+                            dst = pos;
+                            break;
+                        } else if (isTerminalCharacter(c)
+                                || c == '#') {
+                            // handle ending terminal characters
+                            // handle immediate ending comment
+                            // fuck those who don't have good coding habits
+                            dst = pos;
+                            buf.reset();
+                            break;
+                        }
                     }
                 }
+                res = cache(buf, src, dst, lineNumber);
             }
-            res = cache(buf, src, dst);
-            cache(res);
-        }
 
-        if (!buf.hasRemaining() || isComment) {
-            buf = null;
-        }
-        line = buf;
+            if (!isComment || Debug.ACCEPT_COMMENT) {
+                if (!q.add(res)) {
+                    throw new IllegalStateException("Fail to add new token");
+                }
+            }
+        } while (skipLeadingWhitespace(buf));
 
-        return res;
+        return true;
     }
 
     /**
@@ -385,6 +353,7 @@ public final class ScriptParser extends AbstractParser {
             src = buf.position() - 2;
             buf.position(src);
             res = buf.toString();
+            buf.rewind().flip();
             return new Token(res, getLineNumber());
         }
         res = "#";

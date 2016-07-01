@@ -256,9 +256,7 @@ public class ScriptFile extends ScriptValue {
                 sToken = token.getValue();
             } catch (TokenException ex) {
                 if (SKIP_LINE) {
-                    Logger.getLogger(Stellaris.class.getName()).log(
-                            Level.SEVERE, parser.skipCurrentLine(), ex
-                    );
+                    parser.skipCurrentLine();
                     continue;
                 }
                 throw ex;
@@ -282,9 +280,7 @@ public class ScriptFile extends ScriptValue {
                 }
             } catch (TokenException | NumberFormatException ex) {
                 if (SKIP_LINE) {
-                    Logger.getLogger(Stellaris.class.getName()).log(
-                            Level.SEVERE, parser.skipCurrentLine(), ex
-                    );
+                    parser.skipCurrentLine();
                     continue;
                 }
                 throw ex;
@@ -297,9 +293,7 @@ public class ScriptFile extends ScriptValue {
                 sToken = token.getValue();
             } catch (TokenException ex) {
                 if (SKIP_LINE) {
-                    Logger.getLogger(Stellaris.class.getName()).log(
-                            Level.SEVERE, parser.skipCurrentLine(), ex
-                    );
+                    parser.skipCurrentLine();
                     continue;
                 }
                 throw ex;
@@ -313,9 +307,7 @@ public class ScriptFile extends ScriptValue {
                     throw new TokenException("Unexpected color token");
                 } catch (TokenException ex) {
                     if (SKIP_LINE) {
-                        Logger.getLogger(Stellaris.class.getName()).log(
-                                Level.SEVERE, parser.skipCurrentLine(), ex
-                        );
+                        parser.skipCurrentLine();
                         continue;
                     }
                     throw ex;
@@ -331,9 +323,7 @@ public class ScriptFile extends ScriptValue {
                     isList = handlePlainList(scriptList, token);
                 } catch (TokenException ex) {
                     if (SKIP_LINE) {
-                        Logger.getLogger(Stellaris.class.getName()).log(
-                                Level.SEVERE, parser.skipCurrentLine(), ex
-                        );
+                        parser.skipCurrentLine();
                         continue;
                     }
                     throw ex;
@@ -360,9 +350,7 @@ public class ScriptFile extends ScriptValue {
                     sToken = token.getValue();
                 } catch (TokenException ex) {
                     if (SKIP_LINE) {
-                        Logger.getLogger(Stellaris.class.getName()).log(
-                                Level.SEVERE, parser.skipCurrentLine(), ex
-                        );
+                        parser.skipCurrentLine();
                         continue;
                     }
                     throw ex;
@@ -373,9 +361,7 @@ public class ScriptFile extends ScriptValue {
                         scriptColor = handleColorToken(patterns);
                     } catch (TokenException | NumberFormatException ex) {
                         if (SKIP_LINE) {
-                            Logger.getLogger(Stellaris.class.getName()).log(
-                                    Level.SEVERE, parser.skipCurrentLine(), ex
-                            );
+                            parser.skipCurrentLine();
                             continue;
                         }
                         throw ex;
@@ -387,9 +373,7 @@ public class ScriptFile extends ScriptValue {
                         tokens = parser.peekToken(7);
                     } catch (TokenException ex) {
                         if (SKIP_LINE) {
-                            Logger.getLogger(Stellaris.class.getName()).log(
-                                    Level.SEVERE, parser.skipCurrentLine(), ex
-                            );
+                            parser.skipCurrentLine();
                             continue;
                         }
                         throw ex;

@@ -51,26 +51,13 @@ public class AbstractParser implements AutoCloseable {
     }
 
     public final void setReader(Reader in) throws IOException {
-        int limit;
-        int cap;
-
         if (in == null) {
             return;
         }
         close();
         reader = in;
-        cap = buffer.capacity();
-        buffer.rewind();
-        limit = buffer.limit();
-        if (limit != cap) {
-            buffer.limit(cap);
-        }
-        cap = bupher.capacity();
-        bupher.rewind();
-        limit = bupher.limit();
-        if (limit != cap) {
-            bupher.limit(cap);
-        }
+        buffer.clear();
+        bupher.clear();
         line = 0;
         isEOF = false;
     }
