@@ -60,6 +60,7 @@ public final class ScriptParser extends AbstractParser {
         Token t;
         int tl;
 
+        Debug.err.format("[INFO]\tSkip current line!%n");
         buf = line;
         buf.reset();
         res = buf.toString();
