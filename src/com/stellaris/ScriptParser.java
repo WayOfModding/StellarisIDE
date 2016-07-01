@@ -168,7 +168,8 @@ public final class ScriptParser extends AbstractParser {
      * @param dst
      * @return
      */
-    private Token cache(CharBuffer charBuffer, int src, int dst)
+    private Token cache(CharBuffer charBuffer,
+            int src, int dst, int lineNumber)
             throws AssertionError {
         int len;
         char[] buf;
@@ -200,7 +201,7 @@ public final class ScriptParser extends AbstractParser {
             );
         }
 
-        return new Token(str, getLineNumber());
+        return new Token(str, lineNumber);
     }
 
     private boolean isTerminalCharacter(char c) {
@@ -228,6 +229,7 @@ public final class ScriptParser extends AbstractParser {
         char c;
         int src, dst, pos;
         Token res;
+        int lineNumber;
         boolean isComment;
         boolean isString;
         CharBuffer buf;
@@ -248,6 +250,7 @@ public final class ScriptParser extends AbstractParser {
             }
         }
 
+        lineNumber = getLineNumber();
         do {
             isComment = false;
             c = buf.get();
@@ -297,7 +300,7 @@ public final class ScriptParser extends AbstractParser {
                         }
                     }
                 }
-                res = cache(buf, src, dst);
+                res = cache(buf, src, dst, lineNumber);
             }
 
             if (!isComment || Debug.ACCEPT_COMMENT) {
