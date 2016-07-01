@@ -21,7 +21,6 @@ import com.stellaris.ScriptFile;
 import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptParser;
 import com.stellaris.Stellaris;
-import com.stellaris.Token;
 import com.stellaris.TokenException;
 import com.stellaris.script.SimpleEngine;
 import com.stellaris.test.Debug;
@@ -112,44 +111,38 @@ public class ModLoader extends SimpleEngine {
 
     private String handleFile(File file) throws IOException {
         ScriptParser parser;
-        Token key;
-        Token token;
-        String sKey;
-        String sToken;
+        String key;
+        String token;
         int idx;
         int len;
 
         parser = new ScriptParser(file);
         while (parser.hasNextToken()) {
             key = parser.nextToken();
-            sKey = key.getValue();
 
             parser.nextToken();
-            switch (sKey) {
+            switch (key) {
                 case "name":
                     token = parser.nextToken();
-                    sToken = token.getValue();
-                    len = sToken.length();
-                    name = sToken.substring(1, len - 1);
+                    len = token.length();
+                    name = token.substring(1, len - 1);
                     break;
                 case "tags":
                     token = parser.nextToken();
-                    sToken = token.getValue();
-                    if ("{".equals(sToken)) {
+                    if ("{".equals(token)) {
                         do {
                             token = parser.nextToken();
-                        } while (!"}".equals(sToken));
+                        } while (!"}".equals(token));
                     }
                     break;
                 case "archieve":
                     throw new TokenException("Unexpected token: archieve");
                 case "path":
                     token = parser.nextToken();
-                    sToken = token.getValue();
-                    idx = sToken.indexOf('/');
-                    len = sToken.length();
-                    sToken = sToken.substring(idx + 1, len - 1);
-                    return sToken;
+                    idx = token.indexOf('/');
+                    len = token.length();
+                    token = token.substring(idx + 1, len - 1);
+                    return token;
                 default:
                     parser.nextToken();
                     break;
