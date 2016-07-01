@@ -34,7 +34,8 @@ public final class ScriptParser extends AbstractParser {
     private static final int BUFFER_SIZE = 65536;
     private static final int CACHE_SIZE = 3;
 
-    private LinkedList<Token> queue;
+    private LinkedList<String> queue;
+    private Map<Integer, Queue<String>> map;
     private int bracket;
 
     public ScriptParser(File file) throws IOException {
@@ -47,30 +48,25 @@ public final class ScriptParser extends AbstractParser {
                 : new BufferedReader(in),
                 BUFFER_SIZE);
         queue = new LinkedList<>();
+        map = new HashMap<>();
     }
 
     public void skipCurrentLine() {
         int idx;
-        Queue<Token> q;
-        LinkedList<Token> p;
-        Token t;
-        int tl;
+        Queue<String> q;
+        Map<Integer, Queue<String>> m;
+        Queue<String> p;
 
         Debug.err.format("[INFO]\tSkip current line!%n");
 
         idx = getLineNumber();
         q = queue;
-        if (!q.isEmpty()) {
-            p = new LinkedList<>();
-            while (!q.isEmpty()) {
-                t = q.remove();
-                tl = t.getLineNumber();
-                if (tl == idx) {
-                    continue;
-                }
-                p.add(t);
-            }
-            queue = p;
+        // line - token mapping
+        m = map;
+        // retrieve all tokens in this line
+        p = m.remove(idx);
+        if (p != null) {
+            q.removeAll(p);
         }
     }
 
@@ -87,12 +83,14 @@ public final class ScriptParser extends AbstractParser {
 
     private boolean cache(int count)
             throws IOException, TokenException {
-        Queue<Token> q;
+        Queue<String> q;
+        Map<Integer, Queue<String>> m;
         boolean res;
 
         q = queue;
+        m = map;
         while (q.size() < count) {
-            res = tokenize(q);
+            res = tokenize(q, m);
             if (!res) {
                 break;
             }
@@ -101,9 +99,9 @@ public final class ScriptParser extends AbstractParser {
         return res;
     }
 
-    public List<Token> peekToken(int count)
+    public List<String> peekToken(int count)
             throws IOException, TokenException {
-        List<Token> res;
+        List<String> res;
         int size;
 
         cache(count);
@@ -124,7 +122,7 @@ public final class ScriptParser extends AbstractParser {
      */
     public void discardToken(int count) {
         int i;
-        Token str;
+        String str;
 
         if (DEBUG && DEBUG_DISCARD) {
             Debug.err.format("[DSCD]\tcount=%d%n", count);
@@ -146,8 +144,8 @@ public final class ScriptParser extends AbstractParser {
      * @return
      * @throws java.io.IOException
      */
-    public Token nextToken() throws IOException, NoSuchElementException {
-        Token res;
+    public String nextToken() throws IOException, NoSuchElementException {
+        String res;
 
         if (!hasNextToken()) {
             throw new NoSuchElementException();
@@ -168,8 +166,8 @@ public final class ScriptParser extends AbstractParser {
      * @param dst
      * @return
      */
-    private Token cache(CharBuffer charBuffer,
-            int src, int dst, int lineNumber)
+    private String cache(CharBuffer charBuffer,
+            int src, int dst)
             throws AssertionError {
         int len;
         char[] buf;
@@ -201,7 +199,7 @@ public final class ScriptParser extends AbstractParser {
             );
         }
 
-        return new Token(str, lineNumber);
+        return str;
     }
 
     private boolean isTerminalCharacter(char c) {
@@ -224,15 +222,16 @@ public final class ScriptParser extends AbstractParser {
         }
     }
 
-    private boolean tokenize(Queue<Token> q)
+    private boolean tokenize(Queue<String> q, Map<Integer, Queue<String>> m)
             throws IOException, TokenException {
         char c;
         int src, dst, pos;
-        Token res;
+        String res;
         int lineNumber;
         boolean isComment;
         boolean isString;
         CharBuffer buf;
+        Queue<String> p;
 
         // skip empty line:         "\r?\n"
         // skip white-space line:   "\s+\r?\n"
@@ -251,6 +250,7 @@ public final class ScriptParser extends AbstractParser {
         }
 
         lineNumber = getLineNumber();
+        p = new LinkedList<>();
         do {
             isComment = false;
             c = buf.get();
@@ -300,15 +300,20 @@ public final class ScriptParser extends AbstractParser {
                         }
                     }
                 }
-                res = cache(buf, src, dst, lineNumber);
+                res = cache(buf, src, dst);
             }
 
             if (!isComment || Debug.ACCEPT_COMMENT) {
-                if (!q.add(res)) {
+                if (!q.add(res) || !p.add(res)) {
                     throw new IllegalStateException("Fail to add new token");
                 }
             }
         } while (skipLeadingWhitespace(buf));
+
+        // map the line with all tokens in this line
+        if (!p.isEmpty()) {
+            m.put(lineNumber, p);
+        }
 
         return true;
     }
@@ -339,7 +344,7 @@ public final class ScriptParser extends AbstractParser {
         }
     }
 
-    private Token handleComment(CharBuffer buf) {
+    private String handleComment(CharBuffer buf) {
         int src;
         char c;
         String res;
@@ -354,10 +359,10 @@ public final class ScriptParser extends AbstractParser {
             buf.position(src);
             res = buf.toString();
             buf.rewind().flip();
-            return new Token(res, getLineNumber());
+            return res;
         }
         res = "#";
-        return new Token(res, getLineNumber());
+        return res;
     }
 
     public void close() throws IOException {

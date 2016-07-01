@@ -228,9 +228,8 @@ public class ScriptFile extends ScriptValue {
     // remember to skip the current line when TokenException is thrown
     private int analyze(Field parent, int state, int index) throws IOException {
         ScriptParser parser;
-        Token token, key;
-        String sToken, sKey;
-        List<Token> tokens;
+        String token, key;
+        List<String> tokens;
         List<String> output;
         Iterator<String> itr;
         Field field;
@@ -253,7 +252,6 @@ public class ScriptFile extends ScriptValue {
         while (parser.hasNextToken()) {
             try {
                 token = parser.nextToken();
-                sToken = token.getValue();
             } catch (TokenException ex) {
                 if (SKIP_LINE) {
                     parser.skipCurrentLine();
@@ -262,11 +260,11 @@ public class ScriptFile extends ScriptValue {
                 throw ex;
             }
             // ignore comment token
-            if (sToken.charAt(0) == '#') {
+            if (token.charAt(0) == '#') {
                 continue;
             }
             // return
-            if ("}".equals(sToken)) {
+            if ("}".equals(token)) {
                 //put(parent, cache); cache = null;
                 return --state;
             }
@@ -276,7 +274,6 @@ public class ScriptFile extends ScriptValue {
                     return --state;
                 } else {
                     key = token;
-                    sKey = key.getValue();
                 }
             } catch (TokenException | NumberFormatException ex) {
                 if (SKIP_LINE) {
@@ -290,7 +287,6 @@ public class ScriptFile extends ScriptValue {
             // or list?
             try {
                 token = parser.nextToken();
-                sToken = token.getValue();
             } catch (TokenException ex) {
                 if (SKIP_LINE) {
                     parser.skipCurrentLine();
@@ -298,9 +294,9 @@ public class ScriptFile extends ScriptValue {
                 }
                 throw ex;
             }
-            isList = !"=".equals(sToken)
-                    && !">".equals(sToken)
-                    && !"<".equals(sToken);
+            isList = !"=".equals(token)
+                    && !">".equals(token)
+                    && !"<".equals(token);
             // update for Stellaris v1.2
             if (checkColorToken(token) != null) {
                 try {
@@ -317,7 +313,7 @@ public class ScriptFile extends ScriptValue {
             if (isList) {
                 // list entries: key, token, ...
                 scriptList = new ScriptList<>(
-                        ScriptValue.parseString(sKey)
+                        ScriptValue.parseString(key)
                 );
                 try {
                     isList = handlePlainList(scriptList, token);
@@ -338,7 +334,7 @@ public class ScriptFile extends ScriptValue {
                     throw new AssertionError();
                 }
             } else {
-                field = new Field(parent, sKey);
+                field = new Field(parent, key);
                 if (Debug.DEBUG_FIELD) {
                     Debug.err.format("[FIELD]\tparent=%s, key=%s, index=%d%n",
                             parent, key, index);
@@ -347,7 +343,6 @@ public class ScriptFile extends ScriptValue {
                 // value
                 try {
                     token = parser.nextToken();
-                    sToken = token.getValue();
                 } catch (TokenException ex) {
                     if (SKIP_LINE) {
                         parser.skipCurrentLine();
@@ -368,7 +363,7 @@ public class ScriptFile extends ScriptValue {
                     }
                     put(field, scriptColor);
                     scriptColor = null;
-                } else if ("{".equals(sToken)) {
+                } else if ("{".equals(token)) {
                     try {
                         tokens = parser.peekToken(7);
                     } catch (TokenException ex) {
@@ -385,10 +380,10 @@ public class ScriptFile extends ScriptValue {
                     if (isRange) {
                         itr = output.iterator();
 
-                        sToken = itr.next();
-                        min = Integer.parseInt(sToken);
-                        sToken = itr.next();
-                        max = Integer.parseInt(sToken);
+                        token = itr.next();
+                        min = Integer.parseInt(token);
+                        token = itr.next();
+                        max = Integer.parseInt(token);
 
                         put(field, new ScriptRange(min, max));
                         parser.discardToken(7);
@@ -406,26 +401,26 @@ public class ScriptFile extends ScriptValue {
                         }
                         state = newstate;
                     }
-                } else if ("yes".equals(sToken)) {
+                } else if ("yes".equals(token)) {
                     put(field, new ScriptBoolean(true));
-                } else if ("no".equals(sToken)) {
+                } else if ("no".equals(token)) {
                     //type = Type.BOOLEAN;
                     put(field, new ScriptBoolean(false));
                 } else {
                     try {
                         // integer
-                        put(field, new ScriptInteger(Integer.parseInt(sToken)));
+                        put(field, new ScriptInteger(Integer.parseInt(token)));
                         //type = Type.INTEGER;
                     } catch (NumberFormatException e1) {
                         // float
                         try {
-                            put(field, new ScriptFloat(Float.parseFloat(sToken)));
+                            put(field, new ScriptFloat(Float.parseFloat(token)));
                         } catch (NumberFormatException e2) {
-                            if (sToken.startsWith("\"")
-                                    && sToken.endsWith("\"")) {
-                                put(field, new ScriptString(sToken));
+                            if (token.startsWith("\"")
+                                    && token.endsWith("\"")) {
+                                put(field, new ScriptString(token));
                             } else {
-                                put(field, new ScriptReference(sToken));
+                                put(field, new ScriptReference(token));
                             }
                         }
                     }
@@ -454,12 +449,11 @@ public class ScriptFile extends ScriptValue {
         return bindings;
     }
 
-    private boolean handleColorList(Field parent, Token token) throws IOException {
+    private boolean handleColorList(Field parent, String token) throws IOException {
         Patterns patterns;
         ScriptColor color;
         ScriptList<ScriptColor> colorList;
         ScriptParser parser;
-        String sToken;
 
         // detect color list
         patterns = checkColorToken(token);
@@ -479,13 +473,12 @@ public class ScriptFile extends ScriptValue {
             if (patterns != null) {
                 continue;
             }
-            sToken = token.getValue();
-            switch (sToken) {
+            switch (token) {
                 case "}":
                     // exit color list
                     break;
                 default:
-                    throw new TokenException(sToken);
+                    throw new TokenException(token);
             }
             // exit color list
             break;
@@ -501,7 +494,7 @@ public class ScriptFile extends ScriptValue {
             throws IOException, TokenException {
         ScriptParser parser;
         int len;
-        List<Token> tokens;
+        List<String> tokens;
         String[] data;
         List<String> output;
         ScriptColor color;
@@ -555,12 +548,10 @@ public class ScriptFile extends ScriptValue {
         return color;
     }
 
-    private Patterns checkColorToken(Token token) {
+    private Patterns checkColorToken(String token) {
         Patterns patterns;
-        String sToken;
 
-        sToken = token.getValue();
-        switch (sToken) {
+        switch (token) {
             case "hsv":
                 patterns = Patterns.PS_COLOR_HSV;
                 break;
@@ -574,31 +565,28 @@ public class ScriptFile extends ScriptValue {
         return patterns;
     }
 
-    private boolean handlePlainList(ScriptList list, Token token) throws IOException {
+    private boolean handlePlainList(ScriptList list, String token) throws IOException {
         ScriptParser parser;
-        String sToken;
 
-        sToken = token.getValue();
         // handle single-element list
-        if ("}".equals(sToken)) {
+        if ("}".equals(token)) {
             return true;
         }
 
         parser = scriptParser;
-        list.add(ScriptValue.parseString(sToken));
+        list.add(ScriptValue.parseString(token));
         // handle multiple-element list
         while (true) {
             token = parser.nextToken();
-            sToken = token.getValue();
-            if ("}".equals(sToken)) {
+            if ("}".equals(token)) {
                 return true;
             }
-            if ("{".equals(sToken)
-                    || "yes".equals(sToken)
-                    || "no".equals(sToken)) {
-                throw new TokenException(sToken);
+            if ("{".equals(token)
+                    || "yes".equals(token)
+                    || "no".equals(token)) {
+                throw new TokenException(token);
             }
-            list.add(ScriptValue.parseString(sToken));
+            list.add(ScriptValue.parseString(token));
         }
     }
 
