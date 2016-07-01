@@ -130,7 +130,7 @@ public class ScriptFile extends ScriptValue {
             } catch (IOException ex) {
                 Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
             }
-            parser = null;
+            scriptParser = null;
         }
     }
 
