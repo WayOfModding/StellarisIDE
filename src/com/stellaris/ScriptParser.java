@@ -242,17 +242,19 @@ public final class ScriptParser extends AbstractParser {
         }
         // skip empty line:         "\r?\n"
         // skip white-space line:   "\s+\r?\n"
-        while (buf != null
-                //&& !buf.hasRemaining()
-                && !skipLeadingWhitespace(buf)) {
-            // empty line
+        while (true) {
+            if (buf == null) {
+                // hit EOF
+                return null;
+            }
+            if (skipLeadingWhitespace(buf)) {
+                Debug.err.format("[LINE]\t%s%n", buf);
+                break;
+            }
+            // current line is empty
+            // retrieve next line
             buf = nextLine();
         }
-        if (buf == null) {
-            // hit EOF
-            return null;
-        }
-        //Debug.err.format("[LINE]\t%s%n", buf);
 
         isComment = false;
         c = buf.get();
