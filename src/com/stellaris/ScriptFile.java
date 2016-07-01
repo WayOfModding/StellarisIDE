@@ -648,7 +648,8 @@ public class ScriptFile extends ScriptValue {
             Debug.DEBUG = true;
             Debug.DEBUG_NEXT = true;
             Debug.DEBUG_DISCARD = true;
-            Debug.out.format("%nParsing file \"%s\"...%n", sname);
+            System.out.format("Parsing file \"%s\"...%n", sname);
+            Debug.out.format("Parsing file \"%s\"...%n", sname);
             ScriptFile.newInstance(file, context);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
