@@ -92,7 +92,10 @@ public final class ScriptParser extends AbstractParser {
 
         q = queue;
         while (q.size() < count) {
-            tokenize(q);
+            res = tokenize(q);
+            if (!res) {
+                break;
+            }
         }
         res = hasRemaining();
         return res;
@@ -220,7 +223,7 @@ public final class ScriptParser extends AbstractParser {
         }
     }
 
-    private void tokenize(Queue<Token> q)
+    private boolean tokenize(Queue<Token> q)
             throws IOException, TokenException {
         char c;
         int src, dst, pos;
@@ -237,7 +240,7 @@ public final class ScriptParser extends AbstractParser {
             buf = nextLine();
             if (buf == null) {
                 // hit EOF
-                return;
+                return false;
             }
             debugLine(buf);
             if (skipLeadingWhitespace(buf)) {
@@ -303,6 +306,8 @@ public final class ScriptParser extends AbstractParser {
                 }
             }
         } while (skipLeadingWhitespace(buf));
+
+        return true;
     }
 
     /**
