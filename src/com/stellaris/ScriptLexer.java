@@ -225,12 +225,17 @@ public final class ScriptLexer extends AbstractLexer {
     private static String compact(CharBuffer buf) {
         CharBuffer tmp;
         char c;
+        boolean isString;
 
         tmp = CharBuffer.allocate(buf.remaining());
         buf.mark();
+        isString = false;
         while (buf.hasRemaining()) {
             c = buf.get();
-            if (Character.isWhitespace(c)) {
+            if (c == '"') {
+                isString = !isString;
+            }
+            if (Character.isWhitespace(c) && !isString) {
                 continue;
             }
             tmp.put(c);
