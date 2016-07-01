@@ -109,7 +109,9 @@ public class ScriptFile extends ScriptValue {
 
     private void analyze() {
         int res;
+        ScriptParser parser;
 
+        parser = scriptParser;
         try {
             res = analyze(null, 0, 0);
             if (res != 0) {
@@ -124,11 +126,11 @@ public class ScriptFile extends ScriptValue {
             Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                scriptParser.close();
+                parser.close();
             } catch (IOException ex) {
                 Logger.getLogger(ScriptFile.class.getName()).log(Level.SEVERE, null, ex);
             }
-            scriptParser = null;
+            parser = null;
         }
     }
 
