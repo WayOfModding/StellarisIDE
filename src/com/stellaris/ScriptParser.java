@@ -238,6 +238,13 @@ public final class ScriptParser extends AbstractParser {
         }
     }
 
+    private void debugLine(CharBuffer buf) {
+        if (Debug.DEBUG_LINE && buf != null) {
+            Debug.err.format("[LINE]\t%4d>\t%s%n",
+                    buf.remaining(), buf);
+        }
+    }
+
     /**
      * Retrieves the next token string
      *
@@ -258,9 +265,7 @@ public final class ScriptParser extends AbstractParser {
             // get a new line
             buf = nextLine();
             // mark the beginning of the new buffer
-            if (Debug.DEBUG_LINE && buf != null) {
-                Debug.err.format("[LINE]\t%s%n", buf);
-            }
+            debugLine(buf);
         }
         // skip empty line:         "\r?\n"
         // skip white-space line:   "\s+\r?\n"
@@ -275,9 +280,7 @@ public final class ScriptParser extends AbstractParser {
             // current line is empty
             // retrieve next line
             buf = nextLine();
-            if (Debug.DEBUG_LINE && buf != null) {
-                Debug.err.format("[LINE]\t%s%n", buf);
-            }
+            debugLine(buf);
         }
 
         isComment = false;
