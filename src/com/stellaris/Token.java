@@ -41,4 +41,17 @@ public class Token {
     public String toString() {
         return str;
     }
+
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (o instanceof Token) {
+            return str.equals(((Token) o).str);
+        } else if (o instanceof String) {
+            return str.equals((String) o);
+        }
+        return false;
+    }
+
 }

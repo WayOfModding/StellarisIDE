@@ -23,6 +23,7 @@ import java.nio.*;
 import java.util.*;
 import static com.stellaris.test.Debug.*;
 import com.stellaris.util.BOMReader;
+import com.stellaris.util.DigestStore;
 
 /**
  *
@@ -238,20 +239,25 @@ public final class ScriptParser extends AbstractParser {
             // get a new line
             buf = nextLine();
             // mark the beginning of the new buffer
+            if (Debug.DEBUG_LINE && buf != null)
+                Debug.err.format("[LINE]\t%s%n", buf);
         }
         // skip empty line:         "\r?\n"
         // skip white-space line:   "\s+\r?\n"
-        while (buf != null
-                //&& !buf.hasRemaining()
-                && !skipLeadingWhitespace(buf)) {
-            // empty line
+        while (true) {
+            if (buf == null) {
+                // hit EOF
+                return null;
+            }
+            if (skipLeadingWhitespace(buf)) {
+                break;
+            }
+            // current line is empty
+            // retrieve next line
             buf = nextLine();
+            if (Debug.DEBUG_LINE && buf != null)
+                Debug.err.format("[LINE]\t%s%n", buf);
         }
-        if (buf == null) {
-            // hit EOF
-            return null;
-        }
-        //Debug.err.format("[LINE]\t%s%n", buf);
 
         isComment = false;
         c = buf.get();
@@ -362,10 +368,13 @@ public final class ScriptParser extends AbstractParser {
     }
 
     public static void main(String[] args) {
+        File file;
+
         if (args.length < 2) {
             return;
         }
-        try (ScriptParser parser = new ScriptParser(new File(args[0], args[1]));) {
+        file = new File(args[0], args[1]);
+        try (ScriptParser parser = new ScriptParser(file);) {
             int count0; // count {
             int count1; // count }
             CharBuffer buffer;
@@ -385,7 +394,15 @@ public final class ScriptParser extends AbstractParser {
                     }
                 }
             }
-            Debug.out.format("Count['{']=%d%nCount['}']=%d%n", count0, count1);
+            Debug.out.format("File=\"%s\"%n"
+                    + "Count['{']=%d%n"
+                    + "Count['}']=%d%n"
+                    + "Delta=%d%n",
+                    DigestStore.getPath(file),
+                    count0,
+                    count1,
+                    count0 - count1
+            );
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }

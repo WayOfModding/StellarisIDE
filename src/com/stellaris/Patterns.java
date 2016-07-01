@@ -52,7 +52,11 @@ public abstract class Patterns {
 
             token = itr.next();
             str = token.getValue();
-            Integer.parseInt(str);
+            try {
+                Integer.parseInt(str);
+            } catch (NumberFormatException ex) {
+                return false;
+            }
             if (output != null) {
                 output.add(str);
             }
@@ -71,7 +75,11 @@ public abstract class Patterns {
 
             token = itr.next();
             str = token.getValue();
-            Integer.parseInt(str);
+            try {
+                Integer.parseInt(str);
+            } catch (NumberFormatException ex) {
+                return false;
+            }
             if (output != null) {
                 output.add(str);
             }
@@ -148,6 +156,7 @@ public abstract class Patterns {
             value = new int[4];
             while (itr.hasNext()) {
                 token = itr.next();
+                str = token.getValue();
                 if ("}".equals(str)) {
                     break;
                 }
