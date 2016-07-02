@@ -16,6 +16,7 @@
  */
 package com.stellaris.mod;
 
+import com.stellaris.Stellaris;
 import com.stellaris.Type;
 import com.stellaris.script.ScriptValue;
 import com.stellaris.script.SimpleFactory;
@@ -86,32 +87,35 @@ public class SyntaxValidator {
         return false;
     }
 
-    public void validate(ScriptValue value) {
+    public void validate(Bindings script) throws SyntaxException {
         SimpleFactory factory;
         Bindings bindings;
         Set<String> keyset;
         Set<Type> typeset;
         Set<Type> bindset;
-        String fieldName;
+        ScriptValue syntax;
+        ScriptValue value;
 
-        if (value == null) {
-            throw new NullPointerException();
-        }
-        factory = SimpleFactory.getEngineFactory();
+        factory = (SimpleFactory) Stellaris.getDefault();
         bindings = factory.getBindings();
-        keyset = bindings.keySet();
+        keyset = script.keySet();
         for (String key : keyset) {
-            //bindset = syntax.getAll(key);
-            bindset = new TreeSet<>();
-            //typeset = script.getAll(key);
-            typeset = new HashSet<>(16);
+            syntax = (ScriptValue) bindings.get(key);
+            if (syntax == null) {
+                // no available syntax binding
+                throw new SyntaxException(
+                        String.format("Unknown field name \"%s\"", key)
+                );
+            }
+            bindset = syntax.getTypeSet();
+            value = (ScriptValue) script.get(key);
+            typeset = value.getTypeSet();
             for (Type type : typeset) {
-                //if (!bindset.contains(type)) {
                 if (!isValidType(type, bindset)) {
-                    fieldName = key.toString();
                     throw new SyntaxException(
-                            String.format("Field \"%s\" has type \"%s\", which is not found in %s",
-                                    fieldName, type, bindset
+                            String.format("Field \"%s\" has type \"%s\","
+                                    + " which is not found in %s",
+                                    key, typeset, bindset
                             )
                     );
                 }

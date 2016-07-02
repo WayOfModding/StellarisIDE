@@ -22,7 +22,7 @@ import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptLexer;
 import com.stellaris.Stellaris;
 import com.stellaris.TokenException;
-import com.stellaris.script.SimpleEngine;
+import com.stellaris.script.*;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
 import java.io.File;
@@ -32,6 +32,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import static javax.script.ScriptContext.ENGINE_SCOPE;
+import javax.script.ScriptEngine;
+import javax.script.SimpleScriptContext;
 
 /**
  *
@@ -60,13 +65,13 @@ public class ModLoader extends SimpleEngine {
     }
 
     private String name;
+    private String supportedVersion;
 
     public ModLoader(File file) {
         String path;
 
         try {
             path = handleFile(file);
-            Debug.out.format("\tname=\"%s\"%n\tpath=\"%s\"%n", name, path);
             handleDirectory(path);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -79,7 +84,12 @@ public class ModLoader extends SimpleEngine {
         ScriptFilter sf;
         Queue<File> dirs, files;
         String filename;
-        ScriptParser script;
+        ScriptContext engineContext;
+        ScriptContext fileContext;
+        Bindings bindings;
+        SyntaxValidator validator;
+        int scope;
+        String msg;
 
         root = new File(DEFAULT_STELLARIS_DIRECTORY, path);
         if (!root.isDirectory()) {
@@ -89,6 +99,9 @@ public class ModLoader extends SimpleEngine {
         root.listFiles(df);
         sf = new ScriptFilter(df.getDirs());
         dirs = sf.getDirs();
+        validator = new SyntaxValidator();
+        engineContext = getContext();
+        scope = ENGINE_SCOPE;
 
         while (!dirs.isEmpty()) {
             dir = dirs.remove();
@@ -100,10 +113,37 @@ public class ModLoader extends SimpleEngine {
                 file = files.remove();
                 filename = DigestStore.getPath(file);
                 try (FileReader reader = new FileReader(file);) {
-                    script = ScriptParser.newInstance(reader, getContext());
-                    validateScript(script);
-                } catch (Exception ex) {
+                    // create a isolated context for current script file
+                    fileContext = new SimpleScriptContext();
+                    // parse the file
+                    ScriptParser.newInstance(reader, fileContext);
+                    // retrieve field-type binding
+                    bindings = fileContext.getBindings(scope);
+                    // validate field-type binding
+                    validator.validate(bindings);
+                    // if it is accepted,
+                    // put all bindings of the file
+                    // into the engine context.
+                    // it will be used later to check
+                    // compatibility between mods
+                    engineContext.getBindings(scope).putAll(bindings);
+                } catch (IOException ex) {
                     throw new RuntimeException(filename, ex);
+                } catch (SyntaxException ex) {
+                    msg = ex.getMessage();
+                    if (msg == null) {
+                        msg = "";
+                    }
+                    Debug.err.format(
+                            "[MOD]\tfile=\"%s\"%n"
+                            + "\tname=\"%s\"%n"
+                            + "\tsupported_version=\"%s\"%n"
+                            + "\tSyntaxException: %s%n",
+                            filename,
+                            name,
+                            supportedVersion,
+                            msg
+                    );
                 }
             }
         }
@@ -113,10 +153,12 @@ public class ModLoader extends SimpleEngine {
         ScriptLexer parser;
         String key;
         String token;
+        String path;
         int idx;
         int len;
 
         parser = new ScriptLexer(file);
+        path = null;
         while (parser.hasNextToken()) {
             key = parser.nextToken();
 
@@ -133,8 +175,9 @@ public class ModLoader extends SimpleEngine {
                         do {
                             token = parser.nextToken();
                         } while (!"}".equals(token));
+                        break;
                     }
-                    break;
+                    throw new AssertionError(token);
                 case "archieve":
                     throw new TokenException("Unexpected token: archieve");
                 case "path":
@@ -142,13 +185,25 @@ public class ModLoader extends SimpleEngine {
                     idx = token.indexOf('/');
                     len = token.length();
                     token = token.substring(idx + 1, len - 1);
-                    return token;
+                    path = token;
+                    break;
+                case "supported_version":
+                    token = parser.nextToken();
+                    len = token.length();
+                    token = token.substring(1, len - 1);
+                    supportedVersion = token;
+                    break;
                 default:
                     parser.nextToken();
                     break;
             }
         }
-        throw new AssertionError("Invalid descriptor file: path/archieve field not found!");
+
+        if (path == null) {
+            throw new AssertionError("Invalid descriptor file: path/archieve field not found!");
+        }
+
+        return path;
     }
 
     public static Queue<ModLoader> getModLoaders() {
@@ -165,18 +220,6 @@ public class ModLoader extends SimpleEngine {
         dir.listFiles(filter);
 
         return res;
-    }
-
-    private void validateScript(ScriptParser script) {
-        Stellaris stellaris;
-        SyntaxValidator syntaxValidator;
-
-        stellaris = Stellaris.getDefault();
-        if (stellaris == null) {
-            throw new NullPointerException("Stellaris instance is provided!");
-        }
-        syntaxValidator = new SyntaxValidator();
-        syntaxValidator.validate(script);
     }
 
     public static void main(String[] args) {

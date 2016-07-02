@@ -167,7 +167,6 @@ public class Stellaris extends SimpleFactory {
             st = new Stellaris();
             Stellaris.setDefault(st);
             st.init(path, true);
-            ModLoader.getModLoaders();
             se = st.scriptEngine;
             sc = se.getContext();
             ftb = new FieldTypeBinding(sc);
@@ -177,6 +176,7 @@ public class Stellaris extends SimpleFactory {
             } catch (IOException ex) {
                 Logger.getLogger(Stellaris.class.getName()).log(Level.SEVERE, null, ex);
             }
+            ModLoader.getModLoaders();
         } finally {
             if (st != null) {
                 st.digestStore.store();

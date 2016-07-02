@@ -62,7 +62,6 @@ public class DescriptorFilter implements FileFilter {
         } catch (NumberFormatException ex) {
         }
 
-        Debug.out.format("[MOD]\tfile=\"%s\"%n", filename);
         loader = new ModLoader(file);
         queue.add(loader);
 
