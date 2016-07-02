@@ -134,6 +134,24 @@ public class ScriptParser extends ScriptValue {
         }
     }
 
+    private static boolean isLogicalOperator(String fieldName) {
+        if (fieldName == null) {
+            throw new NullPointerException();
+        }
+        fieldName = fieldName.toUpperCase();
+        switch (fieldName) {
+            case "IF":
+            case "ELSE":
+            case "AND":
+            case "OR":
+            case "NOT":
+            case "NOR":
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public void put(Field field, ScriptValue value) {
         Bindings bindings;
         Field parent;
@@ -150,6 +168,10 @@ public class ScriptParser extends ScriptValue {
         }
         parent = field.getParent();
         fieldName = field.getName();
+        if (isLogicalOperator(fieldName)) {
+            put(parent, value);
+            return;
+        }
         if (parent != null) {
             bindings = (ScriptStruct) get(parent);
         }
