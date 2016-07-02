@@ -53,6 +53,7 @@ public class Stellaris extends SimpleFactory {
     private final DigestStore digestStore;
     private final ScriptEngine scriptEngine;
     private File dirRoot;
+    private String gameVersion;
 
     public Stellaris() {
         digestStore = new DigestStore();
@@ -71,7 +72,7 @@ public class Stellaris extends SimpleFactory {
         out = CharBuffer.allocate(16);
         state = 0;
         lup_read:
-        while (reader.read(buf) > 0) {
+        while (reader.read((CharBuffer) buf.clear()) > 0) {
             buf.flip();
             lup_buf:
             while (buf.hasRemaining()) {
@@ -213,13 +214,16 @@ public class Stellaris extends SimpleFactory {
         String fileName;
         File file;
 
+        if (gameVersion != null) {
+            return gameVersion;
+        }
         fileName = "stellaris.exe";
         file = new File(dirRoot, fileName);
         if (!file.isFile()) {
             throw new FileNotFoundException();
         }
         try (Reader reader = new InputStreamReader(new FileInputStream(file));) {
-            return scanGameVersion(reader);
+            return gameVersion = scanGameVersion(reader);
         }
     }
 
@@ -332,18 +336,12 @@ public class Stellaris extends SimpleFactory {
         st = null;
         try {
             st = new Stellaris();
-
-            StringReader reader = new StringReader("Stellaris v1.2.1 ");
-            System.out.println(st.scanGameVersion(reader));
-
             Stellaris.setDefault(st);
             st.init(path);
             Debug.out.format("Game Version: v%s%n"
                     + "Checkout directory \"%s\"...%n",
                     st.getGameVersion(),
                     path);
-            System.exit(0);
-
             st.scan(true);
             se = st.scriptEngine;
             sc = se.getContext();
