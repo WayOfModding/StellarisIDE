@@ -209,7 +209,7 @@ public class Stellaris extends SimpleFactory {
     }
 
     public String getGameVersion()
-            throws FileNotFoundException, IOException {
+            throws IOException {
         String fileName;
         File file;
 
