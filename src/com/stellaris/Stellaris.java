@@ -24,6 +24,7 @@ import com.stellaris.util.DigestStore;
 import java.io.*;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
+import java.nio.CharBuffer;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.logging.Level;
@@ -58,6 +59,170 @@ public class Stellaris extends SimpleFactory {
         scriptEngine = super.getScriptEngine();
     }
 
+    private String scanGameVersion(Reader reader) throws IOException {
+        int bufSize;
+        CharBuffer buf;
+        CharBuffer out;
+        char c;
+        int state;
+
+        bufSize = 4096;
+        buf = CharBuffer.allocate(bufSize);
+        out = CharBuffer.allocate(16);
+        state = 0;
+        lup_read:
+        while (reader.read(buf) > 0) {
+            buf.flip();
+            lup_buf:
+            while (buf.hasRemaining()) {
+                if (state == 0) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != 'S') {
+                        state = 0;
+                        continue;
+                    }
+                    state = 1;
+                }
+                if (state == 1) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != 't') {
+                        state = 0;
+                        continue;
+                    }
+                    state = 2;
+                }
+                if (state == 2) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != 'e') {
+                        state = 0;
+                        continue;
+                    }
+                    state = 3;
+                }
+                if (state == 3 || state == 4) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != 'l') {
+                        state = 0;
+                        continue;
+                    }
+                    ++state;
+                }
+                if (state == 5) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != 'a') {
+                        state = 0;
+                        continue;
+                    }
+                    state = 6;
+                }
+                if (state == 6) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != 'r') {
+                        state = 0;
+                        continue;
+                    }
+                    state = 7;
+                }
+                if (state == 7) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != 'i') {
+                        state = 0;
+                        continue;
+                    }
+                    state = 8;
+                }
+                if (state == 8) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != 's') {
+                        state = 0;
+                        continue;
+                    }
+                    state = 9;
+                }
+                if (state == 9) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != ' ') {
+                        state = 0;
+                        continue;
+                    }
+                    state = 10;
+                }
+                if (state == 10) {
+                    if (!buf.hasRemaining()) {
+                        break;
+                    }
+                    if (buf.get() != 'v') {
+                        state = 0;
+                        continue;
+                    }
+                    state = 11;
+                }
+                // version digits
+                while (state >= 11
+                        && state <= 13) {
+                    if (!buf.hasRemaining()) {
+                        break lup_buf;
+                    }
+                    c = buf.get();
+                    if (c == '.') {
+                        ++state;
+                    } else if (c < '0' || c > '9') {
+                        if (state == 13) {
+                            state = 14;
+                            break lup_read;
+                        }
+                        state = 0;
+                        continue lup_buf;
+                    }
+                    out.put(c);
+                }
+            }
+        }
+
+        out.flip();
+        if (state == 14 && out.hasRemaining()) {
+            // version string is found
+            return out.toString();
+        } else {
+            throw new IllegalStateException(
+                    "Version string is not found in 'stellaris.exe': " + state
+            );
+        }
+    }
+
+    public String getGameVersion()
+            throws FileNotFoundException, IOException {
+        String fileName;
+        File file;
+
+        fileName = "stellaris.exe";
+        file = new File(dirRoot, fileName);
+        if (!file.isFile()) {
+            throw new FileNotFoundException();
+        }
+        try (Reader reader = new InputStreamReader(new FileInputStream(file));) {
+            return scanGameVersion(reader);
+        }
+    }
+
     public File getRootDirectory() {
         return dirRoot;
     }
@@ -70,7 +235,14 @@ public class Stellaris extends SimpleFactory {
         return stellaris;
     }
 
-    public void init(String path, boolean forceUpdate) {
+    public void init(String path) {
+        dirRoot = new File(path);
+        if (!dirRoot.isDirectory()) {
+            throw new IllegalStateException("Root directory is not found!");
+        }
+    }
+
+    public void scan(boolean forceUpdate) {
         DirectoryFilter df;
         ScriptFilter sf;
         Queue<File> files, dirs;
@@ -78,10 +250,6 @@ public class Stellaris extends SimpleFactory {
         ScriptParser script;
         String filename;
 
-        dirRoot = new File(path);
-        if (!dirRoot.isDirectory()) {
-            throw new RuntimeException();
-        }
         df = new DirectoryFilter();
         dirRoot.listFiles(df);
         sf = new ScriptFilter(df.getDirs());
@@ -161,12 +329,22 @@ public class Stellaris extends SimpleFactory {
         }
 
         path = args[0];
-        Debug.out.format("Checkout directory \"%s\"...%n", path);
         st = null;
         try {
             st = new Stellaris();
+
+            StringReader reader = new StringReader("Stellaris v1.2.1 ");
+            System.out.println(st.scanGameVersion(reader));
+
             Stellaris.setDefault(st);
-            st.init(path, true);
+            st.init(path);
+            Debug.out.format("Game Version: v%s%n"
+                    + "Checkout directory \"%s\"...%n",
+                    st.getGameVersion(),
+                    path);
+            System.exit(0);
+
+            st.scan(true);
             se = st.scriptEngine;
             sc = se.getContext();
             ftb = new FieldTypeBinding(sc);
@@ -177,6 +355,8 @@ public class Stellaris extends SimpleFactory {
                 Logger.getLogger(Stellaris.class.getName()).log(Level.SEVERE, null, ex);
             }
             ModLoader.getModLoaders();
+        } catch (IOException ex) {
+            Logger.getLogger(Stellaris.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             if (st != null) {
                 st.digestStore.store();
