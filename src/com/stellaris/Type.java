@@ -32,6 +32,10 @@ public enum Type {
     COLOR,
     COLORLIST;
 
+    public String toString() {
+        return "$" + name().toLowerCase();
+    }
+
     public static Type getType(String str) {
         Type[] types;
         String name;
