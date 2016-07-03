@@ -168,10 +168,6 @@ public class ScriptParser extends ScriptValue {
         }
         parent = field.getParent();
         fieldName = field.getName();
-        if (isLogicalOperator(fieldName)) {
-            put(parent, value);
-            return;
-        }
         if (parent != null) {
             bindings = (ScriptStruct) get(parent);
         }
