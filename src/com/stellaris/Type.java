@@ -30,7 +30,9 @@ public enum Type {
     VARIABLE,
     LIST,
     COLOR,
-    COLORLIST;
+    COLORLIST,
+    CONDITION
+    ;
 
     public String toString() {
         return "$" + name().toLowerCase();
