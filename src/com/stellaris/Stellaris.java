@@ -352,7 +352,7 @@ public class Stellaris extends SimpleFactory {
             } catch (IOException ex) {
                 Logger.getLogger(Stellaris.class.getName()).log(Level.SEVERE, null, ex);
             }
-            ModLoader.getModLoaders();
+            ModLoader.getModLoaders(null);
         } catch (IOException ex) {
             Logger.getLogger(Stellaris.class.getName()).log(Level.SEVERE, null, ex);
         } finally {

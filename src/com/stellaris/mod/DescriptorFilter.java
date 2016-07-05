@@ -30,19 +30,23 @@ public class DescriptorFilter implements FileFilter {
     private static final String SUFFIX_MOD = ".mod";
 
     private final Queue<ModLoader> queue;
+    private final String path;
 
-    public DescriptorFilter(Queue<ModLoader> q) {
+    public DescriptorFilter(String pathHome, Queue<ModLoader> q) {
+        path = pathHome;
         queue = q;
     }
 
     @Override
     public boolean accept(File file) {
+        String pathHome;
         String filename;
         int idx;
         String prefix;
         String suffix;
         ModLoader loader;
 
+        pathHome = path;
         if (!file.isFile()) {
             return false;
         }
@@ -62,7 +66,7 @@ public class DescriptorFilter implements FileFilter {
         } catch (NumberFormatException ex) {
         }
 
-        loader = new ModLoader(file);
+        loader = new ModLoader(pathHome, file);
         queue.add(loader);
 
         return false;

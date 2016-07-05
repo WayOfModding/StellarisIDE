@@ -67,18 +67,22 @@ public class ModLoader extends SimpleEngine {
     private String name;
     private String supportedVersion;
 
-    public ModLoader(File file) {
+    public ModLoader(String pathHome, File file) {
         String path;
 
         try {
             path = handleFile(file);
-            handleDirectory(path);
+            handleDirectory(pathHome, path);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    private void handleDirectory(String path) throws FileNotFoundException {
+    public static String getDefaultPathHome() {
+        return DEFAULT_STELLARIS_DIRECTORY;
+    }
+
+    private void handleDirectory(String pathHome, String path) throws FileNotFoundException {
         File root, dir, file;
         DirectoryFilter df;
         ScriptFilter sf;
@@ -91,7 +95,7 @@ public class ModLoader extends SimpleEngine {
         int scope;
         String msg;
 
-        root = new File(DEFAULT_STELLARIS_DIRECTORY, path);
+        root = new File(pathHome, path);
         if (!root.isDirectory()) {
             throw new FileNotFoundException();
         }
@@ -206,17 +210,20 @@ public class ModLoader extends SimpleEngine {
         return path;
     }
 
-    public static Queue<ModLoader> getModLoaders() {
+    public static Queue<ModLoader> getModLoaders(String pathHome) {
         File dir;
         FileFilter filter;
         Queue<ModLoader> res;
 
-        dir = new File(DEFAULT_STELLARIS_DIRECTORY);
+        if (pathHome == null) {
+            pathHome = DEFAULT_STELLARIS_DIRECTORY;
+        }
+        dir = new File(pathHome);
         if (!dir.isDirectory()) {
             throw new AssertionError("Fail to locate stellaris mod directory!");
         }
         res = new LinkedList<>();
-        filter = new DescriptorFilter(res);
+        filter = new DescriptorFilter(pathHome, res);
         dir.listFiles(filter);
 
         return res;
@@ -229,7 +236,7 @@ public class ModLoader extends SimpleEngine {
         Debug.DEBUG = false;
         main = new Stellaris();
         Stellaris.setDefault(main);
-        q = getModLoaders();
+        q = getModLoaders(null);
         Debug.out.format("ModLoader count=%d%n", q.size());
     }
 }

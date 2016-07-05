@@ -107,7 +107,7 @@ public class DigestStore {
         }
     }
 
-    private static String getUserDir() {
+    public static String getUserDir() {
         return System.getProperty("user.dir");
     }
 
