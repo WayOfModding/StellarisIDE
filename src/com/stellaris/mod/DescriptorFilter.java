@@ -29,12 +29,14 @@ public class DescriptorFilter implements FileFilter {
 
     private static final String SUFFIX_MOD = ".mod";
 
-    private final Queue<ModLoader> queue;
+    private final Queue<ModLoader> queueLocal, queueRemote;
     private final String path;
 
-    public DescriptorFilter(String pathHome, Queue<ModLoader> q) {
+    public DescriptorFilter(String pathHome,
+            Queue<ModLoader> q, Queue<ModLoader> p) {
         path = pathHome;
-        queue = q;
+        queueLocal = q;
+        queueRemote = p;
     }
 
     @Override
@@ -60,14 +62,19 @@ public class DescriptorFilter implements FileFilter {
             return false;
         }
         prefix = filename.substring(0, idx);
-        try {
-            Integer.parseInt(prefix);
-            return false;
-        } catch (NumberFormatException ex) {
-        }
 
         loader = new ModLoader(pathHome, file);
-        queue.add(loader);
+        try {
+            // integer file name ==> subscribed mod descriptor
+            Integer.parseInt(prefix);
+            if (queueRemote != null) {
+                queueRemote.add(loader);
+            }
+        } catch (NumberFormatException ex) {
+            if (queueLocal != null) {
+                queueLocal.add(loader);
+            }
+        }
 
         return false;
     }

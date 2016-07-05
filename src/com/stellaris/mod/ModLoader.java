@@ -30,13 +30,21 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.ZipException;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
 import javax.script.ScriptEngine;
 import javax.script.SimpleScriptContext;
+import org.apache.commons.compress.archivers.zip.*;
 
 /**
  *
@@ -45,6 +53,7 @@ import javax.script.SimpleScriptContext;
 public class ModLoader extends SimpleEngine {
 
     private static final String DEFAULT_STELLARIS_DIRECTORY;
+    private static final String DEFAULT_ENTRY_NAME_DESCRIPTOR = "descriptor.mod";
 
     static {
         String separator;
@@ -59,8 +68,6 @@ public class ModLoader extends SimpleEngine {
         sb.append("Paradox Interactive");
         sb.append(separator);
         sb.append("Stellaris");
-        sb.append(separator);
-        sb.append("mod");
         DEFAULT_STELLARIS_DIRECTORY = sb.toString();
     }
 
@@ -70,42 +77,48 @@ public class ModLoader extends SimpleEngine {
     public ModLoader(String pathHome, File file) {
         String path;
 
+        path = null;
         try {
             path = handleFile(file);
-            handleDirectory(pathHome, path);
+            handleMod(pathHome, path);
+        } catch (ZipException ex) {
+            Logger.getLogger(ModLoader.class.getName()).log(Level.SEVERE, path, ex);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
-        }
+        } 
     }
 
     public static String getDefaultPathHome() {
         return DEFAULT_STELLARIS_DIRECTORY;
     }
 
-    private void handleDirectory(String pathHome, String path) throws FileNotFoundException {
-        File root, dir, file;
+    private void handleMod(String pathHome, String path) throws IOException {
+        File file;
+
+        file = new File(pathHome, path);
+        if (file.isDirectory()) {
+            // mod\xxxx
+            handleDirectory(file);
+        } else if (file.isFile()) {
+            // workshop\xxxx
+            handleArchieve(file);
+        } else {
+            throw new FileNotFoundException(file.getAbsolutePath());
+        }
+    }
+
+    private void handleDirectory(File root) throws IOException {
+        File dir, file;
         DirectoryFilter df;
         ScriptFilter sf;
         Queue<File> dirs, files;
         String filename;
-        ScriptContext engineContext;
-        ScriptContext fileContext;
-        Bindings bindings;
-        SyntaxValidator validator;
-        int scope;
         String msg;
 
-        root = new File(pathHome, path);
-        if (!root.isDirectory()) {
-            throw new FileNotFoundException();
-        }
         df = new DirectoryFilter();
         root.listFiles(df);
         sf = new ScriptFilter(df.getDirs());
         dirs = sf.getDirs();
-        validator = new SyntaxValidator();
-        engineContext = getContext();
-        scope = ENGINE_SCOPE;
 
         while (!dirs.isEmpty()) {
             dir = dirs.remove();
@@ -117,22 +130,15 @@ public class ModLoader extends SimpleEngine {
                 file = files.remove();
                 filename = DigestStore.getPath(file);
                 try (FileReader reader = new FileReader(file);) {
-                    // create a isolated context for current script file
-                    fileContext = new SimpleScriptContext();
-                    // parse the file
-                    ScriptParser.newInstance(reader, fileContext);
-                    // retrieve field-type binding
-                    bindings = fileContext.getBindings(scope);
-                    // validate field-type binding
-                    validator.validate(bindings);
-                    // if it is accepted,
-                    // put all bindings of the file
-                    // into the engine context.
-                    // it will be used later to check
-                    // compatibility between mods
-                    engineContext.getBindings(scope).putAll(bindings);
-                } catch (IOException ex) {
-                    throw new RuntimeException(filename, ex);
+                    handleReader(reader);
+                    Debug.err.format(
+                            "[MOD]\tfile=\"%s\"%n"
+                            + "\tname=\"%s\"%n"
+                            + "\tsupported_version=\"%s\"%n",
+                            filename,
+                            name,
+                            supportedVersion
+                    );
                 } catch (SyntaxException ex) {
                     msg = ex.getMessage();
                     if (msg == null) {
@@ -153,12 +159,58 @@ public class ModLoader extends SimpleEngine {
         }
     }
 
+    private void handleArchieve(File file) throws IOException {
+        Enumeration<? extends ZipArchiveEntry> entries;
+        ZipArchiveEntry entry;
+        String entryName;
+
+        try (ZipFile zf = new ZipFile(file);) {
+            entries = zf.getEntries();
+            while (entries.hasMoreElements()) {
+                entry = entries.nextElement();
+                entryName = entry.getName();
+                if (DEFAULT_ENTRY_NAME_DESCRIPTOR.equals(entryName)) {
+                    continue;
+                }
+                try (InputStream input = zf.getInputStream(entry);
+                        Reader reader = new InputStreamReader(input);) {
+                    handleReader(reader);
+                }
+            }
+        }
+    }
+
+    private void handleReader(Reader reader) throws IOException {
+        ScriptContext engineContext;
+        ScriptContext fileContext;
+        Bindings bindings;
+        SyntaxValidator validator;
+        int scope;
+
+        validator = new SyntaxValidator();
+        engineContext = getContext();
+        scope = ENGINE_SCOPE;
+        // create a isolated context for current script file
+        fileContext = new SimpleScriptContext();
+        // parse the file
+        ScriptParser.newInstance(reader, fileContext);
+        // retrieve field-type binding
+        bindings = fileContext.getBindings(scope);
+        // validate field-type binding
+        validator.validate(bindings);
+        // if it is accepted,
+        // put all bindings of the file
+        // into the engine context.
+        // it will be used later to check
+        // compatibility between mods
+        engineContext.getBindings(scope).putAll(bindings);
+    }
+
     private String handleFile(File file) throws IOException {
         ScriptLexer parser;
         String key;
         String token;
         String path;
-        int idx;
         int len;
 
         parser = new ScriptLexer(file);
@@ -182,13 +234,11 @@ public class ModLoader extends SimpleEngine {
                         break;
                     }
                     throw new AssertionError(token);
-                case "archieve":
-                    throw new TokenException("Unexpected token: archieve");
+                case "archive":
                 case "path":
                     token = parser.nextToken();
-                    idx = token.indexOf('/');
                     len = token.length();
-                    token = token.substring(idx + 1, len - 1);
+                    token = token.substring(1, len - 1);
                     path = token;
                     break;
                 case "supported_version":
@@ -204,39 +254,51 @@ public class ModLoader extends SimpleEngine {
         }
 
         if (path == null) {
-            throw new AssertionError("Invalid descriptor file: path/archieve field not found!");
+            throw new AssertionError("Invalid descriptor file: path/archive field not found!");
         }
 
         return path;
     }
 
-    public static Queue<ModLoader> getModLoaders(String pathHome) {
+    public static void getModLoaders(String pathHome,
+            Queue<ModLoader> q,
+            Queue<ModLoader> p) {
         File dir;
         FileFilter filter;
-        Queue<ModLoader> res;
 
         if (pathHome == null) {
             pathHome = DEFAULT_STELLARIS_DIRECTORY;
         }
-        dir = new File(pathHome);
+        dir = new File(pathHome, "mod");
         if (!dir.isDirectory()) {
             throw new AssertionError("Fail to locate stellaris mod directory!");
         }
-        res = new LinkedList<>();
-        filter = new DescriptorFilter(pathHome, res);
+        filter = new DescriptorFilter(pathHome, q, p);
         dir.listFiles(filter);
+    }
 
-        return res;
+    public static Queue<ModLoader> getModLoaders() {
+        Queue<ModLoader> q;
+
+        q = new LinkedList<>();
+        getModLoaders(null, q, null);
+        return q;
+    }
+
+    public String toString() {
+        return name;
     }
 
     public static void main(String[] args) {
         Queue<ModLoader> q;
         Stellaris main;
 
-        Debug.DEBUG = false;
+        Debug.DEBUG = true;
+
         main = new Stellaris();
         Stellaris.setDefault(main);
-        q = getModLoaders(null);
+        q = new LinkedList<>();
+        getModLoaders();
         Debug.out.format("ModLoader count=%d%n", q.size());
     }
 }
