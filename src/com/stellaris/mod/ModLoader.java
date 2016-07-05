@@ -85,7 +85,7 @@ public class ModLoader extends SimpleEngine {
             Logger.getLogger(ModLoader.class.getName()).log(Level.SEVERE, path, ex);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
-        } 
+        }
     }
 
     public static String getDefaultPathHome() {
@@ -130,7 +130,9 @@ public class ModLoader extends SimpleEngine {
                 file = files.remove();
                 filename = DigestStore.getPath(file);
                 try (FileReader reader = new FileReader(file);) {
-                    handleReader(reader);
+                    if (filename.endsWith(".txt")) {
+                        handleReader(reader);
+                    }
                     Debug.err.format(
                             "[MOD]\tfile=\"%s\"%n"
                             + "\tname=\"%s\"%n"
@@ -174,7 +176,9 @@ public class ModLoader extends SimpleEngine {
                 }
                 try (InputStream input = zf.getInputStream(entry);
                         Reader reader = new InputStreamReader(input);) {
-                    handleReader(reader);
+                    if (entryName.endsWith(".txt")) {
+                        handleReader(reader);
+                    }
                 }
             }
         }
