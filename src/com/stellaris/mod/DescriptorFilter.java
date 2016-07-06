@@ -63,17 +63,21 @@ public class DescriptorFilter implements FileFilter {
         }
         prefix = filename.substring(0, idx);
 
-        loader = new ModLoader(pathHome, file);
         try {
-            // integer file name ==> subscribed mod descriptor
-            Integer.parseInt(prefix);
-            if (queueRemote != null) {
-                queueRemote.add(loader);
+            loader = new ModLoader(pathHome, file);
+            try {
+                // integer file name ==> subscribed mod descriptor
+                Integer.parseInt(prefix);
+                if (queueRemote != null) {
+                    queueRemote.add(loader);
+                }
+            } catch (NumberFormatException ex) {
+                if (queueLocal != null) {
+                    queueLocal.add(loader);
+                }
             }
-        } catch (NumberFormatException ex) {
-            if (queueLocal != null) {
-                queueLocal.add(loader);
-            }
+        } catch (SyntaxException ex) {
+            
         }
 
         return false;
