@@ -284,7 +284,7 @@ public class ModLoader extends SimpleEngine {
         Queue<ModLoader> q;
 
         q = new LinkedList<>();
-        getModLoaders(null, q, null);
+        getModLoaders(null, q, q);
         return q;
     }
 

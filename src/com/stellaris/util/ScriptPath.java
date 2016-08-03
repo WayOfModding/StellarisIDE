@@ -64,6 +64,6 @@ public class ScriptPath {
         sb.append(getPath(file));
         sb.append("!/");
         sb.append(entryName);
-        return null;
+        return sb.toString();
     }
 }

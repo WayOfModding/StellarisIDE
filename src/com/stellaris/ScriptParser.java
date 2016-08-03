@@ -99,23 +99,26 @@ public class ScriptParser extends ScriptValue {
         return pfile.startsWith(proot);
     }
 
-    private ScriptParser(ScriptLexer parser,
+    private ScriptParser(ScriptLexer parser, String filename,
             boolean isCoreFile, ScriptContext context) {
+        if (parser == null)
+            throw new NullPointerException();
+        if (filename == null)
+            throw new NullPointerException();
         this.scriptParser = parser;
+        this.filename = filename;
         this.isCore = isCoreFile;
         this.context = context;
         analyze();
     }
 
     private ScriptParser(File file, ScriptContext context) throws IOException {
-        this(new ScriptLexer(file), isCoreFile(file), context);
-        this.filename = ScriptPath.getPath(file);
+        this(new ScriptLexer(file), ScriptPath.getPath(file), isCoreFile(file), context);
     }
 
     private ScriptParser(Reader reader, String filename,
             ScriptContext context) throws IOException {
-        this(new ScriptLexer(reader), false, context);
-        this.filename = filename;
+        this(new ScriptLexer(reader), filename, false, context);
     }
 
     private void analyze() throws TokenException {
