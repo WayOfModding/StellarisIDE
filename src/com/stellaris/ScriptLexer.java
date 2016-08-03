@@ -24,6 +24,7 @@ import java.util.*;
 import static com.stellaris.test.Debug.*;
 import com.stellaris.util.BOMReader;
 import com.stellaris.util.DigestStore;
+import com.stellaris.util.ScriptPath;
 
 /**
  *
@@ -451,7 +452,7 @@ public final class ScriptLexer extends AbstractLexer {
                     + "Count['{']=%d%n"
                     + "Count['}']=%d%n"
                     + "Delta=%d%n",
-                    DigestStore.getPath(file),
+                    ScriptPath.getPath(file),
                     count0,
                     count1,
                     count0 - count1

@@ -16,10 +16,54 @@
  */
 package com.stellaris.util;
 
+import java.io.File;
+
 /**
  *
  * @author donizyo
  */
 public class ScriptPath {
+
+    /**
+     *
+     * @param file the value of file
+     * @return 
+     */
+    public static String getPath(File file) {
+        String path;
+        path = file.getAbsolutePath();
+        return getPath(path);
+    }
+
+    /**
+     *
+     * @param path the value of path
+     * @return 
+     */
+    public static String getPath(String path) {
+        final String sp = "Stellaris\\";
+        int len;
+        int idx;
+        idx = path.indexOf(sp);
+        len = sp.length();
+        idx += len;
+        return path.substring(idx).replace('\\', '/');
+    }
     
+    public static String getModFilePath(File file) {
+        String res;
+        
+        res = getPath(file);
+        return res;
+    }
+
+    public static String getModArchivePath(File file, String entryName) {
+        StringBuilder sb;
+        
+        sb = new StringBuilder();
+        sb.append(getPath(file));
+        sb.append("!/");
+        sb.append(entryName);
+        return null;
+    }
 }

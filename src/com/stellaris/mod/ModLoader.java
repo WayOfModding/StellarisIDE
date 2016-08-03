@@ -25,6 +25,7 @@ import com.stellaris.TokenException;
 import com.stellaris.script.*;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
+import com.stellaris.util.ScriptPath;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
@@ -68,6 +69,7 @@ public class ModLoader extends SimpleEngine {
         sb.append("Paradox Interactive");
         sb.append(separator);
         sb.append("Stellaris");
+        // <user.home>/Documents/Paradox Interactive/Stellaris
         DEFAULT_STELLARIS_DIRECTORY = sb.toString();
     }
 
@@ -109,7 +111,7 @@ public class ModLoader extends SimpleEngine {
 
     // TODO validate file structure
     // some modders might forget about directories
-    private void handleDirectory(File root) throws IOException {
+    private void handleDirectory(final File root) throws IOException {
         File dir, file;
         DirectoryFilter df;
         ScriptFilter sf;
@@ -130,55 +132,58 @@ public class ModLoader extends SimpleEngine {
             loop:
             while (!files.isEmpty()) {
                 file = files.remove();
-                filename = DigestStore.getPath(file);
-                try (FileReader reader = new FileReader(file);) {
-                    if (filename.endsWith(".txt")) {
+                filename = ScriptPath.getModFilePath(file);
+                //System.out.format("Mod: %s%n", filename);
+                if (filename.endsWith(".txt")) {
+                    try (FileReader reader = new FileReader(file);) {
                         handleReader(reader);
+                        Debug.err.format(
+                                "[MOD]\tfile=\"%s\"%n"
+                                + "\tname=\"%s\"%n"
+                                + "\tsupported_version=\"%s\"%n",
+                                filename,
+                                name,
+                                supportedVersion
+                        );
+                    } catch (SyntaxException ex) {
+                        msg = ex.getMessage();
+                        if (msg == null) {
+                            msg = "";
+                        }
+                        Debug.err.format(
+                                "[MOD]\tfile=\"%s\"%n"
+                                + "\tname=\"%s\"%n"
+                                + "\tsupported_version=\"%s\"%n"
+                                + "\tSyntaxException: %s%n",
+                                filename,
+                                name,
+                                supportedVersion,
+                                msg
+                        );
                     }
-                    Debug.err.format(
-                            "[MOD]\tfile=\"%s\"%n"
-                            + "\tname=\"%s\"%n"
-                            + "\tsupported_version=\"%s\"%n",
-                            filename,
-                            name,
-                            supportedVersion
-                    );
-                } catch (SyntaxException ex) {
-                    msg = ex.getMessage();
-                    if (msg == null) {
-                        msg = "";
-                    }
-                    Debug.err.format(
-                            "[MOD]\tfile=\"%s\"%n"
-                            + "\tname=\"%s\"%n"
-                            + "\tsupported_version=\"%s\"%n"
-                            + "\tSyntaxException: %s%n",
-                            filename,
-                            name,
-                            supportedVersion,
-                            msg
-                    );
                 }
             }
         }
     }
 
-    private void handleArchieve(File file) throws IOException {
+    private void handleArchieve(final File file) throws IOException {
         Enumeration<? extends ZipArchiveEntry> entries;
         ZipArchiveEntry entry;
         String entryName;
+        String filename;
 
         try (ZipFile zf = new ZipFile(file);) {
             entries = zf.getEntries();
             while (entries.hasMoreElements()) {
                 entry = entries.nextElement();
                 entryName = entry.getName();
+                filename = ScriptPath.getModArchivePath(file, entryName);
                 if (DEFAULT_ENTRY_NAME_DESCRIPTOR.equals(entryName)) {
                     continue;
                 }
-                try (InputStream input = zf.getInputStream(entry);
-                        Reader reader = new InputStreamReader(input);) {
-                    if (entryName.endsWith(".txt")) {
+                if (entryName.endsWith(".txt")) {
+                    try (InputStream input = zf.getInputStream(entry);
+                            Reader reader = new InputStreamReader(input);) {
                         handleReader(reader);
                     }
                 }
@@ -299,12 +304,10 @@ public class ModLoader extends SimpleEngine {
         Queue<ModLoader> q;
         Stellaris main;
 
-        Debug.DEBUG = true;
-
+        //Debug.DEBUG = true;
         main = new Stellaris();
         Stellaris.setDefault(main);
-        q = new LinkedList<>();
-        getModLoaders();
+        q = getModLoaders();
         Debug.out.format("ModLoader count=%d%n", q.size());
     }
 }

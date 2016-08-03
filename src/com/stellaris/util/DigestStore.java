@@ -61,30 +61,13 @@ public class DigestStore {
         return file;
     }
 
-    public static String getPath(File file) {
-        String path;
-
-        path = file.getAbsolutePath();
-        return getPath(path);
-    }
-
-    public static String getPath(String path) {
-        final String sp = "Stellaris\\";
-        int len;
-        int idx;
-
-        idx = path.indexOf(sp);
-        len = sp.length();
-        idx += len;
-        return path.substring(idx);
-    }
 
     public boolean matches(File file) {
         String path;
         Digest digest;
         String sum, res;
 
-        path = getPath(file);
+        path = ScriptPath.getPath(file);
         sum = prop.getProperty(path);
         digest = new Digest(file);
         res = digest.digest();

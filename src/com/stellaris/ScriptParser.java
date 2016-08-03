@@ -34,6 +34,7 @@ import com.stellaris.test.Debug;
 import static com.stellaris.test.Debug.DEBUG;
 import static com.stellaris.test.Debug.SKIP_LINE;
 import com.stellaris.util.DigestStore;
+import com.stellaris.util.ScriptPath;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -106,7 +107,7 @@ public class ScriptParser extends ScriptValue {
 
     private ScriptParser(File file, ScriptContext context) throws IOException {
         this(new ScriptLexer(file), isCoreFile(file), context);
-        filename = DigestStore.getPath(file);
+        filename = ScriptPath.getPath(file);
     }
 
     private ScriptParser(Reader reader, ScriptContext context) throws IOException {

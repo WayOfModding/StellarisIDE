@@ -21,6 +21,7 @@ import com.stellaris.script.SimpleEngine;
 import com.stellaris.script.SimpleFactory;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
+import com.stellaris.util.ScriptPath;
 import java.io.*;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -267,7 +268,7 @@ public class Stellaris extends SimpleFactory {
             mainloop:
             while (!files.isEmpty()) {
                 file = files.remove();
-                filename = DigestStore.getPath(file);
+                filename = ScriptPath.getPath(file);
                 for (String name : BLACKLIST_ALL) {
                     if (name.equals(filename)) {
                         continue mainloop;
@@ -283,7 +284,7 @@ public class Stellaris extends SimpleFactory {
                 }
                 // refresh syntax table
                 if (Debug.DEBUG && Debug.DEBUG_REFRESH) {
-                    Debug.out.format("[REFRESH] %s%n", DigestStore.getPath(file));
+                    Debug.out.format("[REFRESH] %s%n", ScriptPath.getPath(file));
                 }
                 try {
                     script = ScriptParser.newInstance(file, scriptEngine.getContext());

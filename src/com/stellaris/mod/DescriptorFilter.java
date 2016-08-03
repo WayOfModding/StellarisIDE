@@ -47,6 +47,7 @@ public class DescriptorFilter implements FileFilter {
         String prefix;
         String suffix;
         ModLoader loader;
+        Queue<ModLoader> queue;
 
         pathHome = path;
         if (!file.isFile()) {
@@ -64,17 +65,18 @@ public class DescriptorFilter implements FileFilter {
         prefix = filename.substring(0, idx);
 
         try {
-            loader = new ModLoader(pathHome, file);
             try {
                 // integer file name ==> subscribed mod descriptor
                 Integer.parseInt(prefix);
-                if (queueRemote != null) {
-                    queueRemote.add(loader);
-                }
+                queue = queueRemote;
+                // TODO workshop mods are currently disabled for debugging
+                queue = null;
             } catch (NumberFormatException ex) {
-                if (queueLocal != null) {
-                    queueLocal.add(loader);
-                }
+                queue = queueLocal;
+            }
+            if (queue != null) {
+                loader = new ModLoader(pathHome, file);
+                queue.add(loader);
             }
         } catch (SyntaxException ex) {
             
