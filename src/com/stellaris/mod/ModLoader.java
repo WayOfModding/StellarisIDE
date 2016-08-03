@@ -300,6 +300,16 @@ public class ModLoader extends SimpleEngine {
         main = new Stellaris();
         Stellaris.setDefault(main);
         q = getModLoaders();
+        Debug.err.flush();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+        }
         Debug.out.format("ModLoader count=%d%n", q.size());
+        for (ModLoader ml : q) {
+            Debug.out.format("%s - %s%n",
+                    ml.name, ml.supportedVersion
+            );
+        }
     }
 }
