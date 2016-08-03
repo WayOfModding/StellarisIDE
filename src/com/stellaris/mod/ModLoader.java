@@ -103,7 +103,7 @@ public class ModLoader extends SimpleEngine {
             handleDirectory(file);
         } else if (file.isFile()) {
             // workshop\xxxx
-            handleArchieve(file);
+            handleArchive(file);
         } else {
             throw new FileNotFoundException(file.getAbsolutePath());
         }
@@ -166,7 +166,7 @@ public class ModLoader extends SimpleEngine {
         }
     }
 
-    private void handleArchieve(final File file) throws IOException {
+    private void handleArchive(final File file) throws IOException {
         Enumeration<? extends ZipArchiveEntry> entries;
         ZipArchiveEntry entry;
         String entryName;
