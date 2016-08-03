@@ -16,7 +16,6 @@
  */
 package com.stellaris.mod;
 
-import com.stellaris.test.Debug;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Queue;
@@ -69,8 +68,8 @@ public class DescriptorFilter implements FileFilter {
                 // integer file name ==> subscribed mod descriptor
                 Integer.parseInt(prefix);
                 queue = queueRemote;
-                // TODO workshop mods are currently disabled for debugging
-                queue = null;
+                // workshop mods can be disabled for debugging
+                //queue = null;
             } catch (NumberFormatException ex) {
                 queue = queueLocal;
             }

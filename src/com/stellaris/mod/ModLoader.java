@@ -21,10 +21,8 @@ import com.stellaris.ScriptParser;
 import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptLexer;
 import com.stellaris.Stellaris;
-import com.stellaris.TokenException;
 import com.stellaris.script.*;
 import com.stellaris.test.Debug;
-import com.stellaris.util.DigestStore;
 import com.stellaris.util.ScriptPath;
 import java.io.File;
 import java.io.FileFilter;
@@ -137,14 +135,6 @@ public class ModLoader extends SimpleEngine {
                 if (filename.endsWith(".txt")) {
                     try (FileReader reader = new FileReader(file);) {
                         handleReader(filename, reader);
-                        Debug.err.format(
-                                "[MOD]\tfile=\"%s\"%n"
-                                + "\tname=\"%s\"%n"
-                                + "\tsupported_version=\"%s\"%n",
-                                filename,
-                                name,
-                                supportedVersion
-                        );
                     } catch (SyntaxException ex) {
                         msg = ex.getMessage();
                         if (msg == null) {
