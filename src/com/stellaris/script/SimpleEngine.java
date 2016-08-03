@@ -47,7 +47,7 @@ public class SimpleEngine extends AbstractScriptEngine implements ScriptEngine {
     @Override
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
         try {
-            ScriptParser.newInstance(reader, context);
+            ScriptParser.newInstance(reader, null, context);
         } catch (IOException ex) {
             throw new ScriptException(ex);
         }

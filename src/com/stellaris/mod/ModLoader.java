@@ -136,7 +136,7 @@ public class ModLoader extends SimpleEngine {
                 //System.out.format("Mod: %s%n", filename);
                 if (filename.endsWith(".txt")) {
                     try (FileReader reader = new FileReader(file);) {
-                        handleReader(reader);
+                        handleReader(filename, reader);
                         Debug.err.format(
                                 "[MOD]\tfile=\"%s\"%n"
                                 + "\tname=\"%s\"%n"
@@ -184,14 +184,14 @@ public class ModLoader extends SimpleEngine {
                 if (entryName.endsWith(".txt")) {
                     try (InputStream input = zf.getInputStream(entry);
                             Reader reader = new InputStreamReader(input);) {
-                        handleReader(reader);
+                        handleReader(filename, reader);
                     }
                 }
             }
         }
     }
 
-    private void handleReader(Reader reader) throws IOException {
+    private void handleReader(String filename, Reader reader) throws IOException {
         ScriptContext engineContext;
         ScriptContext fileContext;
         Bindings bindings;
@@ -203,8 +203,10 @@ public class ModLoader extends SimpleEngine {
         scope = ENGINE_SCOPE;
         // create a isolated context for current script file
         fileContext = new SimpleScriptContext();
+        // routine: set FILENAME
+        fileContext.setAttribute(ScriptEngine.FILENAME, filename, scope);
         // parse the file
-        ScriptParser.newInstance(reader, fileContext);
+        ScriptParser.newInstance(reader, filename, fileContext);
         // retrieve field-type binding
         bindings = fileContext.getBindings(scope);
         // validate field-type binding

@@ -73,8 +73,9 @@ public class ScriptParser extends ScriptValue {
         }
     }
 
-    public static ScriptParser newInstance(Reader reader, ScriptContext context) throws IOException {
-        return new ScriptParser(reader, context);
+    public static ScriptParser newInstance(Reader reader,
+            String filename, ScriptContext context) throws IOException {
+        return new ScriptParser(reader, filename, context);
     }
 
     private static boolean isCoreFile(File file) {
@@ -98,7 +99,8 @@ public class ScriptParser extends ScriptValue {
         return pfile.startsWith(proot);
     }
 
-    private ScriptParser(ScriptLexer parser, boolean isCoreFile, ScriptContext context) {
+    private ScriptParser(ScriptLexer parser,
+            boolean isCoreFile, ScriptContext context) {
         this.scriptParser = parser;
         this.isCore = isCoreFile;
         this.context = context;
@@ -107,11 +109,13 @@ public class ScriptParser extends ScriptValue {
 
     private ScriptParser(File file, ScriptContext context) throws IOException {
         this(new ScriptLexer(file), isCoreFile(file), context);
-        filename = ScriptPath.getPath(file);
+        this.filename = ScriptPath.getPath(file);
     }
 
-    private ScriptParser(Reader reader, ScriptContext context) throws IOException {
+    private ScriptParser(Reader reader, String filename,
+            ScriptContext context) throws IOException {
         this(new ScriptLexer(reader), false, context);
+        this.filename = filename;
     }
 
     private void analyze() throws TokenException {
