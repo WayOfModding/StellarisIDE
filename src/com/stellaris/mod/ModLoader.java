@@ -107,6 +107,8 @@ public class ModLoader extends SimpleEngine {
         }
     }
 
+    // TODO validate file structure
+    // some modders might forget about directories
     private void handleDirectory(File root) throws IOException {
         File dir, file;
         DirectoryFilter df;

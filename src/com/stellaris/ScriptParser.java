@@ -33,6 +33,7 @@ import com.stellaris.script.ScriptValue;
 import com.stellaris.test.Debug;
 import static com.stellaris.test.Debug.DEBUG;
 import static com.stellaris.test.Debug.SKIP_LINE;
+import com.stellaris.util.DigestStore;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.EmptyStackException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -58,9 +60,12 @@ public class ScriptParser extends ScriptValue {
     private ScriptLexer scriptParser;
     private boolean isCore;
     private ScriptContext context;
+    private String filename;
 
     public static ScriptParser newInstance(File file, ScriptContext context) {
         try {
+            if (file == null || !file.isFile())
+                throw new IllegalArgumentException("file");
             return new ScriptParser(file, context);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -101,13 +106,14 @@ public class ScriptParser extends ScriptValue {
 
     private ScriptParser(File file, ScriptContext context) throws IOException {
         this(new ScriptLexer(file), isCoreFile(file), context);
+        filename = DigestStore.getPath(file);
     }
 
     private ScriptParser(Reader reader, ScriptContext context) throws IOException {
         this(new ScriptLexer(reader), false, context);
     }
 
-    private void analyze() {
+    private void analyze() throws TokenException {
         int res;
         ScriptLexer parser;
 
@@ -122,13 +128,14 @@ public class ScriptParser extends ScriptValue {
                         )
                 );
             }
-        } catch (IOException ex) {
-            Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchElementException | IOException ex) {
+            Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, filename, ex);
+            System.exit(-1);
         } finally {
             try {
                 parser.close();
             } catch (IOException ex) {
-                Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, null, ex);
+                throw new RuntimeException(ex);
             }
             scriptParser = null;
         }
@@ -244,7 +251,8 @@ public class ScriptParser extends ScriptValue {
     }
 
     // remember to skip the current line when TokenException is thrown
-    private int analyze(Field parent, int state, int index) throws IOException {
+    private int analyze(Field parent, int state, int index)
+            throws IOException, TokenException, NoSuchElementException {
         ScriptLexer parser;
         String token, key;
         List<String> tokens;
@@ -272,7 +280,7 @@ public class ScriptParser extends ScriptValue {
                 token = parser.nextToken();
             } catch (TokenException ex) {
                 if (SKIP_LINE) {
-                    parser.skipCurrentLine();
+                    skipCurrentLine(parser, ex);
                     continue;
                 }
                 throw ex;
@@ -295,7 +303,7 @@ public class ScriptParser extends ScriptValue {
                 }
             } catch (TokenException | NumberFormatException ex) {
                 if (SKIP_LINE) {
-                    parser.skipCurrentLine();
+                    skipCurrentLine(parser, ex);
                     continue;
                 }
                 throw ex;
@@ -307,7 +315,7 @@ public class ScriptParser extends ScriptValue {
                 token = parser.nextToken();
             } catch (TokenException ex) {
                 if (SKIP_LINE) {
-                    parser.skipCurrentLine();
+                    skipCurrentLine(parser, ex);
                     continue;
                 }
                 throw ex;
@@ -321,7 +329,7 @@ public class ScriptParser extends ScriptValue {
                     throw new TokenException("Unexpected color token");
                 } catch (TokenException ex) {
                     if (SKIP_LINE) {
-                        parser.skipCurrentLine();
+                        skipCurrentLine(parser, ex);
                         continue;
                     }
                     throw ex;
@@ -337,7 +345,7 @@ public class ScriptParser extends ScriptValue {
                     isList = handlePlainList(scriptList, token);
                 } catch (TokenException ex) {
                     if (SKIP_LINE) {
-                        parser.skipCurrentLine();
+                        skipCurrentLine(parser, ex);
                         continue;
                     }
                     throw ex;
@@ -363,7 +371,7 @@ public class ScriptParser extends ScriptValue {
                     token = parser.nextToken();
                 } catch (TokenException ex) {
                     if (SKIP_LINE) {
-                        parser.skipCurrentLine();
+                        skipCurrentLine(parser, ex);
                         continue;
                     }
                     throw ex;
@@ -374,7 +382,7 @@ public class ScriptParser extends ScriptValue {
                         scriptColor = handleColorToken(patterns);
                     } catch (TokenException | NumberFormatException ex) {
                         if (SKIP_LINE) {
-                            parser.skipCurrentLine();
+                            skipCurrentLine(parser, ex);
                             continue;
                         }
                         throw ex;
@@ -386,7 +394,7 @@ public class ScriptParser extends ScriptValue {
                         tokens = parser.peekToken(7);
                     } catch (TokenException ex) {
                         if (SKIP_LINE) {
-                            parser.skipCurrentLine();
+                            skipCurrentLine(parser, ex);
                             continue;
                         }
                         throw ex;
@@ -447,6 +455,11 @@ public class ScriptParser extends ScriptValue {
         }
 
         return state;
+    }
+
+    private void skipCurrentLine(ScriptLexer parser, Throwable ex) {
+        parser.skipCurrentLine();
+        Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, filename, ex);
     }
 
     private Bindings getBindings(ScriptContext context) {
