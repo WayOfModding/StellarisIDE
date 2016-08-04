@@ -18,7 +18,10 @@ package com.stellaris.mod;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.Queue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -70,15 +73,17 @@ public class DescriptorFilter implements FileFilter {
                 queue = queueRemote;
                 // workshop mods can be disabled for debugging
                 //queue = null;
+                loader = new RemoteModLoader(pathHome, file);
             } catch (NumberFormatException ex) {
                 queue = queueLocal;
+                loader = new LocalModLoader(pathHome, file);
             }
             if (queue != null) {
-                loader = new ModLoader(pathHome, file);
+                loader.handleMod();
                 queue.add(loader);
             }
-        } catch (SyntaxException ex) {
-            
+        } catch (IOException ex) {
+            Logger.getLogger(DescriptorFilter.class.getName()).log(Level.SEVERE, filename, ex);
         }
 
         return false;

@@ -16,26 +16,17 @@
  */
 package com.stellaris.mod;
 
-import com.stellaris.DirectoryFilter;
 import com.stellaris.ScriptParser;
-import com.stellaris.ScriptFilter;
 import com.stellaris.ScriptLexer;
 import com.stellaris.Stellaris;
 import com.stellaris.script.*;
 import com.stellaris.test.Debug;
-import com.stellaris.util.ScriptPath;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipException;
@@ -44,16 +35,14 @@ import javax.script.ScriptContext;
 import static javax.script.ScriptContext.ENGINE_SCOPE;
 import javax.script.ScriptEngine;
 import javax.script.SimpleScriptContext;
-import org.apache.commons.compress.archivers.zip.*;
 
 /**
  *
  * @author donizyo
  */
-public class ModLoader extends SimpleEngine {
+public abstract class ModLoader extends SimpleEngine {
 
     private static final String DEFAULT_STELLARIS_DIRECTORY;
-    private static final String DEFAULT_ENTRY_NAME_DESCRIPTOR = "descriptor.mod";
 
     static {
         String separator;
@@ -72,16 +61,15 @@ public class ModLoader extends SimpleEngine {
         DEFAULT_STELLARIS_DIRECTORY = sb.toString();
     }
 
-    private String name;
-    private String supportedVersion;
+    protected final String pathHome;
+    protected String path;
+    protected String name;
+    protected String supportedVersion;
 
-    public ModLoader(String pathHome, File file) {
-        String path;
-
-        path = null;
+    public ModLoader(String home, File file) {
+        pathHome = home;
         try {
             path = handleFile(file);
-            handleMod(pathHome, path);
         } catch (ZipException ex) {
             Logger.getLogger(ModLoader.class.getName()).log(Level.SEVERE, path, ex);
         } catch (IOException ex) {
@@ -93,127 +81,9 @@ public class ModLoader extends SimpleEngine {
         return DEFAULT_STELLARIS_DIRECTORY;
     }
 
-    private void handleMod(String pathHome, String path) throws IOException {
-        File file;
+    public abstract void handleMod() throws IOException;
 
-        file = new File(pathHome, path);
-        if (file.isDirectory()) {
-            // mod\xxxx
-            handleDirectory(file);
-        } else if (file.isFile()) {
-            // workshop\xxxx
-            handleArchive(file);
-        } else {
-            throw new FileNotFoundException(file.getAbsolutePath());
-        }
-    }
-
-    private void handleDirectory(final File root) throws IOException {
-        File dir, file;
-        DirectoryFilter df;
-        ScriptFilter sf;
-        Queue<File> dirs, files;
-        String filename;
-        String msg;
-        Stellaris main;
-        Set<String> set;
-        boolean doParseFile;
-
-        main = Stellaris.getDefault();
-        if (main == null)
-            throw new NullPointerException("Stellaris instance not found!");
-        set = main.getDirectories();
-        if (set == null)
-            throw new NullPointerException("Script directories not found!");
-        if (set.isEmpty())
-            throw new IllegalStateException("Script directories not found!");
-        df = new DirectoryFilter();
-        root.listFiles(df);
-        sf = new ScriptFilter(df.getDirs());
-        dirs = sf.getDirs();
-
-        while (!dirs.isEmpty()) {
-            dir = dirs.remove();
-            dir.listFiles(sf);
-            // filter directories
-            filename = ScriptPath.getPath(dir);
-            if (filename == null)
-                throw new NullPointerException();
-            doParseFile = set.contains(filename);
-            if (!doParseFile)
-                continue;
-
-            files = sf.getFiles();
-            loop:
-            while (!files.isEmpty()) {
-                file = files.remove();
-                filename = ScriptPath.getModFilePath(file);
-                //System.out.format("Mod: %s%n", filename);
-                if (filename.endsWith(".txt")) {
-                    try (FileReader reader = new FileReader(file);) {
-                        handleReader(filename, reader);
-                    } catch (SyntaxException ex) {
-                        msg = ex.getMessage();
-                        if (msg == null) {
-                            msg = "";
-                        }
-                        Debug.err.format(
-                                "[MOD]\tfile=\"%s\"%n"
-                                + "\tname=\"%s\"%n"
-                                + "\tsupported_version=\"%s\"%n"
-                                + "\tSyntaxException: %s%n",
-                                filename,
-                                name,
-                                supportedVersion,
-                                msg
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    private void handleArchive(final File file) throws IOException {
-        Enumeration<? extends ZipArchiveEntry> entries;
-        ZipArchiveEntry entry;
-        String entryName;
-        String filename;
-        Stellaris main;
-        Set<String> set;
-        boolean doParseFile;
-
-        main = Stellaris.getDefault();
-        if (main == null)
-            throw new NullPointerException("Stellaris instance not found!");
-        set = main.getDirectories();
-        if (set == null)
-            throw new NullPointerException("Script directories not found!");
-        if (set.isEmpty())
-            throw new IllegalStateException("Script directories not found!");
-        try (ZipFile zf = new ZipFile(file);) {
-            entries = zf.getEntries();
-            while (entries.hasMoreElements()) {
-                entry = entries.nextElement();
-                entryName = entry.getName();
-                // filter entries
-                doParseFile = set.contains(entryName);
-                if (!doParseFile)
-                    continue;
-                filename = ScriptPath.getModArchivePath(file, entryName);
-                if (DEFAULT_ENTRY_NAME_DESCRIPTOR.equals(entryName)) {
-                    continue;
-                }
-                if (entryName.endsWith(".txt")) {
-                    try (InputStream input = zf.getInputStream(entry);
-                            Reader reader = new InputStreamReader(input);) {
-                        handleReader(filename, reader);
-                    }
-                }
-            }
-        }
-    }
-
-    private void handleReader(String filename, Reader reader) throws IOException {
+    protected void handleReader(String filename, Reader reader) throws IOException {
         ScriptContext engineContext;
         ScriptContext fileContext;
         Bindings bindings;
@@ -226,7 +96,7 @@ public class ModLoader extends SimpleEngine {
         // create a isolated context for current script file
         fileContext = new SimpleScriptContext();
         // routine: set FILENAME
-        fileContext.setAttribute(ScriptEngine.FILENAME, filename, scope);
+        //fileContext.setAttribute(ScriptEngine.FILENAME, filename, scope);
         // parse the file
         ScriptParser.newInstance(reader, filename, fileContext);
         // retrieve field-type binding
@@ -241,6 +111,12 @@ public class ModLoader extends SimpleEngine {
         engineContext.getBindings(scope).putAll(bindings);
     }
 
+    /**
+     * Parse descriptor.mod
+     * @param file
+     * @return
+     * @throws IOException 
+     */
     private String handleFile(File file) throws IOException {
         ScriptLexer parser;
         String key;
