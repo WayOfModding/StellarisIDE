@@ -273,7 +273,9 @@ public class Stellaris extends SimpleFactory {
             if (files.isEmpty()) {
                 continue;
             }
-            set.add(ScriptPath.getPath(dir));
+            // filter empty directories
+            filename = ScriptPath.getPath(dir);
+            set.add(filename);
             mainloop:
             do {
                 file = files.remove();
