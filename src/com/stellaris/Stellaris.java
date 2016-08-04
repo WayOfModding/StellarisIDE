@@ -57,7 +57,7 @@ public class Stellaris extends SimpleFactory {
     private final ScriptEngine scriptEngine;
     private File dirRoot;
     private String gameVersion;
-    private Set<File> directories;
+    private Set<String> directories;
 
     public Stellaris() {
         digestStore = new DigestStore();
@@ -257,7 +257,7 @@ public class Stellaris extends SimpleFactory {
         File file, dir;
         ScriptParser script;
         String filename;
-        Set<File> set;
+        Set<String> set;
 
         df = new DirectoryFilter();
         dirRoot.listFiles(df);
@@ -273,7 +273,7 @@ public class Stellaris extends SimpleFactory {
             if (files.isEmpty()) {
                 continue;
             }
-            set.add(dir);
+            set.add(ScriptPath.getPath(dir));
             mainloop:
             do {
                 file = files.remove();
@@ -316,7 +316,7 @@ public class Stellaris extends SimpleFactory {
         directories = set;
     }
 
-    public Set<File> getDirectories() {
+    public Set<String> getDirectories() {
         return directories;
     }
 
