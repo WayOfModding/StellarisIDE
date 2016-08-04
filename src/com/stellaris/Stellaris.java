@@ -26,8 +26,10 @@ import java.io.*;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.CharBuffer;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.script.*;
@@ -55,6 +57,7 @@ public class Stellaris extends SimpleFactory {
     private final ScriptEngine scriptEngine;
     private File dirRoot;
     private String gameVersion;
+    private Set<File> directories;
 
     public Stellaris() {
         digestStore = new DigestStore();
@@ -254,19 +257,25 @@ public class Stellaris extends SimpleFactory {
         File file, dir;
         ScriptParser script;
         String filename;
+        Set<File> set;
 
         df = new DirectoryFilter();
         dirRoot.listFiles(df);
         sf = new ScriptFilter(df.getDirs());
         dirs = sf.getDirs();
+        set = new HashSet<>();
 
         while (!dirs.isEmpty()) {
             dir = dirs.remove();
             dir.listFiles(sf);
 
             files = sf.getFiles();
+            if (files.isEmpty()) {
+                continue;
+            }
+            set.add(dir);
             mainloop:
-            while (!files.isEmpty()) {
+            do {
                 file = files.remove();
                 filename = ScriptPath.getPath(file);
                 for (String name : BLACKLIST_ALL) {
@@ -301,8 +310,14 @@ public class Stellaris extends SimpleFactory {
                             ex
                     );
                 }
-            }
+            } while (!files.isEmpty());
         }
+
+        directories = set;
+    }
+
+    public Set<File> getDirectories() {
+        return directories;
     }
 
     private static void printCopyrightMessage() {
