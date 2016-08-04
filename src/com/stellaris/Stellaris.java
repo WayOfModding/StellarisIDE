@@ -41,15 +41,15 @@ import javax.script.*;
 public class Stellaris extends SimpleFactory {
 
     private static final String[] BLACKLIST_ALL = {
-        "common\\HOW_TO_MAKE_NEW_SHIPS.txt",
-        "interface\\credits.txt",
-        "interface\\reference.txt",
-        "previewer_assets\\previewer_filefilter.txt",
-        "pdx_launcher\\game\\motd.txt"
+        "common/HOW_TO_MAKE_NEW_SHIPS.txt",
+        "interface/credits.txt",
+        "interface/reference.txt",
+        "previewer_assets/previewer_filefilter.txt",
+        "pdx_launcher/game/motd.txt"
     };
     // skip when syntax analysis is ongoing
     private static final String[] BLACKLIST_SYN = {
-        "common\\component_tags\\00_tags.txt"
+        "common/component_tags/00_tags.txt"
     };
 
     private static Stellaris stellaris;
