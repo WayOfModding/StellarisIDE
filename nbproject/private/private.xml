@@ -2,6 +2,14 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="1"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/D:/Programming/StellarisIDE/src/com/stellaris/mod/ModLoader.java</file>
+            <file>file:/D:/Programming/StellarisIDE/src/com/stellaris/ScriptParser.java</file>
+            <file>file:/D:/Programming/StellarisIDE/src/com/stellaris/util/ScriptPath.java</file>
+            <file>file:/D:/Programming/StellarisIDE/src/com/stellaris/Stellaris.java</file>
+            <file>file:/D:/Programming/StellarisIDE/src/com/stellaris/mod/DescriptorFilter.java</file>
+            <file>file:/D:/Programming/StellarisIDE/src/com/stellaris/DirectoryFilter.java</file>
+            <file>file:/D:/Programming/StellarisIDE/src/com/stellaris/ScriptLexer.java</file>
+        </group>
     </open-files>
 </project-private>

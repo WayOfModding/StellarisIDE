@@ -78,14 +78,18 @@ public class ScriptFilter implements FileFilter {
     @Override
     public boolean accept(File file) {
         String name;
+        Set<String> s;
+        Queue<File> q;
 
+        s = ext;
+        q = files;
         if (file.isDirectory()) {
             dirs.add(file);
         } else if (file.isFile()) {
             name = file.getName();
-            for (String suffix : ext) {
+            for (String suffix : s) {
                 if (name.endsWith(suffix)) {
-                    files.add(file);
+                    q.add(file);
                     break;
                 }
             }

@@ -45,6 +45,8 @@ public class ScriptPath {
         int len;
         int idx;
         idx = path.indexOf(sp);
+        if (idx == -1)
+            return null;
         len = sp.length();
         idx += len;
         return path.substring(idx).replace('\\', '/');

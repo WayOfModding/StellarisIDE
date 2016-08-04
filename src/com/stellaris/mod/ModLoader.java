@@ -35,6 +35,7 @@ import java.io.Reader;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipException;
@@ -107,8 +108,6 @@ public class ModLoader extends SimpleEngine {
         }
     }
 
-    // TODO validate file structure
-    // some modders might forget about directories
     private void handleDirectory(final File root) throws IOException {
         File dir, file;
         DirectoryFilter df;
@@ -116,7 +115,18 @@ public class ModLoader extends SimpleEngine {
         Queue<File> dirs, files;
         String filename;
         String msg;
+        Stellaris main;
+        Set<String> set;
+        boolean doParseFile;
 
+        main = Stellaris.getDefault();
+        if (main == null)
+            throw new NullPointerException("Stellaris instance not found!");
+        set = main.getDirectories();
+        if (set == null)
+            throw new NullPointerException("Script directories not found!");
+        if (set.isEmpty())
+            throw new IllegalStateException("Script directories not found!");
         df = new DirectoryFilter();
         root.listFiles(df);
         sf = new ScriptFilter(df.getDirs());
@@ -125,6 +135,13 @@ public class ModLoader extends SimpleEngine {
         while (!dirs.isEmpty()) {
             dir = dirs.remove();
             dir.listFiles(sf);
+            // filter directories
+            filename = ScriptPath.getPath(dir);
+            if (filename == null)
+                throw new NullPointerException();
+            doParseFile = set.contains(filename);
+            if (!doParseFile)
+                continue;
 
             files = sf.getFiles();
             loop:
@@ -161,12 +178,27 @@ public class ModLoader extends SimpleEngine {
         ZipArchiveEntry entry;
         String entryName;
         String filename;
+        Stellaris main;
+        Set<String> set;
+        boolean doParseFile;
 
+        main = Stellaris.getDefault();
+        if (main == null)
+            throw new NullPointerException("Stellaris instance not found!");
+        set = main.getDirectories();
+        if (set == null)
+            throw new NullPointerException("Script directories not found!");
+        if (set.isEmpty())
+            throw new IllegalStateException("Script directories not found!");
         try (ZipFile zf = new ZipFile(file);) {
             entries = zf.getEntries();
             while (entries.hasMoreElements()) {
                 entry = entries.nextElement();
                 entryName = entry.getName();
+                // filter entries
+                doParseFile = set.contains(entryName);
+                if (!doParseFile)
+                    continue;
                 filename = ScriptPath.getModArchivePath(file, entryName);
                 if (DEFAULT_ENTRY_NAME_DESCRIPTOR.equals(entryName)) {
                     continue;
@@ -293,12 +325,19 @@ public class ModLoader extends SimpleEngine {
     }
 
     public static void main(String[] args) {
+        String path;
         Queue<ModLoader> q;
         Stellaris main;
 
+        if (args.length < 1) {
+            return;
+        }
+        path = args[0];
         //Debug.DEBUG = true;
         main = new Stellaris();
         Stellaris.setDefault(main);
+        main.init(path);
+        main.scan(true);
         q = getModLoaders();
         Debug.err.flush();
         try {

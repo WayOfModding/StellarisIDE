@@ -18,6 +18,7 @@ package com.stellaris.util;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -114,8 +115,10 @@ public class SoloSet<E> implements Set<E> {
         public E next() {
             if (hasNext) {
                 hasNext = false;
+                return element;
+            } else {
+                throw new NoSuchElementException();
             }
-            return element;
         }
     }
 
