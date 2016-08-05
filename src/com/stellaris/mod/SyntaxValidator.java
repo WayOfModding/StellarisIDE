@@ -102,10 +102,15 @@ public class SyntaxValidator {
         for (String key : keyset) {
             syntax = (ScriptValue) bindings.get(key);
             if (syntax == null) {
+                /*
+                // TODO unknown field name validation should be
+                // replaced by semantic validation
                 // no available syntax binding
                 throw new SyntaxException(
                         String.format("Unknown field name \"%s\"", key)
                 );
+                */
+                continue;
             }
             bindset = syntax.getTypeSet();
             value = (ScriptValue) script.get(key);
