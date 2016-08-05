@@ -16,6 +16,7 @@
  */
 package com.stellaris;
 
+import com.stellaris.mod.SyntaxException;
 import com.stellaris.script.ScriptBoolean;
 import com.stellaris.script.ScriptColor;
 import com.stellaris.script.ScriptColorList;
@@ -137,8 +138,7 @@ public class ScriptParser extends ScriptValue {
                 );
             }
         } catch (NoSuchElementException | IOException ex) {
-            Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, filename, ex);
-            System.exit(-1);
+            throw new SyntaxException(filename, ex);
         } finally {
             try {
                 parser.close();

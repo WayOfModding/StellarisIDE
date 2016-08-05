@@ -37,7 +37,7 @@ public final class ScriptLexer extends AbstractLexer {
 
     private LinkedList<String> queue;
     private Map<Integer, Queue<String>> map;
-    private int bracket;
+    private int cl, cr;
 
     public ScriptLexer(File file) throws IOException {
         this(new BOMReader(file));
@@ -174,24 +174,30 @@ public final class ScriptLexer extends AbstractLexer {
         char[] buf;
         char c;
         String str;
+        int i;
 
         if (src == dst) {
             throw new AssertionError("Empty string");
         }
         len = dst - src;
         buf = charBuffer.array();
-        if (len == 1) {
-            c = buf[src];
-            switch (c) {
-                case '{':
-                    ++bracket;
-                    break;
-                case '}':
-                    --bracket;
-                    break;
+        for (i = 0; i < len; i++) {
+            c = buf[src + i];
+            if (c == '{') {
+                ++cl;
+                i = -1;
+                break;
+            } else if (c == '}') {
+                ++cr;
+                i = -1;
+                break;
             }
         }
         str = new String(buf, src, len);
+        if (i == -1 && len != 1)
+            throw new AssertionError(
+                    String.format("[WARN] Unexpected token: \"%s\"%n", str)
+            );
         if (DEBUG && DEBUG_CACHE) {
             Debug.err.format("[CACHE]\tline=%d, src=%d, dst=%d, str=\"%s\"%n"
                     + "\tcache=%d %s%n",
@@ -410,12 +416,16 @@ public final class ScriptLexer extends AbstractLexer {
     }
 
     public void close() throws IOException {
+        int total;
+        
         super.close();
-        if (bracket != 0) {
+        total = cl - cr;
+        //System.out.format("Closing lexer (%d, %d, %d)...%n", cl, cr, total);
+        if (total != 0) {
             throw new TokenException(
                     String.format(
-                            "Unmatching bracket pairs: %d",
-                            bracket
+                            "Unmatching bracket pairs: %d('{'=%d, '}'=%d)",
+                            total, cl, cr
                     )
             );
         }
@@ -435,10 +445,27 @@ public final class ScriptLexer extends AbstractLexer {
             char c;
 
             count0 = count1 = 0;
+            mainloop:
             while ((buffer = parser.nextLine()) != null) {
+                //buffer.mark();
                 while (buffer.hasRemaining()) {
                     c = buffer.get();
                     switch (c) {
+                        case '#':
+                            /*
+                            while (buffer.hasRemaining()) {
+                                c = buffer.get();
+                                if (c == '{' || c == '}') {
+                                    buffer.reset();
+                                    System.out.format("%s%n%n", buffer.toString());
+                                    break;
+                                }
+                            }
+                            */
+                            buffer = parser.nextLine();
+                            if (buffer == null)
+                                break mainloop;
+                            continue;
                         case '{':
                             ++count0;
                             break;
