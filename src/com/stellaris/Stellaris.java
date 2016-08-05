@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.script.*;
@@ -147,7 +148,7 @@ public class Stellaris extends SimpleFactory {
             } while (!files.isEmpty());
         }
 
-        directories = set;
+        directories = new TreeSet<>(set);
     }
 
     public Set<String> getDirectories() {
@@ -168,6 +169,13 @@ public class Stellaris extends SimpleFactory {
         Debug.out.format("Usage:%n\tjava -jar %s <StellarisPath>%n%n",
                 jarName);
     }
+    
+    private static void sleep() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+        }
+    }
 
     public static void main(String[] args) {
         String path;
@@ -176,6 +184,7 @@ public class Stellaris extends SimpleFactory {
         ScriptEngine se;
         ScriptContext sc;
         FieldTypeBinding ftb;
+        Set<String> dirs;
 
         if (args.length < 1) {
             printHelpMessage();
@@ -204,6 +213,13 @@ public class Stellaris extends SimpleFactory {
             } catch (IOException ex) {
                 Logger.getLogger(Stellaris.class.getName()).log(Level.SEVERE, null, ex);
             }
+            sleep();
+            dirs = st.directories;
+            System.out.format("[DIRS]\tList of script directories:%n");
+            for (String dir : dirs) {
+                System.out.format("\t%s%n", dir);
+            }
+            sleep();
             ModLoader.getModLoaders();
         } catch (IOException ex) {
             Logger.getLogger(Stellaris.class.getName()).log(Level.SEVERE, null, ex);
@@ -214,32 +230,3 @@ public class Stellaris extends SimpleFactory {
         }
     }
 }
-/*
-    public String getGameVersion1()
-            throws IOException {
-        String fileName;
-        File file;
-        Path path;
-        LargeTextFactory factory;
-        CharSequence text;
-        Pattern p;
-        Matcher m;
-
-        if (gameVersion != null) {
-            return gameVersion;
-        }
-        fileName = "stellaris.exe";
-        file = new File(dirRoot, fileName);
-        if (!file.isFile()) {
-            throw new FileNotFoundException();
-        }
-        path = file.toPath();
-        factory = LargeTextFactory.defaultFactory();
-        text = factory.load(path);
-        p = Pattern.compile("Stellaris v(\\d+(?:\\.\\d+)+)");
-        m = p.matcher(text);
-        if (!m.find())
-            throw new IllegalStateException("Game version token not found!");
-        return gameVersion = m.group(1);
-    }
-*/
