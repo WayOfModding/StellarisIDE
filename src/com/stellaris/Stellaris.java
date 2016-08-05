@@ -56,179 +56,11 @@ public class Stellaris extends SimpleFactory {
     private final DigestStore digestStore;
     private final ScriptEngine scriptEngine;
     private File dirRoot;
-    private String gameVersion;
     private Set<String> directories;
 
     public Stellaris() {
         digestStore = new DigestStore();
         scriptEngine = super.getScriptEngine();
-    }
-
-    private String scanGameVersion(Reader reader) throws IOException {
-        int bufSize;
-        CharBuffer buf;
-        CharBuffer out;
-        char c;
-        int state;
-
-        bufSize = 4096;
-        buf = CharBuffer.allocate(bufSize);
-        out = CharBuffer.allocate(16);
-        state = 0;
-        lup_read:
-        while (reader.read((CharBuffer) buf.clear()) > 0) {
-            buf.flip();
-            lup_buf:
-            while (buf.hasRemaining()) {
-                if (state == 0) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != 'S') {
-                        state = 0;
-                        continue;
-                    }
-                    state = 1;
-                }
-                if (state == 1) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != 't') {
-                        state = 0;
-                        continue;
-                    }
-                    state = 2;
-                }
-                if (state == 2) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != 'e') {
-                        state = 0;
-                        continue;
-                    }
-                    state = 3;
-                }
-                if (state == 3 || state == 4) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != 'l') {
-                        state = 0;
-                        continue;
-                    }
-                    ++state;
-                }
-                if (state == 5) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != 'a') {
-                        state = 0;
-                        continue;
-                    }
-                    state = 6;
-                }
-                if (state == 6) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != 'r') {
-                        state = 0;
-                        continue;
-                    }
-                    state = 7;
-                }
-                if (state == 7) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != 'i') {
-                        state = 0;
-                        continue;
-                    }
-                    state = 8;
-                }
-                if (state == 8) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != 's') {
-                        state = 0;
-                        continue;
-                    }
-                    state = 9;
-                }
-                if (state == 9) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != ' ') {
-                        state = 0;
-                        continue;
-                    }
-                    state = 10;
-                }
-                if (state == 10) {
-                    if (!buf.hasRemaining()) {
-                        break;
-                    }
-                    if (buf.get() != 'v') {
-                        state = 0;
-                        continue;
-                    }
-                    state = 11;
-                }
-                // version digits
-                while (state >= 11
-                        && state <= 13) {
-                    if (!buf.hasRemaining()) {
-                        break lup_buf;
-                    }
-                    c = buf.get();
-                    if (c == '.') {
-                        ++state;
-                    } else if (c < '0' || c > '9') {
-                        if (state == 13) {
-                            state = 14;
-                            break lup_read;
-                        }
-                        state = 0;
-                        continue lup_buf;
-                    }
-                    out.put(c);
-                }
-            }
-        }
-
-        out.flip();
-        if (state == 14 && out.hasRemaining()) {
-            // version string is found
-            return out.toString();
-        } else {
-            throw new IllegalStateException(
-                    "Version string is not found in 'stellaris.exe': " + state
-            );
-        }
-    }
-
-    public String getGameVersion()
-            throws IOException {
-        String fileName;
-        File file;
-
-        if (gameVersion != null) {
-            return gameVersion;
-        }
-        fileName = "stellaris.exe";
-        file = new File(dirRoot, fileName);
-        if (!file.isFile()) {
-            throw new FileNotFoundException();
-        }
-        try (Reader reader = new InputStreamReader(new FileInputStream(file));) {
-            return gameVersion = scanGameVersion(reader);
-        }
     }
 
     public File getRootDirectory() {
@@ -340,6 +172,7 @@ public class Stellaris extends SimpleFactory {
     public static void main(String[] args) {
         String path;
         Stellaris st;
+        VersionScanner scanner;
         ScriptEngine se;
         ScriptContext sc;
         FieldTypeBinding ftb;
@@ -356,9 +189,10 @@ public class Stellaris extends SimpleFactory {
             st = new Stellaris();
             Stellaris.setDefault(st);
             st.init(path);
+            scanner = new VersionScanner(path);
             Debug.out.format("Game Version: v%s%n"
                     + "Checkout directory \"%s\"...%n",
-                    st.getGameVersion(),
+                    scanner.getGameVersion(),
                     path);
             st.scan(true);
             se = st.scriptEngine;
@@ -380,3 +214,32 @@ public class Stellaris extends SimpleFactory {
         }
     }
 }
+/*
+    public String getGameVersion1()
+            throws IOException {
+        String fileName;
+        File file;
+        Path path;
+        LargeTextFactory factory;
+        CharSequence text;
+        Pattern p;
+        Matcher m;
+
+        if (gameVersion != null) {
+            return gameVersion;
+        }
+        fileName = "stellaris.exe";
+        file = new File(dirRoot, fileName);
+        if (!file.isFile()) {
+            throw new FileNotFoundException();
+        }
+        path = file.toPath();
+        factory = LargeTextFactory.defaultFactory();
+        text = factory.load(path);
+        p = Pattern.compile("Stellaris v(\\d+(?:\\.\\d+)+)");
+        m = p.matcher(text);
+        if (!m.find())
+            throw new IllegalStateException("Game version token not found!");
+        return gameVersion = m.group(1);
+    }
+*/
