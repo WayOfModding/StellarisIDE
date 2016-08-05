@@ -16,9 +16,13 @@
  */
 package com.stellaris.mod;
 
+import com.stellaris.TokenException;
+import com.stellaris.test.Debug;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -79,7 +83,20 @@ public class DescriptorFilter implements FileFilter {
                 loader = new LocalModLoader(pathHome, file);
             }
             if (queue != null) {
-                loader.handleMod();
+                try {
+                    loader.handleMod();
+                } catch (ModException ex) {
+                    Debug.err.format("[ERROR] Found at mod \"%s\"%n"
+                            + "\tname=%s%n"
+                            + "\tpath=%s%n"
+                            + "\tsver=%s%n"
+                            + "\t%s%n",
+                            ex.getMessage(),
+                            loader.name,
+                            loader.path,
+                            loader.supportedVersion,
+                            ex.getCause());
+                }
                 queue.add(loader);
             }
         } catch (IOException ex) {

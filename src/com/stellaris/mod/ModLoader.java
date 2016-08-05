@@ -19,6 +19,7 @@ package com.stellaris.mod;
 import com.stellaris.ScriptParser;
 import com.stellaris.ScriptLexer;
 import com.stellaris.Stellaris;
+import com.stellaris.TokenException;
 import com.stellaris.script.*;
 import com.stellaris.test.Debug;
 import java.io.File;
@@ -98,7 +99,11 @@ public abstract class ModLoader extends SimpleEngine {
         // routine: set FILENAME
         //fileContext.setAttribute(ScriptEngine.FILENAME, filename, scope);
         // parse the file
-        ScriptParser.newInstance(reader, filename, fileContext);
+        try {
+            ScriptParser.newInstance(reader, filename, fileContext);
+        } catch (RuntimeException ex) {
+            throw new ModException(filename, ex);
+        }
         // retrieve field-type binding
         bindings = fileContext.getBindings(scope);
         // validate field-type binding
@@ -121,11 +126,11 @@ public abstract class ModLoader extends SimpleEngine {
         ScriptLexer parser;
         String key;
         String token;
-        String path;
+        String _path;
         int len;
 
         parser = new ScriptLexer(file);
-        path = null;
+        _path = null;
         while (parser.hasNextToken()) {
             key = parser.nextToken();
 
@@ -150,7 +155,7 @@ public abstract class ModLoader extends SimpleEngine {
                     token = parser.nextToken();
                     len = token.length();
                     token = token.substring(1, len - 1);
-                    path = token;
+                    _path = token;
                     break;
                 case "supported_version":
                     token = parser.nextToken();
@@ -164,11 +169,11 @@ public abstract class ModLoader extends SimpleEngine {
             }
         }
 
-        if (path == null) {
+        if (_path == null) {
             throw new AssertionError("Invalid descriptor file: path/archive field not found!");
         }
 
-        return path;
+        return _path;
     }
 
     public static void getModLoaders(String pathHome,
