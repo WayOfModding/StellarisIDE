@@ -70,7 +70,7 @@ public class ScriptParser extends ScriptValue {
                 throw new IllegalArgumentException("file");
             return new ScriptParser(file, context);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new RuntimeException(ScriptPath.getPath(file), ex);
         }
     }
 
@@ -666,7 +666,7 @@ public class ScriptParser extends ScriptValue {
             Debug.out.format("Parsing file \"%s\"...%n", sname);
             ScriptParser.newInstance(file, context);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ScriptParser.class.getName()).log(Level.SEVERE, ScriptPath.getPath(file), ex);
         }
     }
 }
