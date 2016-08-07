@@ -440,10 +440,10 @@ public class ScriptParser extends ScriptValue {
                         state = newstate;
                     }
                 } else if ("yes".equals(sToken)) {
-                    put(field, new ScriptBoolean(true));
+                    put(field, ScriptBoolean.TRUE);
                 } else if ("no".equals(sToken)) {
                     //type = Type.BOOLEAN;
-                    put(field, new ScriptBoolean(false));
+                    put(field, ScriptBoolean.FALSE);
                 } else {
                     try {
                         // integer

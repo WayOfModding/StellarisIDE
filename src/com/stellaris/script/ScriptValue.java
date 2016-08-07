@@ -18,6 +18,7 @@ package com.stellaris.script;
 
 import com.stellaris.Type;
 import com.stellaris.TypeComparator;
+import java.io.StringReader;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -74,10 +75,38 @@ public abstract class ScriptValue {
     }
 
     public static ScriptValue parseString(String str) {
-        ScriptValue value;
+        int iVal;
+        float fVal;
 
-        value = null;
-        // TODO
-        return value;
+        if (str == null)
+            throw new NullPointerException();
+        if ("none".equals(str))
+            return new ScriptNull();
+        if ("yes".equals(str))
+            return ScriptBoolean.TRUE;
+        if ("no".equals(str))
+            return ScriptBoolean.FALSE;
+        if (str.startsWith("\"") && str.endsWith("\""))
+            return new ScriptString(str);
+        if (str.startsWith("{") && str.endsWith("}")) {
+            //try (StringReader reader = new StringReader(str);) {
+                // TODO Range, Struct, List, Color-list
+            //}
+            throw new UnsupportedOperationException("ScriptStruct");
+        }
+        if (str.startsWith("rgb") || str.startsWith("hsv")) {
+            throw new UnsupportedOperationException("ScriptColor");
+        }
+        try {
+            iVal = Integer.parseInt(str);
+            return new ScriptInteger(iVal);
+        } catch (NumberFormatException ex) {
+        }
+        try {
+            fVal = Float.parseFloat(str);
+            return new ScriptFloat(fVal);
+        } catch (NumberFormatException ex) {
+        }
+        return new ScriptReference(str);
     }
 }

@@ -23,41 +23,43 @@ import com.stellaris.Type;
  *
  * @author donizyo
  */
-public class ScriptBoolean extends ScriptValue {
+public abstract class ScriptBoolean extends ScriptValue {
 
-    private static final String TRUE = "yes";
-    private static final String FALSE = "no";
-    private boolean boolValue;
+    private static final String STR_TRUE = "yes";
+    private static final String STR_FALSE = "no";
 
-    public ScriptBoolean(boolean value) {
-        boolValue = value;
-    }
-
-    public void set(boolean newValue) {
-        boolValue = newValue;
-    }
-
-    public boolean get() {
-        return boolValue;
-    }
-
-    public void parse(String s) {
-        switch (s) {
-            case TRUE:
-                set(true);
-                return;
-            case FALSE:
-                set(false);
-                return;
-        }
-        throw new TokenException(s);
+    private ScriptBoolean() {
     }
 
     protected Type getType() {
         return Type.BOOLEAN;
     }
 
-    public String toString() {
-        return get() ? TRUE : FALSE;
-    }
+    public abstract boolean get();
+
+    public abstract String toString();
+
+    public static final ScriptBoolean TRUE = new ScriptBoolean() {
+        @Override
+        public boolean get() {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return STR_TRUE;
+        }
+    };
+
+    public static final ScriptBoolean FALSE = new ScriptBoolean() {
+        @Override
+        public boolean get() {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return STR_FALSE;
+        }
+    };
 }
