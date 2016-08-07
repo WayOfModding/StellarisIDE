@@ -25,6 +25,8 @@ import static com.stellaris.test.Debug.*;
 import com.stellaris.util.BOMReader;
 import com.stellaris.util.DigestStore;
 import com.stellaris.util.ScriptPath;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -38,6 +40,7 @@ public final class ScriptLexer extends AbstractLexer {
     private LinkedList<Token> queue;
     private SortedMap<Integer, Queue<Token>> map;
     private int cl, cr;
+    //private final List<Integer> slbl = new LinkedList<>();
 
     public ScriptLexer(File file) throws IOException {
         this(new BOMReader(file));
@@ -197,42 +200,54 @@ public final class ScriptLexer extends AbstractLexer {
      * @param dst
      * @return
      */
-    private String cache(CharBuffer charBuffer,
-            int src, int dst)
+    private String cache(int lineNumber, boolean isComment,
+            char[] buf, int src, int dst)
             throws AssertionError {
         int len;
-        char[] buf;
         char c;
         String str;
-        int i;
+        //int i;
+        Queue<Token> q;
 
         if (src == dst) {
             throw new AssertionError("Empty string");
         }
         len = dst - src;
-        buf = charBuffer.array();
-        for (i = 0; i < len; i++) {
-            c = buf[src + i];
+        str = new String(buf, src, len);
+        if (!isComment && len == 1) {
+            c = buf[src];
             if (c == '{') {
+                //slbl.add(lineNumber);
                 ++cl;
-                i = -1;
-                break;
             } else if (c == '}') {
                 ++cr;
-                i = -1;
-                break;
             }
+            /*
+            for (i = 0; i < len; i++) {
+                c = buf[src + i];
+                if (c == '{') {
+                    slbl.add(lineNumber);
+                    ++cl;
+                    i = -1;
+                    break;
+                } else if (c == '}') {
+                    ++cr;
+                    i = -1;
+                    break;
+                }
+            }
+            if (i == -1 && len != 1)
+                throw new AssertionError(
+                        String.format("[WARN] Unexpected token: \"%s\"%n", str)
+                );
+            */
         }
-        str = new String(buf, src, len);
-        if (i == -1 && len != 1)
-            throw new AssertionError(
-                    String.format("[WARN] Unexpected token: \"%s\"%n", str)
-            );
+        q = queue;
         if (DEBUG && DEBUG_CACHE) {
             Debug.err.format("[CACHE]\tline=%d, src=%d, dst=%d, str=\"%s\"%n"
                     + "\tcache=%d %s%n",
-                    getLineNumber(), src, dst, str,
-                    queue.size(), queue.toString()
+                    lineNumber, src, dst, str,
+                    q.size(), q.toString()
             );
         }
 
@@ -368,7 +383,7 @@ public final class ScriptLexer extends AbstractLexer {
                         }
                     }
                 }
-                res = cache(buf, src, dst);
+                res = cache(lineNumber, isComment, buf.array(), src, dst);
             }
 
             sb.append(res);
@@ -464,27 +479,31 @@ public final class ScriptLexer extends AbstractLexer {
             );
         }
     }
-
-    public static void main(String[] args) {
-        File file;
-
-        if (args.length < 2) {
-            return;
-        }
-        file = new File(args[0], args[1]);
+    
+    private static List<Integer> checkBrackets(File file) {
+        int idx;
+        List<Integer> bList;
+        
+        bList = new LinkedList<>();
         try (ScriptLexer parser = new ScriptLexer(file);) {
             int cl, clt; // count {
             int cr, crt; // count }
             CharBuffer buffer;
             char c;
+            boolean inQuote;
 
             cl = cr = clt = crt = 0;
             mainloop:
             while ((buffer = parser.nextLine()) != null) {
+                idx = parser.getLineNumber();
                 //buffer.mark();
+                inQuote = false;
                 while (buffer.hasRemaining()) {
                     c = buffer.get();
                     switch (c) {
+                        case '"':
+                            inQuote = !inQuote;
+                            break;
                         case '#':
                             while (buffer.hasRemaining()) {
                                 c = buffer.get();
@@ -496,10 +515,16 @@ public final class ScriptLexer extends AbstractLexer {
                             }
                             break;
                         case '{':
-                            ++cl;
+                            if (!inQuote) {
+                                if (bList != null)
+                                    bList.add(idx);
+                                ++cl;
+                            }
                             break;
                         case '}':
-                            ++cr;
+                            if (!inQuote) {
+                                ++cr;
+                            }
                             break;
                     }
                 }
@@ -518,5 +543,37 @@ public final class ScriptLexer extends AbstractLexer {
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+        
+        return bList;
+    }
+
+    public static void main(String[] args) {
+        File file;
+
+        if (args.length < 2) {
+            return;
+        }
+        file = new File(args[0], args[1]);
+        //List<Integer> standard = 
+                checkBrackets(file);
+        /*
+        try {
+            ScriptLexer scriptLexer = new ScriptLexer(file);
+            while (scriptLexer.hasNextToken()) {
+                scriptLexer.nextToken();
+            }
+            List<Integer> test = scriptLexer.slbl;
+            
+            // analyze
+            standard.removeAll(test);
+            if (!standard.isEmpty()) {
+                // error
+                System.out.println(standard);
+                System.exit(-1);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(ScriptLexer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        */
     }
 }
