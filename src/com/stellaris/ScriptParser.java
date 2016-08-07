@@ -641,6 +641,8 @@ public class ScriptParser extends ScriptValue {
         if (args.length < 2) {
             return;
         }
+        ScriptLexer.main(args);
+        System.out.println();
         sparent = args[0];
         sname = args[1];
         {

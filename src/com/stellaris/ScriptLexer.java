@@ -50,6 +50,8 @@ public final class ScriptLexer extends AbstractLexer {
                 BUFFER_SIZE);
         queue = new LinkedList<>();
         map = new HashMap<>();
+        cl = 0;
+        cr = 0;
     }
 
     public void skipCurrentLine() {
