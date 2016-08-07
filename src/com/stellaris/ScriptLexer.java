@@ -226,8 +226,10 @@ public final class ScriptLexer extends AbstractLexer {
 
     private void debugLine(CharBuffer buf) {
         if (Debug.DEBUG_LINE) {
-            Debug.err.format("[LINE]\t%4d>\t%s%n",
-                    buf.remaining(), buf);
+            Debug.err.format("[LINE]\t%4d - %2d>\t%s%n",
+                    getLineNumber(),
+                    buf.remaining(),
+                    buf);
         }
     }
 
