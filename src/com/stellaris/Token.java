@@ -22,11 +22,15 @@ package com.stellaris;
  */
 public final class Token {
 
-    final String token;
-    final int line;
+    public final String token;
+    public final int line;
 
     Token(String str, int num) {
         token = str;
         line = num;
+    }
+    
+    public String toString() {
+        return token;
     }
 }

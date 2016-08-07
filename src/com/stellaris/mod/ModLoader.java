@@ -19,6 +19,7 @@ package com.stellaris.mod;
 import com.stellaris.ScriptParser;
 import com.stellaris.ScriptLexer;
 import com.stellaris.Stellaris;
+import com.stellaris.Token;
 import com.stellaris.TokenException;
 import com.stellaris.script.*;
 import com.stellaris.test.Debug;
@@ -124,8 +125,10 @@ public abstract class ModLoader extends SimpleEngine {
      */
     private String handleFile(File file) throws IOException {
         ScriptLexer parser;
-        String key;
-        String token;
+        Token key;
+        String sKey;
+        Token token;
+        String sToken;
         String _path;
         int len;
 
@@ -135,33 +138,39 @@ public abstract class ModLoader extends SimpleEngine {
             key = parser.nextToken();
 
             parser.nextToken();
-            switch (key) {
+            sKey = key.token;
+            switch (sKey) {
                 case "name":
                     token = parser.nextToken();
-                    len = token.length();
-                    name = token.substring(1, len - 1);
+                    sToken = token.token;
+                    len = sToken.length();
+                    name = sToken.substring(1, len - 1);
                     break;
                 case "tags":
                     token = parser.nextToken();
-                    if ("{".equals(token)) {
+                    sToken = token.token;
+                    if ("{".equals(sToken)) {
                         do {
                             token = parser.nextToken();
-                        } while (!"}".equals(token));
+                            sToken = token.token;
+                        } while (!"}".equals(sToken));
                         break;
                     }
-                    throw new AssertionError(token);
+                    throw new AssertionError(sToken);
                 case "archive":
                 case "path":
                     token = parser.nextToken();
-                    len = token.length();
-                    token = token.substring(1, len - 1);
-                    _path = token;
+                    sToken = token.token;
+                    len = sToken.length();
+                    sToken = sToken.substring(1, len - 1);
+                    _path = sToken;
                     break;
                 case "supported_version":
                     token = parser.nextToken();
-                    len = token.length();
-                    token = token.substring(1, len - 1);
-                    supportedVersion = token;
+                    sToken = token.token;
+                    len = sToken.length();
+                    sToken = sToken.substring(1, len - 1);
+                    supportedVersion = sToken;
                     break;
                 default:
                     parser.nextToken();

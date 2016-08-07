@@ -35,8 +35,8 @@ public final class ScriptLexer extends AbstractLexer {
     private static final int BUFFER_SIZE = 65536;
     private static final int CACHE_SIZE = 3;
 
-    private LinkedList<String> queue;
-    private Map<Integer, Queue<String>> map;
+    private LinkedList<Token> queue;
+    private SortedMap<Integer, Queue<Token>> map;
     private int cl, cr;
 
     public ScriptLexer(File file) throws IOException {
@@ -49,20 +49,21 @@ public final class ScriptLexer extends AbstractLexer {
                 : new BufferedReader(in),
                 BUFFER_SIZE);
         queue = new LinkedList<>();
-        map = new HashMap<>();
+        map = new TreeMap<>();
         cl = 0;
         cr = 0;
     }
 
     public void skipCurrentLine() {
         int idx;
-        Queue<String> q;
-        Map<Integer, Queue<String>> m;
-        Queue<String> p;
+        Queue<Token> q;
+        SortedMap<Integer, Queue<Token>> m;
+        Queue<Token> p;
 
         Debug.err.format("[INFO]\tSkip current line!%n");
 
-        idx = getLineNumber();
+        m = map;
+        idx = m.firstKey();
         q = queue;
         // line - token mapping
         m = map;
@@ -86,8 +87,8 @@ public final class ScriptLexer extends AbstractLexer {
 
     private boolean cache(int count)
             throws IOException, TokenException {
-        Queue<String> q;
-        Map<Integer, Queue<String>> m;
+        Queue<Token> q;
+        Map<Integer, Queue<Token>> m;
         boolean res;
 
         q = queue;
@@ -102,17 +103,19 @@ public final class ScriptLexer extends AbstractLexer {
         return res;
     }
 
-    public List<String> peekToken(int count)
+    public List<Token> peekToken(int count)
             throws IOException, TokenException {
-        List<String> res;
+        List<Token> res;
+        List<Token> q;
         int size;
 
+        q = queue;
         cache(count);
-        size = queue.size();
+        size = q.size();
         if (size < count) {
             count = size;
         }
-        res = queue.subList(0, count);
+        res = q.subList(0, count);
         res = Collections.unmodifiableList(res);
         return res;
     }
@@ -125,20 +128,40 @@ public final class ScriptLexer extends AbstractLexer {
      */
     public void discardToken(int count) {
         int i;
-        String str;
+        Queue<Token> q;
+        Token token;
 
         if (DEBUG && DEBUG_DISCARD) {
             Debug.err.format("[DSCD]\tcount=%d%n", count);
         }
         i = 0;
+        q = queue;
         while (i++ < count) {
-            str = queue.remove();
+            token = q.remove();
+            cleanLine(token);
             if (DEBUG && DEBUG_DISCARD) {
                 Debug.err.format("[DSCD]\tstr=\"%s\"%n\tcache=%d %s%n",
-                        str, queue.size(), queue.toString()
+                        token.token, q.size(), q.toString()
                 );
             }
         }
+    }
+    
+    private void cleanLine(Token token) {
+        int idx;
+        SortedMap<Integer, Queue<Token>> m;
+        Queue<Token> l;
+        
+        if (token == null)
+            throw new NullPointerException("cleanLine");
+        idx = token.line;
+        // remove token in list
+        m = map;
+        l = m.get(idx);
+        l.remove(token);
+        // remove int-list binding from map
+        if (l.isEmpty())
+            m.remove(idx);
     }
 
     /**
@@ -147,16 +170,21 @@ public final class ScriptLexer extends AbstractLexer {
      * @return
      * @throws java.io.IOException
      */
-    public String nextToken() throws IOException, NoSuchElementException {
-        String res;
+    public Token nextToken() throws IOException, NoSuchElementException {
+        Queue<Token> q;
+        Token res;
+        int lineNumber;
 
         if (!hasNextToken()) {
             throw new NoSuchElementException();
         }
-        res = queue.remove();
+        q = queue;
+        res = q.remove();
+        lineNumber = res.line;
+        cleanLine(res);
         if (DEBUG && DEBUG_NEXT) {
             Debug.err.format("[NEXT]\tline=%d, next=\"%s\"%n\tcache=%d %s%n",
-                    getLineNumber(), res, queue.size(), queue.toString()
+                    lineNumber, res.token, q.size(), q.toString()
             );
         }
         return res;
@@ -256,16 +284,17 @@ public final class ScriptLexer extends AbstractLexer {
         return tmp.toString();
     }
 
-    private boolean tokenize(Queue<String> q, Map<Integer, Queue<String>> m)
+    private boolean tokenize(Queue<Token> q, Map<Integer, Queue<Token>> m)
             throws IOException, TokenException {
         char c;
         int src, dst, pos;
         String res;
+        Token token;
         int lineNumber;
         boolean isComment;
         boolean isString;
         CharBuffer buf;
-        Queue<String> p;
+        Queue<Token> p;
         String line;
         StringBuilder sb;
         String lex;
@@ -344,7 +373,8 @@ public final class ScriptLexer extends AbstractLexer {
 
             sb.append(res);
             if (!isComment || Debug.ACCEPT_COMMENT) {
-                if (!q.add(res) || !p.add(res)) {
+                token = new Token(res, lineNumber);
+                if (!q.add(token) || !p.add(token)) {
                     throw new IllegalStateException("Fail to add new token");
                 }
             }
