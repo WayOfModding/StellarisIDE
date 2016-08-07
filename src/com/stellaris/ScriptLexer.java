@@ -439,12 +439,12 @@ public final class ScriptLexer extends AbstractLexer {
         }
         file = new File(args[0], args[1]);
         try (ScriptLexer parser = new ScriptLexer(file);) {
-            int count0; // count {
-            int count1; // count }
+            int cl, clt; // count {
+            int cr, crt; // count }
             CharBuffer buffer;
             char c;
 
-            count0 = count1 = 0;
+            cl = cr = clt = crt = 0;
             mainloop:
             while ((buffer = parser.nextLine()) != null) {
                 //buffer.mark();
@@ -452,37 +452,34 @@ public final class ScriptLexer extends AbstractLexer {
                     c = buffer.get();
                     switch (c) {
                         case '#':
-                            /*
                             while (buffer.hasRemaining()) {
                                 c = buffer.get();
-                                if (c == '{' || c == '}') {
-                                    buffer.reset();
-                                    System.out.format("%s%n%n", buffer.toString());
-                                    break;
+                                if (c == '{') {
+                                    ++clt;
+                                } else if (c == '}') {
+                                    ++crt;
                                 }
                             }
-                            */
-                            buffer = parser.nextLine();
-                            if (buffer == null)
-                                break mainloop;
-                            continue;
+                            break;
                         case '{':
-                            ++count0;
+                            ++cl;
                             break;
                         case '}':
-                            ++count1;
+                            ++cr;
                             break;
                     }
                 }
             }
+            clt += cl;
+            crt += cr;
             Debug.out.format("File=\"%s\"%n"
-                    + "Count['{']=%d%n"
-                    + "Count['}']=%d%n"
+                    + "Count['{']=%d / %d%n"
+                    + "Count['}']=%d / %d%n"
                     + "Delta=%d%n",
                     ScriptPath.getPath(file),
-                    count0,
-                    count1,
-                    count0 - count1
+                    cl, clt,
+                    cr, crt,
+                    cl - cr
             );
         } catch (IOException ex) {
             throw new RuntimeException(ex);
