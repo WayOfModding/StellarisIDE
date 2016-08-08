@@ -21,6 +21,7 @@ import com.stellaris.script.SimpleEngine;
 import com.stellaris.script.SimpleFactory;
 import com.stellaris.test.Debug;
 import com.stellaris.util.DigestStore;
+import com.stellaris.util.RootFilter;
 import com.stellaris.util.ScriptPath;
 import java.io.*;
 import java.nio.BufferOverflowException;
@@ -81,6 +82,11 @@ public class Stellaris extends SimpleFactory {
         if (!dirRoot.isDirectory()) {
             throw new IllegalStateException("Root directory is not found!");
         }
+    }
+    
+    private void init(File path) {
+        dirRoot = path;
+        
     }
 
     public void scan(boolean forceUpdate) {
@@ -178,7 +184,7 @@ public class Stellaris extends SimpleFactory {
     }
 
     public static void main(String[] args) {
-        String path;
+        File path;
         Stellaris st;
         VersionScanner scanner;
         ScriptEngine se;
@@ -186,17 +192,11 @@ public class Stellaris extends SimpleFactory {
         FieldTypeBinding ftb;
         Set<String> dirs;
 
-        if (args.length < 1) {
-            printHelpMessage();
-            printCopyrightMessage();
-            return;
-        }
-
-        path = args[0];
         st = null;
         try {
             st = new Stellaris();
             Stellaris.setDefault(st);
+            path = RootFilter.getGameDirectory();
             st.init(path);
             scanner = new VersionScanner(path);
             Debug.out.format("Game Version: v%s%n"

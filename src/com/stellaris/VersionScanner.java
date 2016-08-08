@@ -33,15 +33,15 @@ import java.util.logging.Logger;
  */
 public class VersionScanner {
 
-    private final File dirRoot;
+    private final File game;
     private String gameVersion;
 
     public VersionScanner(String path) {
-        dirRoot = new File(path);
+        game = new File(path, "stellaris.exe");
     }
 
     public VersionScanner(File path) {
-        dirRoot = path;
+        game = new File(path, "stellaris.exe");
     }
 
     private String scanGameVersion(Reader reader) throws IOException {
@@ -99,18 +99,16 @@ public class VersionScanner {
 
     public String getGameVersion()
             throws IOException {
-        String fileName;
-        File file;
+        File g;
 
+        g = game;
         if (gameVersion != null) {
             return gameVersion;
         }
-        fileName = "stellaris.exe";
-        file = new File(dirRoot, fileName);
-        if (!file.isFile()) {
+        if (!g.isFile()) {
             throw new FileNotFoundException();
         }
-        try (Reader reader = new InputStreamReader(new FileInputStream(file));) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(g));) {
             return gameVersion = scanGameVersion(reader);
         }
     }
