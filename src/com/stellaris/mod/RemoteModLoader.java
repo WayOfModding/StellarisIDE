@@ -44,7 +44,9 @@ class RemoteModLoader extends ModLoader {
     public void handleMod() throws IOException {
         File file;
 
-        file = new File(pathHome, path);
+        file = new File(path);
+        if (!file.isFile())
+            file = new File(pathHome, path);
         handleArchive(file);
     }
 

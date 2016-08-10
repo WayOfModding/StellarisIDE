@@ -26,6 +26,8 @@ import java.nio.BufferUnderflowException;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -54,6 +56,8 @@ public class DescriptorFilter implements FileFilter {
         String suffix;
         ModLoader loader;
         Queue<ModLoader> queue;
+        Pattern pRemoteMod;
+        Matcher m;
 
         pathHome = path;
         if (!file.isFile()) {
@@ -69,19 +73,21 @@ public class DescriptorFilter implements FileFilter {
             return false;
         }
         prefix = filename.substring(0, idx);
-
+        // filter remote mod
+        pRemoteMod = Pattern.compile("(?:ugc_)?\\d+");
+        m = pRemoteMod.matcher(prefix);
+        if (m.find()) {
+            // is remote mod
+            queue = queueRemote;
+            // workshop mods can be disabled for debugging
+            //queue = null;
+            loader = new RemoteModLoader(pathHome, file);
+        } else {
+            // is local mod
+            queue = queueLocal;
+            loader = new LocalModLoader(pathHome, file);
+        }
         try {
-            try {
-                // integer file name ==> subscribed mod descriptor
-                Integer.parseInt(prefix);
-                queue = queueRemote;
-                // workshop mods can be disabled for debugging
-                //queue = null;
-                loader = new RemoteModLoader(pathHome, file);
-            } catch (NumberFormatException ex) {
-                queue = queueLocal;
-                loader = new LocalModLoader(pathHome, file);
-            }
             if (queue != null) {
                 try {
                     loader.handleMod();

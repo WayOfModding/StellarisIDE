@@ -202,6 +202,10 @@ public abstract class ModLoader extends SimpleEngine {
         dir.listFiles(filter);
     }
 
+    public static void getModLoaders(Queue<ModLoader> q, Queue<ModLoader> p) {
+        getModLoaders(null, q, p);
+    }
+
     public static Queue<ModLoader> getModLoaders() {
         Queue<ModLoader> q;
 
@@ -216,7 +220,7 @@ public abstract class ModLoader extends SimpleEngine {
 
     public static void main(String[] args) {
         String path;
-        Queue<ModLoader> q;
+        Queue<ModLoader> q, p;
         Stellaris main;
 
         if (args.length < 1) {
@@ -228,15 +232,29 @@ public abstract class ModLoader extends SimpleEngine {
         Stellaris.setDefault(main);
         main.init(path);
         main.scan(true);
-        q = getModLoaders();
+        q = new LinkedList<>();
+        p = new LinkedList<>();
+        ModLoader.getModLoaders(q, p);
         Debug.err.flush();
         try {
             Thread.sleep(1000);
         } catch (InterruptedException ex) {
         }
-        Debug.out.format("ModLoader count=%d%n", q.size());
+        Debug.out.format("ModLoader count=%d%n"
+                + "====================%n"
+                + "Local Mods:%n"
+                + "--------------------%n",
+                q.size() + p.size());
         for (ModLoader ml : q) {
-            Debug.out.format("%s - %s%n",
+            Debug.out.format("%-32s %s%n",
+                    ml.name, ml.supportedVersion
+            );
+        }
+        Debug.out.format("====================%n"
+                + "Remote Mods:%n"
+                + "--------------------%n");
+        for (ModLoader ml : p) {
+            Debug.out.format("%-32s %s%n",
                     ml.name, ml.supportedVersion
             );
         }
